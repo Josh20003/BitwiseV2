@@ -196,11 +196,73 @@ async function main() {
     }
   ]});
 
-  console.log('✅ Seeded 4 lessons with 12 topics successfully!');
+  // Lesson 5: Number System
+  const lesson5 = await prisma.lesson.create({ data: { title: 'Number System' } });
+  await prisma.topic.createMany({ data: [
+    {
+      title: 'Binary, Decimal, Hexadecimal', lessonId: lesson5.id, tags: ['bases','number-systems'],
+      contentText: 'Understanding different number systems used in computing.',
+      displayContent: JSON.parse(JSON.stringify([
+        { type: 'heading', text: 'Understanding Number Systems', level: 2 },
+        { type: 'text', text: 'Different number systems use different bases (radix) to represent values. The most common in computing are Binary (base 2), Decimal (base 10), and Hexadecimal (base 16).' },
+        { type: 'heading', text: 'Decimal System (Base 10)', level: 3 },
+        { type: 'text', text: 'The decimal system uses 10 digits: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9. It is the number system we use in everyday life.' },
+        { type: 'codeBlock', code: 'Decimal: 342\n= 3×10² + 4×10¹ + 2×10⁰\n= 300 + 40 + 2\n= 342', language: 'text' },
+        { type: 'heading', text: 'Binary System (Base 2)', level: 3 },
+        { type: 'text', text: 'The binary system uses only 2 digits: 0 and 1. This is the fundamental language of computers—every bit is either 0 or 1.' },
+        { type: 'codeBlock', code: 'Binary: 10110\n= 1×2⁴ + 0×2³ + 1×2² + 1×2¹ + 0×2⁰\n= 16 + 0 + 4 + 2 + 0\n= 22 (in decimal)', language: 'text' },
+        { type: 'heading', text: 'Hexadecimal System (Base 16)', level: 3 },
+        { type: 'text', text: 'Hexadecimal uses 16 digits: 0-9 and A-F (where A=10, B=11, C=12, D=13, E=14, F=15). It is commonly used in programming for memory addresses and color codes.' },
+        { type: 'codeBlock', code: 'Hexadecimal: 2F4\n= 2×16² + F×16¹ + 4×16⁰\n= 2×256 + 15×16 + 4\n= 512 + 240 + 4\n= 756 (in decimal)', language: 'text' },
+        { type: 'table', table: { headers: ['Decimal', 'Binary', 'Hexadecimal'], rows: [['0','0','0'], ['1','1','1'], ['10','1010','A'], ['15','1111','F'], ['16','10000','10'], ['255','11111111','FF'], ['256','100000000','100']], caption: 'Number System Conversions' } },
+        { type: 'callout', callout: { type: 'important', title: 'Key Insight', content: 'Computers use binary because digital circuits can represent two states: on (1) and off (0). Hexadecimal is used as a shorthand because it compactly represents groups of 4 binary digits.' } }
+      ]))
+    },
+    {
+      title: 'Number System Conversions', lessonId: lesson5.id, tags: ['conversion','calculations'],
+      contentText: 'Converting between different number systems.',
+      displayContent: JSON.parse(JSON.stringify([
+        { type: 'heading', text: 'Converting Between Number Systems', level: 2 },
+        { type: 'heading', text: 'Converting FROM Any Base TO Decimal', level: 3 },
+        { type: 'text', text: 'Multiply each digit by its base raised to its position power, then sum all values.' },
+        { type: 'codeBlock', code: 'Example: Binary 1101 to Decimal\n1101₂ = 1×2³ + 1×2² + 0×2¹ + 1×2⁰\n      = 8 + 4 + 0 + 1\n      = 13₁₀', language: 'text' },
+        { type: 'heading', text: 'Converting FROM Decimal TO Any Base', level: 3 },
+        { type: 'text', text: 'Repeatedly divide by the target base and collect remainders from bottom to top.' },
+        { type: 'codeBlock', code: 'Example: Decimal 25 to Binary\n25 ÷ 2 = 12 remainder 1\n12 ÷ 2 = 6 remainder 0\n6 ÷ 2 = 3 remainder 0\n3 ÷ 2 = 1 remainder 1\n1 ÷ 2 = 0 remainder 1\n\nRead remainders bottom to top: 11001₂', language: 'text' },
+        { type: 'heading', text: 'Quick Conversion: Binary ↔ Hexadecimal', level: 3 },
+        { type: 'text', text: 'Since 16 = 2⁴, each hexadecimal digit represents exactly 4 binary digits. This makes conversion easy!' },
+        { type: 'codeBlock', code: 'Binary to Hex: Group binary digits in 4s from right\n11010110₂ = 1101 0110₂ = D6₁₆\n\nHex to Binary: Convert each hex digit to 4 binary digits\nA5₁₆ = 1010 0101₂', language: 'text' },
+        { type: 'table', table: { headers: ['Hex Digit', 'Binary', 'Decimal'], rows: [['0','0000','0'], ['1','0001','1'], ['2','0010','2'], ['3','0011','3'], ['4','0100','4'], ['5','0101','5'], ['6','0110','6'], ['7','0111','7'], ['8','1000','8'], ['9','1001','9'], ['A','1010','10'], ['B','1011','11'], ['C','1100','12'], ['D','1101','13'], ['E','1110','14'], ['F','1111','15']], caption: 'Binary-Hexadecimal Mapping' } },
+        { type: 'callout', callout: { type: 'tip', title: 'Practice Tip', content: 'Start with small numbers and use the division method. The more you practice, the faster you\'ll recognize patterns and shortcuts!' } }
+      ]))
+    },
+    {
+      title: 'Applications in Computing', lessonId: lesson5.id, tags: ['applications','real-world'],
+      contentText: 'Why number systems matter in computer science.',
+      displayContent: JSON.parse(JSON.stringify([
+        { type: 'heading', text: 'Number Systems in Computing', level: 2 },
+        { type: 'heading', text: 'Why Binary?', level: 3 },
+        { type: 'text', text: 'Computers are built from transistors that can be in one of two states: ON (1) or OFF (0). Binary is the natural language for this digital hardware.' },
+        { type: 'list', list: ['CPU processes instructions in binary', 'Memory stores data as sequences of bits', 'All digital signals are ultimately binary at the hardware level', 'Boolean logic (TRUE/FALSE) maps directly to binary (1/0)'] },
+        { type: 'heading', text: 'Why Hexadecimal?', level: 3 },
+        { type: 'text', text: 'While computers work in binary, large binary numbers are hard for humans to read. Hexadecimal provides a compact representation.' },
+        { type: 'list', list: ['Memory addresses are written in hexadecimal (e.g., 0x7FFF)', 'Color codes in web design use hex: #FF5733 (Red=FF, Green=57, Blue=33)', 'Machine code is easier to read in hexadecimal', 'Debugging requires reading hex dumps of memory'] },
+        { type: 'heading', text: 'Practical Examples', level: 3 },
+        { type: 'codeBlock', code: '// Memory Address\npointer = 0x7FFFFFFF  // Hexadecimal\n\n// Color in Web\nbackground-color: #FF6B9D  // Hex RGB\n\n// File permissions in Linux\nchmod 755 myfile.sh  // Octal (another base system!)', language: 'text' },
+        { type: 'heading', text: 'Other Number Systems', level: 3 },
+        { type: 'text', text: 'While binary, decimal, and hexadecimal are most common, octal (base 8) is also used in some contexts, particularly in Unix/Linux file permissions.' },
+        { type: 'table', table: { headers: ['System', 'Base', 'Digits', 'Common Use'], rows: [['Binary', '2', '0-1', 'Computer hardware & logic'], ['Octal', '8', '0-7', 'Unix file permissions'], ['Decimal', '10', '0-9', 'Human mathematics'], ['Hexadecimal', '16', '0-9,A-F', 'Memory addresses, colors, debugging']], caption: 'Common Number Systems' } },
+        { type: 'callout', callout: { type: 'important', title: 'Connection to Boolean Algebra', content: 'Number systems are foundational to Boolean algebra! Binary numbers are collections of Boolean values (bits), and logic gates operate on these bits. Understanding both is essential for computer science.' } }
+      ]))
+    }
+  ]});
+
+  console.log('✅ Seeded 5 lessons with 15 topics successfully!');
   console.log(`  Lesson 1 (id=${lesson1.id}): Intro to Boolean Algebra - 3 topics`);
   console.log(`  Lesson 2 (id=${lesson2.id}): Logic Gates - 3 topics`);
   console.log(`  Lesson 3 (id=${lesson3.id}): Truth Tables - 3 topics`);
   console.log(`  Lesson 4 (id=${lesson4.id}): Simplification - 3 topics`);
+  console.log(`  Lesson 5 (id=${lesson5.id}): Number System - 3 topics`);
 }
 
 main()

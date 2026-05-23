@@ -22,6 +22,7 @@ import roadmapSample from '@/assets/bg-icon/roadmapsample1.png'
 import booleImg from '@/assets/bg-icon/GeorgeBoole.png'
 import vennImg from '@/assets/bg-icon/venn.jpg'
 import circuitImg from '@/assets/bg-icon/circuits.jpg'
+import numberSystemImg from '@/assets/bg-icon/roadmapsample.png'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -260,6 +261,25 @@ function RouteComponent() {
               <p className="text-xs md:text-sm">
                 Understanding how to construct and interpret truth tables, and
                 how they represent logical expressions.
+              </p>
+              <div className="flex flex-row items-center space-x-2 pt-3">
+                <p className="text-xs">View lesson</p>
+                <img src={logoArrow} alt="My Icon" className="h-2" />
+              </div>
+            </div>
+          </div>
+          <div className="w-full md:w-86 h-auto rounded-3xl border border-primary bg-primary-foreground box-shadow2 flex flex-col">
+            <div className="w-full h-48 md:h-64 rounded-t-3xl overflow-hidden">
+              <img
+                src={numberSystemImg}
+                className="w-full h-full object-cover"
+                alt="Number System"
+              />
+            </div>
+            <div className="w-full p-4 space-y-2">
+              <h1 className="addinter font-bold text-lg md:text-xl">Number System</h1>
+              <p className="text-xs md:text-sm">
+                Master binary, decimal, and hexadecimal number systems used in computing and digital logic.
               </p>
               <div className="flex flex-row items-center space-x-2 pt-3">
                 <p className="text-xs">View lesson</p>
