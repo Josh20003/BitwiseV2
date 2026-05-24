@@ -353,6 +353,8 @@ function RouteComponent() {
       case 3:
         return 'kmap'
       case 5:
+      case 6:
+      case 7:
         return 'converter'
       default:
         return null

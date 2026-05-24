@@ -171,25 +171,185 @@ const lessons: Lesson[] = [
   },
   {
     id: 5,
-    title: 'Number System',
-    description: 'Master binary, decimal, and hexadecimal number systems.',
+    title: 'Introduction to Number Systems',
+    description: 'Basics of radix systems, positional values, and digit representation.',
     details:
-      'Number systems are foundational to computing. Learn how different bases represent values and how to convert between them.',
+      'Number systems define how we represent quantities using symbols and positional values. Learn the foundations of binary, decimal, octal, and hexadecimal systems.',
     topics: [
       {
         id: '5-1',
-        title: 'Binary, Decimal, Hexadecimal',
-        description: 'Understanding different number systems used in computing.',
+        title: 'Binary',
+        description: 'The base-2 number system used by all digital computers.',
       },
       {
         id: '5-2',
-        title: 'Number System Conversions',
-        description: 'Converting between different number systems.',
+        title: 'Decimal',
+        description: 'The base-10 system we use in everyday life.',
       },
       {
         id: '5-3',
-        title: 'Applications in Computing',
-        description: 'Why number systems matter in computer science.',
+        title: 'Octal',
+        description: 'The base-8 system used in Unix permissions.',
+      },
+      {
+        id: '5-4',
+        title: 'Hexadecimal',
+        description: 'The base-16 system used in programming and memory.',
+      },
+      {
+        id: '5-5',
+        title: 'Radix Slider Visualizer',
+        description: 'See how values look across different bases.',
+      },
+    ],
+  },
+  {
+    id: 6,
+    title: 'Types of Number Systems',
+    description: 'Learn the relationships between number systems.',
+    details:
+      'Explore how binary, decimal, octal, and hexadecimal relate to each other through grouping patterns and direct conversion shortcuts.',
+    topics: [
+      {
+        id: '6-1',
+        title: 'Binary ↔ Decimal',
+        description: 'The relationship between base-2 and base-10.',
+      },
+      {
+        id: '6-2',
+        title: 'Binary ↔ Hex',
+        description: 'The 4-bit grouping connection between binary and hex.',
+      },
+      {
+        id: '6-3',
+        title: 'Digit Groupings',
+        description: 'Nibbles, bytes, and words explained.',
+      },
+      {
+        id: '6-4',
+        title: 'Color-coded Comparison Grid',
+        description: 'Side-by-side comparison of all four systems.',
+      },
+    ],
+  },
+  {
+    id: 7,
+    title: 'Conversion of Number Systems',
+    description: 'Convert numbers manually and automatically.',
+    details:
+      'Master the techniques to convert between decimal, binary, hexadecimal, and octal using division, expansion, and regrouping methods.',
+    topics: [
+      {
+        id: '7-1',
+        title: 'Decimal to Binary',
+        description: 'Division-remainder and subtraction methods.',
+      },
+      {
+        id: '7-2',
+        title: 'Binary to Decimal',
+        description: 'Positional expansion and doubling methods.',
+      },
+      {
+        id: '7-3',
+        title: 'Hex Conversion',
+        description: 'Convert between hex, binary, decimal, and octal.',
+      },
+      {
+        id: '7-4',
+        title: 'Step-by-step Conversion Trees',
+        description: 'Visualize the best conversion paths.',
+      },
+    ],
+  },
+  {
+    id: 8,
+    title: 'Binary Arithmetic',
+    description: 'Perform arithmetic operations using binary values.',
+    details:
+      'Master the four fundamental arithmetic operations in binary: addition, subtraction, multiplication, and division, including carry and borrow mechanics.',
+    topics: [
+      {
+        id: '8-1',
+        title: 'Binary Addition',
+        description: 'Add binary numbers with carry rules.',
+      },
+      {
+        id: '8-2',
+        title: 'Subtraction',
+        description: 'Subtract binary numbers with borrow.',
+      },
+      {
+        id: '8-3',
+        title: 'Multiplication',
+        description: 'Shift-and-add multiplication method.',
+      },
+      {
+        id: '8-4',
+        title: 'Division',
+        description: 'Binary long division step by step.',
+      },
+      {
+        id: '8-5',
+        title: 'Carry/Borrow Animation',
+        description: 'Visualize carry chains and borrow propagation.',
+      },
+    ],
+  },
+  {
+    id: 9,
+    title: 'Complements',
+    description: 'Understand signed binary transformations.',
+    details:
+      "Learn how computers represent negative numbers using 1's and 2's complement, and understand the bit inversion and cascading carry mechanics behind them.",
+    topics: [
+      {
+        id: '9-1',
+        title: "1's Complement",
+        description: 'Invert all bits to represent negatives.',
+      },
+      {
+        id: '9-2',
+        title: "2's Complement",
+        description: 'The standard signed number representation.',
+      },
+      {
+        id: '9-3',
+        title: 'Bit Inversion',
+        description: 'The NOT operation foundation.',
+      },
+      {
+        id: '9-4',
+        title: 'Cascading +1 Animation',
+        description: 'Visualize carry propagation in +1 step.',
+      },
+    ],
+  },
+  {
+    id: 10,
+    title: 'Signed and Unsigned Numbers',
+    description: 'Interpret binary values in different contexts.',
+    details:
+      'Learn how the same binary pattern can represent different values depending on whether it is interpreted as signed or unsigned, and the role of the MSB.',
+    topics: [
+      {
+        id: '10-1',
+        title: 'MSB (Most Significant Bit)',
+        description: 'The leftmost bit and its dual role.',
+      },
+      {
+        id: '10-2',
+        title: 'Signed Representation',
+        description: 'Representing positive and negative values.',
+      },
+      {
+        id: '10-3',
+        title: 'Unsigned Representation',
+        description: 'Non-negative values with wider range.',
+      },
+      {
+        id: '10-4',
+        title: 'Sign Bit Visualizer',
+        description: 'See how MSB changes interpretation.',
       },
     ],
   },
@@ -202,6 +362,11 @@ const lessonImages: Record<number, string> = {
   3: truthTablesPhoto,
   4: simplificationPhoto,
   5: numberSystemPhoto,
+  6: numberSystemPhoto,
+  7: numberSystemPhoto,
+  8: numberSystemPhoto,
+  9: numberSystemPhoto,
+  10: numberSystemPhoto,
 }
 
 export const Route = createFileRoute('/roadmap')({
