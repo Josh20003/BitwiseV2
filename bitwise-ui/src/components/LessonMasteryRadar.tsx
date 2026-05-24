@@ -15,6 +15,13 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart'
 
+interface LessonProgressItem {
+  lessonId: number
+  progress: number
+  status: string
+  masteryScore?: number | null
+}
+
 interface LessonMasteryRadarProps {
   analytics: {
     skillsByLesson?: Array<{
@@ -23,6 +30,7 @@ interface LessonMasteryRadarProps {
       skills: Array<{ mastery: number }>
     }>
   } | null
+  lessonProgress?: LessonProgressItem[]
   compact?: boolean
 }
 
@@ -31,33 +39,58 @@ const lessonShortNames: Record<number, string> = {
   2: 'Logic',
   3: 'Truth',
   4: 'Simplify',
+  5: 'Numbers',
 }
 
 const chartConfig = {
   mastery: {
-    label: 'Mastery(%)',
+    label: 'Progress(%)',
     
   },
 } satisfies ChartConfig
 
-export function LessonMasteryRadar({ analytics }: LessonMasteryRadarProps) {
-  // Prepare data for radar chart - all 4 lessons
+export function LessonMasteryRadar({ analytics, lessonProgress = [] }: LessonMasteryRadarProps) {
+  // Prepare data for radar chart - all 5 lessons
+  // Uses assessment mastery if available, otherwise falls back to lesson completion progress
   const radarData = useMemo(() => {
-    const lessons = [1, 2, 3, 4]
-    return lessons.map((lessonId) => {
+    const lessonIds = [1, 2, 3, 4, 5]
+    return lessonIds.map((lessonId) => {
+      // First try assessment mastery data
       const lessonData = analytics?.skillsByLesson?.find(
         (l) => l.lessonId === lessonId
       )
-      const mastery = lessonData?.skills?.length
-        ? lessonData.skills.reduce((sum, s) => sum + s.mastery, 0) /
+      
+      if (lessonData?.skills?.length) {
+        const mastery = lessonData.skills.reduce((sum, s) => sum + s.mastery, 0) /
           lessonData.skills.length
-        : 0
+        return {
+          lesson: lessonShortNames[lessonId],
+          mastery: Math.round(mastery * 100),
+        }
+      }
+
+      // Fallback to lesson completion progress
+      const progressData = lessonProgress.find(
+        (p) => p.lessonId === lessonId
+      )
+      
+      if (progressData) {
+        // Use masteryScore if available, otherwise use progress percentage
+        const value = progressData.masteryScore != null
+          ? Math.round(progressData.masteryScore * 100)
+          : Math.round(progressData.progress * 100)
+        return {
+          lesson: lessonShortNames[lessonId],
+          mastery: value,
+        }
+      }
+
       return {
         lesson: lessonShortNames[lessonId],
-        mastery: Math.round(mastery * 100),
+        mastery: 0,
       }
     })
-  }, [analytics])
+  }, [analytics, lessonProgress])
 
 
   return (

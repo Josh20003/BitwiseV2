@@ -354,6 +354,8 @@ function RouteComponent() {
         return 'circuit'
       case 3:
         return 'kmap'
+      case 5:
+        return 'converter'
       default:
         return null
     }

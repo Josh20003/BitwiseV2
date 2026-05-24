@@ -20,6 +20,7 @@ import introPhoto from '@/assets/photos/intro.png'
 import logicGatesPhoto from '@/assets/photos/logic gates.png'
 import truthTablesPhoto from '@/assets/photos/truth tables.png'
 import simplificationPhoto from '@/assets/photos/simplification.png'
+import numberSystemPhoto from '@/assets/bg-icon/roadmapsample.png'
 import { LessonMasteryRadar } from '@/components/LessonMasteryRadar'
 import { toast } from 'sonner'
 
@@ -168,6 +169,30 @@ const lessons: Lesson[] = [
       },
     ],
   },
+  {
+    id: 5,
+    title: 'Number System',
+    description: 'Master binary, decimal, and hexadecimal number systems.',
+    details:
+      'Number systems are foundational to computing. Learn how different bases represent values and how to convert between them.',
+    topics: [
+      {
+        id: '5-1',
+        title: 'Binary, Decimal, Hexadecimal',
+        description: 'Understanding different number systems used in computing.',
+      },
+      {
+        id: '5-2',
+        title: 'Number System Conversions',
+        description: 'Converting between different number systems.',
+      },
+      {
+        id: '5-3',
+        title: 'Applications in Computing',
+        description: 'Why number systems matter in computer science.',
+      },
+    ],
+  },
 ]
 
 // Map lesson id -> photo
@@ -176,6 +201,7 @@ const lessonImages: Record<number, string> = {
   2: logicGatesPhoto,
   3: truthTablesPhoto,
   4: simplificationPhoto,
+  5: numberSystemPhoto,
 }
 
 export const Route = createFileRoute('/roadmap')({
@@ -612,38 +638,59 @@ function RouteComponent() {
                   </p>
                   <div className="space-y-1.5">
                     {(() => {
-                      // Get top 5 lowest mastery topics
-                      const allTopics = analytics?.skillsByLesson?.flatMap(lesson =>
-                        lesson.skills.map(skill => ({
-                          ...skill,
-                          lessonTitle: lesson.lessonTitle
-                        }))
-                      ) || []
-                      const sortedTopics = [...allTopics]
-                        .sort((a, b) => a.mastery - b.mastery)
-                        .slice(0, 5)
-                      
-                      if (sortedTopics.length === 0) {
-                        return (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Complete assessments to see focus areas
-                          </p>
-                        )
-                      }
-                      
-                      return sortedTopics.map((topic, idx) => (
+                      // Build topic list from ALL lessons with progress from multiple sources
+                      const allTopicsList = lessons.flatMap(lesson =>
+                        lesson.topics.map((topic, idx) => {
+                          // 1. Check topic completion progress (from viewing/completing topics)
+                          const lessonTopics = topicsProgress[lesson.id] as Array<{
+                            topicId: string | number
+                            status: string
+                            topic?: { title: string }
+                          }> | undefined
+                          const topicProgress = lessonTopics?.find(
+                            (t) => t.topicId === idx + 1 || String(t.topicId) === topic.id.split('-')[1]
+                          )
+                          const completionProgress = topicProgress?.status === 'completed' ? 1.0
+                            : topicProgress?.status === 'viewed' ? 0.5
+                            : 0
+
+                          // 2. Check assessment mastery (from AI practice)
+                          const lessonAnalytics = analytics?.skillsByLesson?.find(
+                            (l) => l.lessonId === lesson.id
+                          )
+                          const skillData = lessonAnalytics?.skills?.find(
+                            (s) => s.topicId === idx + 1 || String(s.topicId) === topic.id.split('-')[1]
+                          )
+                          const assessmentMastery = skillData?.mastery ?? 0
+
+                          // Use the higher of the two
+                          const effectiveProgress = Math.max(completionProgress, assessmentMastery)
+
+                          return {
+                            id: topic.id,
+                            title: topic.title,
+                            progress: effectiveProgress,
+                            lessonId: lesson.id,
+                          }
+                        })
+                      )
+
+                      // Sort by lowest progress first (focus areas = weakest topics)
+                      const sorted = [...allTopicsList].sort((a, b) => a.progress - b.progress)
+
+                      return sorted.slice(0, 5).map((topic) => (
                         <div
-                          key={topic.topicId || idx}
+                          key={topic.id}
                           className="flex items-center justify-between text-xs"
                         >
                           <span className="text-gray-600 dark:text-gray-400 truncate mr-2">
-                            {topic.topicTitle}
+                            {topic.title}
                           </span>
                           <span className={`font-medium shrink-0 ${
-                            topic.mastery >= 0.7 ? 'text-green-600' :
-                            topic.mastery >= 0.4 ? 'text-yellow-600' : 'text-red-600'
+                            topic.progress >= 0.7 ? 'text-green-600' :
+                            topic.progress >= 0.4 ? 'text-yellow-600' : 'text-red-600'
                           }`}>
-                            {Math.round(topic.mastery * 100)}%
+                            {Math.round(topic.progress * 100)}%
                           </span>
                         </div>
                       ))
@@ -658,7 +705,7 @@ function RouteComponent() {
                 onClick={() => setShowAnalyticsModal(true)}
                 title="Click to view detailed analytics"
               >
-                <LessonMasteryRadar analytics={analytics} />
+                <LessonMasteryRadar analytics={analytics} lessonProgress={lessonProgress} />
                 <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                   Click to view details
                 </p>
@@ -1260,7 +1307,7 @@ function RouteComponent() {
                 </h3>
                 <div className="bg-linear-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-lg p-6 border border-purple-100 dark:border-purple-900/30">
                   <div className="w-full h-[400px]">
-                    <LessonMasteryRadar analytics={analytics} />
+                    <LessonMasteryRadar analytics={analytics} lessonProgress={lessonProgress} />
                   </div>
                 </div>
               </div>

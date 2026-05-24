@@ -61,7 +61,7 @@ import { useBackendProfile } from '@/hooks/useAuthQueries'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import ThemeToggle from '@/components/ui/theme-toggle'
 import { Separator } from '@/components/ui/separator'
-import { Calculator, Grid3x3, Cpu, Book } from 'lucide-react'
+import { Calculator, Grid3x3, Cpu, Book, ArrowLeftRight } from 'lucide-react'
 
 type NavItem = {
   key: string
@@ -78,6 +78,14 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Learn',
     to: '/roadmap',
     icon: Book,
+    group: 'primary',
+  },
+  {
+    key: 'converter',
+    label: 'Converter',
+    to: '/converter',
+    icon: ArrowLeftRight,
+    description: 'Convert between binary, decimal, hexadecimal and other number systems.',
     group: 'primary',
   },
   {
