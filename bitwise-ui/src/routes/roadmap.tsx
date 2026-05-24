@@ -20,7 +20,13 @@ import introPhoto from '@/assets/photos/intro.png'
 import logicGatesPhoto from '@/assets/photos/logic gates.png'
 import truthTablesPhoto from '@/assets/photos/truth tables.png'
 import simplificationPhoto from '@/assets/photos/simplification.png'
-import numberSystemPhoto from '@/assets/bg-icon/roadmapsample.png'
+import numberSystemsPhoto from '@/assets/photos/intro number systems.png'
+import typesNumberSystemsPhoto from '@/assets/photos/types number systems2.png'
+import conversionPhoto from '@/assets/photos/conversion.png'
+import binaryArithmeticPhoto from '@/assets/photos/binary arithmetic.png'
+import complementsPhoto from '@/assets/photos/complements.png'
+import signedUnsignedPhoto from '@/assets/photos/signed unsigned.png'
+import binaryCodesPhoto from '@/assets/photos/binary codes.png'
 import { LessonMasteryRadar } from '@/components/LessonMasteryRadar'
 import { toast } from 'sonner'
 
@@ -390,13 +396,13 @@ const lessonImages: Record<number, string> = {
   2: logicGatesPhoto,
   3: truthTablesPhoto,
   4: simplificationPhoto,
-  5: numberSystemPhoto,
-  6: numberSystemPhoto,
-  7: numberSystemPhoto,
-  8: numberSystemPhoto,
-  9: numberSystemPhoto,
-  10: numberSystemPhoto,
-  11: numberSystemPhoto,
+  5: numberSystemsPhoto,
+  6: typesNumberSystemsPhoto,
+  7: conversionPhoto,
+  8: binaryArithmeticPhoto,
+  9: complementsPhoto,
+  10: signedUnsignedPhoto,
+  11: binaryCodesPhoto,
 }
 
 export const Route = createFileRoute('/roadmap')({
