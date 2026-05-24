@@ -45,6 +45,7 @@ const lessonShortNames: Record<number, string> = {
   8: 'Arith',
   9: 'Compl',
   10: 'Sign',
+  11: 'BCD',
 }
 
 const chartConfig = {
@@ -58,7 +59,7 @@ export function LessonMasteryRadar({ analytics, lessonProgress = [] }: LessonMas
   // Prepare data for radar chart - all 5 lessons
   // Uses assessment mastery if available, otherwise falls back to lesson completion progress
   const radarData = useMemo(() => {
-    const lessonIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    const lessonIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     return lessonIds.map((lessonId) => {
       // First try assessment mastery data
       const lessonData = analytics?.skillsByLesson?.find(

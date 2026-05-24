@@ -26,7 +26,7 @@ export function NumberSystemConverter() {
     setLoading(true);
     setError('');
     try {
-      const data = await apiService.post<{ success: boolean, result: any, error?: string }>('/calculator/convert-multi-step', {
+      const data = await apiService.post<{ success: boolean, result: any, error?: string }>('/calculator/convert', {
         value: sourceValue.trim(),
         fromBase: parseBase(sourceBase),
         toBase: parseBase(targetBase)

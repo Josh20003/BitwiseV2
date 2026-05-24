@@ -693,6 +693,82 @@ async function main() {
   ]});
 
   console.log('Seeded 10 lessons with 38 topics successfully!');
+
+  // Lesson 11: Binary Codes (BCD & ASCII)
+  const lesson11 = await prisma.lesson.create({ data: { title: 'Binary Codes (BCD & ASCII)' } });
+  await prisma.topic.createMany({ data: [
+    {
+      title: 'BCD Encoding', lessonId: lesson11.id, tags: ['bcd','encoding','decimal'],
+      contentText: 'Binary-Coded Decimal (BCD) represents each decimal digit with 4 binary bits.',
+      displayContent: JSON.parse(JSON.stringify([
+        { type: 'heading', text: 'Binary-Coded Decimal (BCD)', level: 2 },
+        { type: 'text', text: 'BCD is a binary encoding where each decimal digit (0-9) is represented individually with 4 bits. Unlike pure binary, BCD keeps the decimal structure intact.' },
+        { type: 'heading', text: 'BCD vs Pure Binary', level: 3 },
+        { type: 'codeBlock', code: 'Decimal 47 in pure binary:\n  47 = 00101111  (8 bits, one number)\n\nDecimal 47 in BCD:\n  4 = 0100,  7 = 0111\n  47 = 0100 0111  (8 bits, two separate digits)', language: 'text' },
+        { type: 'heading', text: 'BCD Digit Table', level: 3 },
+        { type: 'table', table: { headers: ['Decimal', 'BCD', 'Valid?'], rows: [['0', '0000', 'Yes'], ['1', '0001', 'Yes'], ['2', '0010', 'Yes'], ['3', '0011', 'Yes'], ['4', '0100', 'Yes'], ['5', '0101', 'Yes'], ['6', '0110', 'Yes'], ['7', '0111', 'Yes'], ['8', '1000', 'Yes'], ['9', '1001', 'Yes'], ['--', '1010', 'INVALID'], ['--', '1011', 'INVALID'], ['--', '1100', 'INVALID'], ['--', '1101', 'INVALID'], ['--', '1110', 'INVALID'], ['--', '1111', 'INVALID']], caption: 'BCD uses only 10 of 16 possible 4-bit patterns' } },
+        { type: 'heading', text: 'Multi-digit BCD Examples', level: 3 },
+        { type: 'codeBlock', code: 'Decimal 192 in BCD:\n  1 = 0001,  9 = 1001,  2 = 0010\n  BCD: 0001 1001 0010\n\nDecimal 2024 in BCD:\n  2 = 0010,  0 = 0000,  2 = 0010,  4 = 0100\n  BCD: 0010 0000 0010 0100', language: 'text' },
+        { type: 'heading', text: 'Where BCD Is Used', level: 3 },
+        { type: 'list', list: [
+          'Digital clocks and watches (display decimal digits directly)',
+          'Calculators (avoid binary rounding errors)',
+          'Financial systems (exact decimal arithmetic)',
+          'Seven-segment displays (each digit drives one display)',
+          'Embedded systems with decimal I/O'
+        ] },
+        { type: 'callout', callout: { type: 'warning', title: 'BCD Wastes Space', content: 'BCD uses 4 bits per decimal digit but only 10 of 16 combinations are valid. To store 0-99 in pure binary: 7 bits. In BCD: 8 bits. For large numbers the waste adds up, but the simplicity of decimal conversion is worth it in some applications.' } }
+      ]))
+    },
+    {
+      title: 'ASCII Conversion', lessonId: lesson11.id, tags: ['ascii','text','encoding'],
+      contentText: 'ASCII encodes text characters as 7-bit binary numbers.',
+      displayContent: JSON.parse(JSON.stringify([
+        { type: 'heading', text: 'ASCII: American Standard Code for Information Interchange', level: 2 },
+        { type: 'text', text: 'ASCII is a character encoding that maps letters, digits, punctuation, and control characters to 7-bit binary numbers (0-127). It is the foundation of text representation in computers.' },
+        { type: 'heading', text: 'Key ASCII Values', level: 3 },
+        { type: 'table', table: { headers: ['Char', 'Decimal', 'Binary', 'Hex'], rows: [['A', '65', '1000001', '41'], ['B', '66', '1000010', '42'], ['Z', '90', '1011010', '5A'], ['a', '97', '1100001', '61'], ['b', '98', '1100010', '62'], ['z', '122', '1111010', '7A'], ['0', '48', '0110000', '30'], ['9', '57', '0111001', '39'], ['Space', '32', '0100000', '20'], ['!', '33', '0100001', '21']], caption: 'Common ASCII Character Codes' } },
+        { type: 'heading', text: 'ASCII Patterns', level: 3 },
+        { type: 'codeBlock', code: "Uppercase letters: A=65 to Z=90\nLowercase letters: a=97 to z=122\nDigit characters:  '0'=48 to '9'=57\n\nCase conversion trick:\n  A (65) = 1000001\n  a (97) = 1100001\n          ^--- bit 5 differs!\n\n  To lowercase: set bit 5 (OR with 0100000 = 32)\n  To uppercase: clear bit 5 (AND with 1011111)\n  Difference: 97 - 65 = 32 (exactly bit 5!)", language: 'text' },
+        { type: 'heading', text: 'Encoding a Word', level: 3 },
+        { type: 'codeBlock', code: 'Encode \"Hi!\" in ASCII:\n\n  H = 72  = 01001000\n  i = 105 = 01101001\n  ! = 33  = 00100001\n\nBinary: 01001000 01101001 00100001\nHex:    48 69 21\n\nThis is exactly how text files store data!', language: 'text' },
+        { type: 'callout', callout: { type: 'info', title: 'ASCII vs Unicode', content: 'ASCII only covers 128 characters (English + basic symbols). Unicode extends this to 150,000+ characters covering all world languages, emoji, and symbols. UTF-8 (the most common Unicode encoding) is backward-compatible with ASCII.' } }
+      ]))
+    },
+    {
+      title: 'Character-to-Binary Translator', lessonId: lesson11.id, tags: ['translator','character','binary'],
+      contentText: 'Understand how text is converted to binary and back.',
+      displayContent: JSON.parse(JSON.stringify([
+        { type: 'heading', text: 'Character-to-Binary Translation', level: 2 },
+        { type: 'text', text: 'Every character you type is stored as a binary number. Understanding this translation is fundamental to how computers handle text, files, and communication.' },
+        { type: 'heading', text: 'The Translation Process', level: 3 },
+        { type: 'codeBlock', code: 'Text to Binary:\n  Character -> ASCII lookup -> Decimal -> Binary\n\n  \"B\" -> ASCII table -> 66 -> 01000010\n  \"5\" -> ASCII table -> 53 -> 00110101\n  \" \" -> ASCII table -> 32 -> 00100000\n\nBinary to Text:\n  Binary -> Decimal -> ASCII lookup -> Character\n\n  01001010 -> 74 -> ASCII table -> \"J\"', language: 'text' },
+        { type: 'heading', text: 'Full Word Translation', level: 3 },
+        { type: 'codeBlock', code: 'Translate \"Code\" to binary:\n\n  C = 67  -> 01000011\n  o = 111 -> 01101111\n  d = 100 -> 01100100\n  e = 101 -> 01100101\n\nComplete binary: 01000011 01101111 01100100 01100101\nHex:             43 6F 64 65\n\nFun fact: \"Code\" in hex is 43 6F 64 65!', language: 'text' },
+        { type: 'heading', text: 'Digit Characters vs Numeric Values', level: 3 },
+        { type: 'text', text: 'An important distinction: the character \"5\" and the number 5 are stored differently!' },
+        { type: 'table', table: { headers: ['What', 'Stored As', 'Binary', 'Why'], rows: [["Character '5'", 'ASCII 53', '00110101', 'Text encoding'], ['Number 5', 'Integer 5', '00000101', 'Numeric value'], ["Character '0'", 'ASCII 48', '00110000', 'Text encoding'], ['Number 0', 'Integer 0', '00000000', 'Numeric value']], caption: "Character '5' is NOT the same as number 5!" } },
+        { type: 'callout', callout: { type: 'tip', title: 'Conversion Trick', content: "To convert an ASCII digit character to its numeric value, subtract 48 (ASCII '0'). For example: '7' (ASCII 55) - '0' (ASCII 48) = 7. In code: int value = charDigit - '0';" } }
+      ]))
+    },
+    {
+      title: 'Split-screen Visualizer', lessonId: lesson11.id, tags: ['visualizer','bcd','ascii','comparison'],
+      contentText: 'Compare BCD and ASCII side by side to understand their different approaches to encoding.',
+      displayContent: JSON.parse(JSON.stringify([
+        { type: 'heading', text: 'BCD vs ASCII: Side-by-Side Comparison', level: 2 },
+        { type: 'text', text: 'BCD and ASCII are both binary codes, but they serve different purposes. BCD encodes numeric values for calculation; ASCII encodes characters for text display and communication.' },
+        { type: 'heading', text: 'Encoding the Same Input: \"42\"', level: 3 },
+        { type: 'table', table: { headers: ['Aspect', 'BCD Encoding', 'ASCII Encoding'], rows: [['Input', '42 (number)', '"42" (text)'], ['Approach', 'Each digit -> 4 bits', 'Each character -> 8 bits'], ['Digit 4', '0100', '00110100 (ASCII 52)'], ['Digit 2', '0010', '00110010 (ASCII 50)'], ['Total bits', '8 bits', '16 bits'], ['Result', '0100 0010', '00110100 00110010'], ['Hex', '42', '34 32'], ['Purpose', 'Arithmetic operations', 'Text display/storage']], caption: 'Same Input, Different Encodings' } },
+        { type: 'heading', text: 'When to Use Which', level: 3 },
+        { type: 'table', table: { headers: ['Feature', 'BCD', 'ASCII'], rows: [['Encodes', 'Digits 0-9 only', 'Letters, digits, symbols (128 chars)'], ['Bits per digit', '4', '7-8'], ['Can represent letters?', 'No', 'Yes'], ['Math operations', 'Direct (with BCD arithmetic)', 'Must convert to number first'], ['Used in', 'Calculators, clocks, meters', 'Text files, keyboards, web'], ['Space efficiency', 'Moderate', 'Standard'], ['Modern relevance', 'Niche (embedded/financial)', 'Universal']], caption: 'BCD vs ASCII Feature Comparison' } },
+        { type: 'heading', text: 'Encoding Comparison for 0-9', level: 3 },
+        { type: 'table', table: { headers: ['Digit', 'BCD (4-bit)', 'ASCII Binary', 'ASCII Decimal'], rows: [['0', '0000', '0110000', '48'], ['1', '0001', '0110001', '49'], ['2', '0010', '0110010', '50'], ['3', '0011', '0110011', '51'], ['4', '0100', '0110100', '52'], ['5', '0101', '0110101', '53'], ['6', '0110', '0110110', '54'], ['7', '0111', '0110111', '55'], ['8', '1000', '0111000', '56'], ['9', '1001', '0111001', '57']], caption: 'Digits 0-9: BCD vs ASCII' } },
+        { type: 'callout', callout: { type: 'important', title: 'The Connection', content: "Notice that ASCII digit codes are simply 0011 concatenated with the BCD code! ASCII '5' = 0011 0101 = 0011 + BCD(5). This is not a coincidence -- ASCII was designed this way to make digit conversion easy." } }
+      ]))
+    }
+  ]});
+
+  console.log('Seeded 11 lessons with 42 topics successfully!');
   console.log(`  Lesson 1 (id=${lesson1.id}): Intro to Boolean Algebra - 3 topics`);
   console.log(`  Lesson 2 (id=${lesson2.id}): Logic Gates - 3 topics`);
   console.log(`  Lesson 3 (id=${lesson3.id}): Truth Tables - 3 topics`);
@@ -703,6 +779,7 @@ async function main() {
   console.log(`  Lesson 8 (id=${lesson8.id}): Binary Arithmetic - 5 topics`);
   console.log(`  Lesson 9 (id=${lesson9.id}): Complements - 4 topics`);
   console.log(`  Lesson 10 (id=${lesson10.id}): Signed and Unsigned Numbers - 4 topics`);
+  console.log(`  Lesson 11 (id=${lesson11.id}): Binary Codes (BCD & ASCII) - 4 topics`);
 }
 
 main()

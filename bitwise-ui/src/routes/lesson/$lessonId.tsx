@@ -355,7 +355,13 @@ function RouteComponent() {
       case 5:
       case 6:
       case 7:
+      case 10:
+      case 11:
         return 'converter'
+      case 8:
+        return 'arithmetic'
+      case 9:
+        return 'complements'
       default:
         return null
     }

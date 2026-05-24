@@ -353,6 +353,35 @@ const lessons: Lesson[] = [
       },
     ],
   },
+  {
+    id: 11,
+    title: 'Binary Codes (BCD & ASCII)',
+    description: 'Encode numbers and characters in binary.',
+    details:
+      'Learn how BCD encodes decimal digits and ASCII encodes text characters in binary, and compare their approaches side by side.',
+    topics: [
+      {
+        id: '11-1',
+        title: 'BCD Encoding',
+        description: 'Represent each decimal digit with 4 bits.',
+      },
+      {
+        id: '11-2',
+        title: 'ASCII Conversion',
+        description: 'Map characters to 7-bit binary codes.',
+      },
+      {
+        id: '11-3',
+        title: 'Character-to-Binary Translator',
+        description: 'Convert text to binary and back.',
+      },
+      {
+        id: '11-4',
+        title: 'Split-screen Visualizer',
+        description: 'BCD vs ASCII side-by-side comparison.',
+      },
+    ],
+  },
 ]
 
 // Map lesson id -> photo
@@ -367,6 +396,7 @@ const lessonImages: Record<number, string> = {
   8: numberSystemPhoto,
   9: numberSystemPhoto,
   10: numberSystemPhoto,
+  11: numberSystemPhoto,
 }
 
 export const Route = createFileRoute('/roadmap')({

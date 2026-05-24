@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 interface ToolSpotlightProps {
-  tool: 'calculator' | 'converter' | 'circuit' | 'kmap'
+  tool: 'calculator' | 'converter' | 'circuit' | 'kmap' | 'arithmetic' | 'complements'
   title?: string
   description?: string
 }
@@ -40,6 +40,20 @@ const TOOLS = {
     defaultDesc: 'Solve Karnaugh Maps visually to get simplified expressions.',
     path: '/karnaughMaps',
     color: 'text-orange-600 dark:text-orange-400',
+  },
+  arithmetic: {
+    icon: Calculator,
+    defaultTitle: 'Binary Arithmetic',
+    defaultDesc: 'Trace step-by-step binary addition and subtraction with carry/borrow animations.',
+    path: '/calculator',
+    color: 'text-cyan-600 dark:text-cyan-400',
+  },
+  complements: {
+    icon: Binary,
+    defaultTitle: "1's & 2's Complements",
+    defaultDesc: 'Visualize bit inversions and cascading carries interactively.',
+    path: '/calculator',
+    color: 'text-pink-600 dark:text-pink-400',
   },
 }
 
