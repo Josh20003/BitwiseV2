@@ -97,6 +97,14 @@ const NAV_ITEMS: NavItem[] = [
     group: 'tools',
   },
   {
+    key: 'converter',
+    label: 'Number Converter',
+    to: '/converter',
+    icon: ArrowLeftRight,
+    description: 'Convert numbers between Binary, Octal, Decimal, and Hexadecimal.',
+    group: 'tools',
+  },
+  {
     key: 'karnaugh',
     label: 'Karnaugh Maps',
     to: '/karnaughMaps',

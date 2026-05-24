@@ -1,12 +1,16 @@
 import { Controller, Post, Get, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { AssessmentService } from './assessment.service';
 import { AdaptiveService } from '../adaptive/adaptive.service';
+import { AiQuizService } from './ai-quiz.service';
+import { EmaMasteryService } from './ema-mastery.service';
 
 @Controller('assessment')
 export class AssessmentController {
   constructor(
     private assessmentService: AssessmentService,
-    private adaptiveService: AdaptiveService
+    private adaptiveService: AdaptiveService,
+    private aiQuizService: AiQuizService,
+    private emaMasteryService: EmaMasteryService
   ) {}
 
   /**
@@ -166,6 +170,42 @@ export class AssessmentController {
         success: false,
         error: error.message
       };
+    }
+  }
+
+  // ============= SDD Module 4 Endpoints =============
+
+  @Get('ai-quiz/:userId/:topic')
+  async generateAiQuiz(@Param('userId') userId: string, @Param('topic') topic: string) {
+    try {
+      const questions = await this.aiQuizService.generateQuiz(userId, topic);
+      return { success: true, data: questions };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  @Post('ai-quiz/submit')
+  async submitAiQuiz(@Body() body: { userId: string, topic: string, score: number, answersJson: any }) {
+    try {
+      await this.aiQuizService.submitQuiz(body.userId, body.topic, body.score, body.answersJson);
+      
+      // Update EMA Mastery
+      const emaResult = await this.emaMasteryService.processScore(body.userId, body.topic, body.score);
+      
+      return { success: true, data: emaResult };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  @Get('mastery/:userId')
+  async getUserMastery(@Param('userId') userId: string) {
+    try {
+      const mastery = await this.emaMasteryService.getUserMastery(userId);
+      return { success: true, data: mastery };
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
   }
 }

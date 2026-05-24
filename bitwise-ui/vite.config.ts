@@ -16,6 +16,14 @@ export default defineConfig({
       '@assets': resolve(__dirname, 'src/assets'),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
+  },
   preview: {
     host: '0.0.0.0',
     port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
