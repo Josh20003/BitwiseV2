@@ -17,6 +17,7 @@ import { Route as KarnaughMapsRouteImport } from './routes/karnaughMaps'
 import { Route as DigitalCircuitRouteImport } from './routes/digitalCircuit'
 import { Route as ConverterRouteImport } from './routes/converter'
 import { Route as CalculatorRouteImport } from './routes/calculator'
+import { Route as BinaryCodesRouteImport } from './routes/binary-codes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RoadmapRefactoredRouteImport } from './routes/roadmap.refactored'
 import { Route as LessonLessonIdRouteImport } from './routes/lesson/$lessonId'
@@ -62,6 +63,11 @@ const CalculatorRoute = CalculatorRouteImport.update({
   path: '/calculator',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BinaryCodesRoute = BinaryCodesRouteImport.update({
+  id: '/binary-codes',
+  path: '/binary-codes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -85,6 +91,7 @@ const AssessmentAssessmentIdRoute = AssessmentAssessmentIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/binary-codes': typeof BinaryCodesRoute
   '/calculator': typeof CalculatorRoute
   '/converter': typeof ConverterRoute
   '/digitalCircuit': typeof DigitalCircuitRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/binary-codes': typeof BinaryCodesRoute
   '/calculator': typeof CalculatorRoute
   '/converter': typeof ConverterRoute
   '/digitalCircuit': typeof DigitalCircuitRoute
@@ -114,6 +122,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/binary-codes': typeof BinaryCodesRoute
   '/calculator': typeof CalculatorRoute
   '/converter': typeof ConverterRoute
   '/digitalCircuit': typeof DigitalCircuitRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/binary-codes'
     | '/calculator'
     | '/converter'
     | '/digitalCircuit'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/binary-codes'
     | '/calculator'
     | '/converter'
     | '/digitalCircuit'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/binary-codes'
     | '/calculator'
     | '/converter'
     | '/digitalCircuit'
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BinaryCodesRoute: typeof BinaryCodesRoute
   CalculatorRoute: typeof CalculatorRoute
   ConverterRoute: typeof ConverterRoute
   DigitalCircuitRoute: typeof DigitalCircuitRoute
@@ -243,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalculatorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/binary-codes': {
+      id: '/binary-codes'
+      path: '/binary-codes'
+      fullPath: '/binary-codes'
+      preLoaderRoute: typeof BinaryCodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -287,6 +307,7 @@ const RoadmapRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BinaryCodesRoute: BinaryCodesRoute,
   CalculatorRoute: CalculatorRoute,
   ConverterRoute: ConverterRoute,
   DigitalCircuitRoute: DigitalCircuitRoute,
