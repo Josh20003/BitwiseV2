@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, X, RefreshCw } from 'lucide-react';
+// Removed unused lucide-react imports
 import { apiService } from '@/services/api.service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -146,14 +146,12 @@ function RouteComponent() {
       setCompletionError(null)
       setIsCompleting(true)
       await markCompletedMutation.mutateAsync(topicId)
-      onSuccess()
     } catch (error) {
-      console.error('❌ Error marking topic as completed:', error)
-      setCompletionError(
-        'Failed to mark this topic as completed. Please try again.'
-      )
+      console.warn('⚠️ Could not save topic progress (continuing anyway):', error)
     } finally {
       setIsCompleting(false)
+      // Always proceed — progress tracking should never block navigation
+      onSuccess()
     }
   }
 
