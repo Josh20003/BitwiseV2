@@ -80,14 +80,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: Book,
     group: 'primary',
   },
-  {
-    key: 'converter',
-    label: 'Converter',
-    to: '/converter',
-    icon: ArrowLeftRight,
-    description: 'Convert between binary, decimal, hexadecimal and other number systems.',
-    group: 'primary',
-  },
+
   {
     key: 'calculator',
     label: 'Calculator',
