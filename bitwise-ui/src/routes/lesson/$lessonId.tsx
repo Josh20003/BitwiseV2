@@ -10,7 +10,8 @@ import {
 import { useAuthContext } from '@/contexts/AuthContext'
 
 import { Button } from '@/components/ui/button'
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Brain } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { Confetti, type ConfettiRef } from '@/components/magicui/confetti'
 import BitBotGuide from '@/components/BitBotGuide'
 import ToolSpotlight from '@/components/ToolSpotlight'
@@ -367,6 +368,22 @@ function RouteComponent() {
     }
   }
 
+  // Map lesson ID to AI quiz topic slug
+  const lessonToQuizTopic: Record<number, string> = {
+    1: 'boolean-algebra',
+    2: 'logic-gates',
+    3: 'truth-tables',
+    4: 'boolean-algebra',
+    5: 'number-systems',
+    6: 'number-systems',
+    7: 'number-systems',
+    8: 'binary-arithmetic',
+    9: 'complements',
+    10: 'number-systems',
+    11: 'number-systems',
+  }
+  const quizTopic = lesson ? lessonToQuizTopic[lesson.id] : null
+
   const toolToSpotlight = lesson ? getToolForLesson(lesson.id) : null
 
   return (
@@ -480,7 +497,7 @@ function RouteComponent() {
               </div>
             </div>
 
-            <div className="flex gap-4 relative z-10">
+            <div className="flex flex-col sm:flex-row gap-4 relative z-10 items-center">
               <Button
                 variant="outline"
                 className="w-40"
@@ -491,6 +508,14 @@ function RouteComponent() {
               >
                 Restart Lesson
               </Button>
+              {user && quizTopic && (
+                <Link to="/quiz/$topic" params={{ topic: quizTopic }} search={{ lessonId: lesson.id }}>
+                  <Button className="w-52 gap-2 bg-purple-600 hover:bg-purple-700 text-white">
+                    <Brain className="w-4 h-4" />
+                    Take AI Quiz
+                  </Button>
+                </Link>
+              )}
               <Button
                 className="w-40"
                 onClick={() => {

@@ -1,5 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { createGroq } from '@ai-sdk/groq';
+import { generateText } from 'ai';
 
 export interface QuizQuestion {
   id: string;
@@ -12,7 +15,12 @@ export interface QuizQuestion {
 
 @Injectable()
 export class AiQuizService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(AiQuizService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   /**
    * Generates a 10-item adaptive quiz based on the user's EMA mastery.
@@ -23,9 +31,9 @@ export class AiQuizService {
     const mastery = await this.prisma.ema_mastery.findUnique({
       where: { user_id_topic: { user_id: userId, topic } }
     });
-    
-    const ema = mastery ? mastery.currentEMA : 0.0;
-    
+
+    const ema = mastery ? Number(mastery.currentEMA) : 0.0;
+
     // Determine difficulty spread based on EMA
     let easyCount = 4, mediumCount = 4, hardCount = 2;
     if (ema < 0.4) {
@@ -37,31 +45,182 @@ export class AiQuizService {
     return this.generateDynamicQuestions(topic, easyCount, mediumCount, hardCount);
   }
 
-  private generateDynamicQuestions(topic: string, easy: number, medium: number, hard: number): QuizQuestion[] {
-    const questions: QuizQuestion[] = [];
+  private async generateDynamicQuestions(topic: string, easy: number, medium: number, hard: number): Promise<QuizQuestion[]> {
+    const groqApiKey = this.configService.get<string>('GROQ_API_KEY');
+
+    if (!groqApiKey) {
+      this.logger.warn('No GROQ_API_KEY found, using fallback questions.');
+      return this.generateFallbackQuestions(topic, easy, medium, hard);
+    }
+
     const total = easy + medium + hard;
     
-    // Simulate AI generation by dynamically constructing questions based on topic
+    // Mapping for syllabus injection
+    const QUIZ_SCOPES: Record<string, { title: string, scope: string, exclusion: string }> = {
+      'number-systems': {
+        title: 'Introduction to Number Systems',
+        scope: '- Definition of base-2, base-8, base-10, base-16\n- Positional values\n- Digit representation in different bases',
+        exclusion: '- Conversion between bases\n- Binary arithmetic\n- Complements'
+      },
+      'binary-arithmetic': {
+        title: 'Binary Arithmetic',
+        scope: '- Binary addition rules and carry\n- Binary subtraction and borrow\n- Binary multiplication (shift and add)\n- Binary division',
+        exclusion: '- 1\'s and 2\'s complements\n- Signed vs unsigned numbers\n- Floating point'
+      },
+      'complements': {
+        title: 'Complements',
+        scope: '- 1\'s complement (bit inversion)\n- 2\'s complement (invert and add 1)\n- Cascading carry in 2\'s complement',
+        exclusion: '- Signed number interpretation (MSB)\n- Overflow conditions\n- BCD'
+      },
+      'boolean-algebra': {
+        title: 'Intro to Boolean Algebra',
+        scope: '- True/False and 1/0 values\n- Basic boolean logic concepts\n- Applications in circuit design',
+        exclusion: '- Specific logic gates (AND, OR, NOT)\n- Truth tables\n- Karnaugh Maps'
+      },
+      'logic-gates': {
+        title: 'Logic Gates',
+        scope: '- AND, OR, NOT gates\n- NAND, NOR universal gates\n- XOR, XNOR gates',
+        exclusion: '- Truth tables for complex expressions\n- Boolean algebra simplification\n- K-Maps'
+      },
+      'truth-tables': {
+        title: 'Truth Tables',
+        scope: '- Constructing truth tables for basic gates\n- Reading input/output combinations\n- Evaluating simple boolean expressions',
+        exclusion: '- Karnaugh maps\n- Boolean laws (De Morgan\'s)\n- Advanced circuit design'
+      },
+      'karnaugh-maps': {
+        title: 'Simplification and K-Maps',
+        scope: '- Boolean laws (Commutative, Associative, Distributive)\n- Karnaugh Maps structure and grouping\n- Simplifying expressions',
+        exclusion: '- Sequential logic\n- Flip-flops\n- Number systems'
+      }
+    };
+
+    const syllabus = QUIZ_SCOPES[topic] || {
+      title: topic,
+      scope: `- Core concepts of ${topic}`,
+      exclusion: '- Topics outside the current lesson scope'
+    };
+
+    const systemPrompt = `You are a strict, precision-focused educational assessor. Your task is to generate multiple-choice questions that are 100% EXCLUSIVE to the provided lesson syllabus. 
+
+STRICT SCOPE BOUNDARIES:
+1. EXCLUSIVITY: You must ONLY test concepts explicitly listed in the "Permitted Lesson Scope". Do not introduce vocabulary, formulas, or concepts from future lessons or outside knowledge.
+2. NO FORWARD-TESTING: If a concept is a logical next step but is not explicitly in the permitted scope, do NOT test it. 
+3. Verify Knowledge, Not Trivia: Generate specific questions that test application or recall of the permitted concepts. Do not ask meta-questions (e.g., "What did we learn in Lesson 8?").
+4. Options: Create exactly 4 plausible options. The incorrect options must be common mistakes related ONLY to the permitted scope. Never include labels like "Option A" or "(Correct)" in the text.
+5. Output format: Return STRICTLY as a raw JSON object matching the exact schema below. No markdown formatting, backticks, or conversational text.
+
+REQUIRED JSON SCHEMA:
+[
+  {
+    "question": "The specific question text.",
+    "options": [
+      "First option",
+      "Second option",
+      "Third option",
+      "Fourth option"
+    ],
+    "correctOptionIndex": 0, 
+    "explanation": "Explanation of the correct answer, referencing ONLY the permitted scope."
+  }
+]`;
+
+    // Note: difficulty target dynamically builds a string of difficulties
+    const difficultyList = [
+      ...Array(easy).fill('Easy'),
+      ...Array(medium).fill('Medium'),
+      ...Array(hard).fill('Hard'),
+    ].join(', ');
+
+    const userPrompt = `Generate a set of exactly ${total} questions for the following exact lesson. 
+
+- Target Lesson: ${syllabus.title}
+- Difficulty Target: ${difficultyList}
+
+PERMITTED LESSON SCOPE (You may ONLY test these concepts):
+${syllabus.scope}
+
+EXCLUSION ZONE (Do NOT test these concepts under any circumstances):
+${syllabus.exclusion}
+
+Ensure the questions strictly honor these boundaries and return the exact JSON array format requested in the system prompt.`;
+
+    try {
+      const groq = createGroq({ apiKey: groqApiKey });
+
+      const { text } = await (generateText as any)({
+        model: groq('llama-3.3-70b-versatile'),
+        system: systemPrompt,
+        prompt: userPrompt,
+        maxTokens: 4096,
+        temperature: 0.7,
+      });
+
+      this.logger.log(`Groq response received, parsing JSON...`);
+
+      // Extract JSON array from response (handles any surrounding text)
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        this.logger.error(`No JSON array found in Groq response. Response: ${text.substring(0, 500)}`);
+        return this.generateFallbackQuestions(topic, easy, medium, hard);
+      }
+
+      const parsed: Array<{
+        question: string;
+        options: string[];
+        correctOptionIndex: number;
+        explanation: string;
+      }> = JSON.parse(jsonMatch[0]);
+
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        this.logger.error('Parsed result is not a valid array');
+        return this.generateFallbackQuestions(topic, easy, medium, hard);
+      }
+
+      const questions: QuizQuestion[] = parsed.map((q, i) => {
+        const idx = typeof q.correctOptionIndex === 'number' && q.correctOptionIndex >= 0 && q.correctOptionIndex <= 3
+          ? q.correctOptionIndex
+          : 0;
+        return {
+          id: `q-${Date.now()}-${i}`,
+          topic,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.options[idx],
+          explanation: q.explanation,
+        };
+      });
+
+      this.logger.log(`Successfully generated ${questions.length} AI questions for topic "${topic}"`);
+      return questions;
+
+    } catch (error: any) {
+      this.logger.error(`Groq API failed for topic "${topic}": ${error.message}`);
+      return this.generateFallbackQuestions(topic, easy, medium, hard);
+    }
+  }
+
+  private generateFallbackQuestions(topic: string, easy: number, medium: number, hard: number): QuizQuestion[] {
+    const questions: QuizQuestion[] = [];
+    const total = easy + medium + hard;
+
     for (let i = 0; i < total; i++) {
       let difficulty = 'easy';
       if (i >= easy && i < easy + medium) difficulty = 'medium';
       if (i >= easy + medium) difficulty = 'hard';
 
       if (topic === 'binary-arithmetic') {
-        const q = this.generateBinaryArithmeticQuestion(difficulty);
-        questions.push(q);
+        questions.push(this.generateBinaryArithmeticQuestion(difficulty));
       } else if (topic === 'complements') {
-        const q = this.generateComplementQuestion(difficulty);
-        questions.push(q);
+        questions.push(this.generateComplementQuestion(difficulty));
       } else {
-        // Fallback generic
+        // Generic fallback — at least meaningful for the topic
         questions.push({
-          id: `q-${Date.now()}-${i}`,
+          id: `q-fallback-${i}`,
           topic,
-          question: `What is a core concept of ${topic} at ${difficulty} level?`,
-          options: ['Option A (Correct)', 'Option B', 'Option C', 'Option D'],
-          correctAnswer: 'Option A (Correct)',
-          explanation: `This verifies understanding of ${topic}.`
+          question: `[Fallback] This question about "${topic}" could not be generated. Please check the server logs.`,
+          options: ['A', 'B', 'C', 'D'],
+          correctAnswer: 'A',
+          explanation: 'Fallback question — Groq API was unavailable.',
         });
       }
     }
@@ -70,58 +229,59 @@ export class AiQuizService {
   }
 
   private generateBinaryArithmeticQuestion(difficulty: string): QuizQuestion {
-    // Basic generator
     const val1 = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 10 : 25;
     const val2 = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 5 : 14;
     const bin1 = val1.toString(2);
     const bin2 = val2.toString(2);
     const result = (val1 + val2).toString(2);
 
+    const opts = [
+      result,
+      (val1 + val2 + 1).toString(2),
+      (val1 + val2 - 1).toString(2),
+      (val1 + val2 + 2).toString(2),
+    ].sort(() => Math.random() - 0.5);
+
     return {
       id: `ba-${Math.random()}`,
       topic: 'binary-arithmetic',
       question: `What is the binary sum of ${bin1} + ${bin2}?`,
-      options: [
-        result,
-        (val1 + val2 + 1).toString(2),
-        (val1 + val2 - 1).toString(2),
-        (val1 + val2 + 2).toString(2)
-      ].sort(() => Math.random() - 0.5), // shuffle
+      options: opts,
       correctAnswer: result,
-      explanation: `${bin1} is ${val1} in decimal, ${bin2} is ${val2}. Sum is ${val1+val2}, which is ${result} in binary.`
+      explanation: `${bin1} is ${val1} decimal, ${bin2} is ${val2} decimal. Sum = ${val1 + val2} = ${result} in binary.`,
     };
   }
 
   private generateComplementQuestion(difficulty: string): QuizQuestion {
     const val = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 12 : 28;
     const bin = val.toString(2).padStart(6, '0');
-    // 1s complement
     let ones = '';
     for (const b of bin) ones += b === '1' ? '0' : '1';
-    
+
+    const opts = [
+      ones,
+      bin,
+      (parseInt(ones, 2) + 1).toString(2).padStart(6, '0'),
+      (parseInt(ones, 2) - 1).toString(2).padStart(6, '0'),
+    ].sort(() => Math.random() - 0.5);
+
     return {
       id: `comp-${Math.random()}`,
       topic: 'complements',
       question: `What is the 1's complement of the 6-bit binary number ${bin}?`,
-      options: [
-        ones,
-        bin,
-        (parseInt(ones, 2) + 1).toString(2).padStart(6, '0'),
-        (parseInt(ones, 2) - 1).toString(2).padStart(6, '0')
-      ].sort(() => Math.random() - 0.5),
+      options: opts,
       correctAnswer: ones,
-      explanation: `To find the 1's complement, invert every bit: 0 becomes 1, and 1 becomes 0.`
+      explanation: `To find the 1's complement, invert every bit: 0 becomes 1, and 1 becomes 0. ${bin} → ${ones}.`,
     };
   }
 
   async submitQuiz(userId: string, topic: string, score: number, answersJson: any) {
-    // Save raw result
     await this.prisma.quiz_results.create({
       data: {
         user_id: userId,
-        topic: topic,
-        score: score,
-        answersJson: answersJson
+        topic,
+        score,
+        answersJson,
       }
     });
   }

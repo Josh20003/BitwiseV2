@@ -77,104 +77,8 @@ interface TopicMastery {
   level: number
 }
 
-// Lessons with topics
+// Lessons with topics — Number Systems (5–11) are prerequisites, shown first
 const lessons: Lesson[] = [
-  {
-    id: 1,
-    title: 'Intro to Boolean Algebra',
-    description: 'Basics, history, and importance in logic.',
-    details:
-      "Boolean Algebra deals with true/false values. It's key in computer science and circuit design.",
-    topics: [
-      {
-        id: '1-1',
-        title: 'What is Boolean Algebra?',
-        description: 'Definition and origins.',
-      },
-      {
-        id: '1-2',
-        title: 'Boolean Values',
-        description: 'True/False, 1/0, and their meaning.',
-      },
-      {
-        id: '1-3',
-        title: 'Applications',
-        description: 'Where Boolean Algebra is used.',
-      },
-    ],
-  },
-  {
-    id: 2,
-    title: 'Logic Gates',
-    description: 'Learn AND, OR, NOT, and more.',
-    details:
-      'Logic gates are digital circuit components that execute Boolean functions.',
-    topics: [
-      {
-        id: '2-1',
-        title: 'AND, OR, NOT',
-        description: 'Basic gates and their symbols.',
-      },
-      {
-        id: '2-2',
-        title: 'NAND, NOR',
-        description: 'Universal gates and their uses.',
-      },
-      {
-        id: '2-3',
-        title: 'XOR, XNOR',
-        description: 'Exclusive gates and applications.',
-      },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Truth Tables',
-    description: 'Make and read truth tables.',
-    details:
-      'Truth tables show all possible input/output combinations for logical expressions.',
-    topics: [
-      {
-        id: '3-1',
-        title: 'Constructing Truth Tables',
-        description: 'Step-by-step process.',
-      },
-      {
-        id: '3-2',
-        title: 'Reading Truth Tables',
-        description: 'How to interpret results.',
-      },
-      {
-        id: '3-3',
-        title: 'Truth Tables for Gates',
-        description: 'Examples for each gate.',
-      },
-    ],
-  },
-  {
-    id: 4,
-    title: 'Simplification',
-    description: 'Reduce logic expressions efficiently.',
-    details:
-      'Simplifying logic reduces circuit complexity and improves performance.',
-    topics: [
-      {
-        id: '4-1',
-        title: 'Boolean Laws',
-        description: 'Commutative, Associative, Distributive.',
-      },
-      {
-        id: '4-2',
-        title: 'Karnaugh Maps',
-        description: 'Visual simplification method.',
-      },
-      {
-        id: '4-3',
-        title: 'Practical Examples',
-        description: 'Simplifying real expressions.',
-      },
-    ],
-  },
   {
     id: 5,
     title: 'Introduction to Number Systems',
@@ -385,6 +289,102 @@ const lessons: Lesson[] = [
         id: '11-4',
         title: 'Split-screen Visualizer',
         description: 'BCD vs ASCII side-by-side comparison.',
+      },
+    ],
+  },
+  {
+    id: 1,
+    title: 'Intro to Boolean Algebra',
+    description: 'Basics, history, and importance in logic.',
+    details:
+      "Boolean Algebra deals with true/false values. It's key in computer science and circuit design.",
+    topics: [
+      {
+        id: '1-1',
+        title: 'What is Boolean Algebra?',
+        description: 'Definition and origins.',
+      },
+      {
+        id: '1-2',
+        title: 'Boolean Values',
+        description: 'True/False, 1/0, and their meaning.',
+      },
+      {
+        id: '1-3',
+        title: 'Applications',
+        description: 'Where Boolean Algebra is used.',
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: 'Logic Gates',
+    description: 'Learn AND, OR, NOT, and more.',
+    details:
+      'Logic gates are digital circuit components that execute Boolean functions.',
+    topics: [
+      {
+        id: '2-1',
+        title: 'AND, OR, NOT',
+        description: 'Basic gates and their symbols.',
+      },
+      {
+        id: '2-2',
+        title: 'NAND, NOR',
+        description: 'Universal gates and their uses.',
+      },
+      {
+        id: '2-3',
+        title: 'XOR, XNOR',
+        description: 'Exclusive gates and applications.',
+      },
+    ],
+  },
+  {
+    id: 3,
+    title: 'Truth Tables',
+    description: 'Make and read truth tables.',
+    details:
+      'Truth tables show all possible input/output combinations for logical expressions.',
+    topics: [
+      {
+        id: '3-1',
+        title: 'Constructing Truth Tables',
+        description: 'Step-by-step process.',
+      },
+      {
+        id: '3-2',
+        title: 'Reading Truth Tables',
+        description: 'How to interpret results.',
+      },
+      {
+        id: '3-3',
+        title: 'Truth Tables for Gates',
+        description: 'Examples for each gate.',
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: 'Simplification',
+    description: 'Reduce logic expressions efficiently.',
+    details:
+      'Simplifying logic reduces circuit complexity and improves performance.',
+    topics: [
+      {
+        id: '4-1',
+        title: 'Boolean Laws',
+        description: 'Commutative, Associative, Distributive.',
+      },
+      {
+        id: '4-2',
+        title: 'Karnaugh Maps',
+        description: 'Visual simplification method.',
+      },
+      {
+        id: '4-3',
+        title: 'Practical Examples',
+        description: 'Simplifying real expressions.',
       },
     ],
   },
@@ -697,7 +697,9 @@ function RouteComponent() {
           : isStarted
             ? 'in-progress'
             : 'not-started',
-        progress: Math.round((progress?.progress || 0) * 100),
+        progress: progress?.progress !== undefined 
+          ? Math.round(progress.progress > 1 ? progress.progress : progress.progress * 100)
+          : 0,
         masteryScore,
         isLocked: false, // No locks - all lessons accessible
       }
@@ -1015,7 +1017,7 @@ function RouteComponent() {
                     <div className="p-5 flex-1 flex flex-col">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                          Lesson {lesson.id}
+                          Lesson {lessons.findIndex(l => l.id === lesson.id) + 1}
                         </span>
                         {status === 'in-progress' && (
                           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -1095,7 +1097,7 @@ function RouteComponent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                            Lesson {lesson.id}
+                            Lesson {lessons.findIndex(l => l.id === lesson.id) + 1}
                           </span>
                           <span className="text-gray-300 dark:text-gray-700">
                             •

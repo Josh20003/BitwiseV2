@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ChevronRight, LayoutDashboard, RotateCcw } from 'lucide-react';
 
 interface QuizQuestion {
   id: string;
@@ -11,27 +13,48 @@ interface QuizQuestion {
   explanation: string;
 }
 
-export function QuizSessionManager({ userId, topic, onComplete }: { userId: string, topic: string, onComplete?: () => void }) {
+export function QuizSessionManager({
+  userId,
+  topic,
+  onComplete,
+  nextLessonId,
+}: {
+  userId: string;
+  topic: string;
+  onComplete?: () => void;
+  nextLessonId?: number;
+}) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [quizState, setQuizState] = useState<'IDLE' | 'IN_PROGRESS' | 'COMPLETED'>('IDLE');
   const [scoreData, setScoreData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submittedQuestion, setSubmittedQuestion] = useState<string | null>(null);
+
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
   const startQuiz = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/assessment/ai-quiz/${userId}/${topic}`);
+      const res = await fetch(`${API_BASE}/assessment/ai-quiz/${userId}/${topic}`, {
+        signal: AbortSignal.timeout(60000), // 60s for AI generation
+      });
       const data = await res.json();
       if (data.success && data.data.length > 0) {
         setQuestions(data.data);
         setQuizState('IN_PROGRESS');
         setCurrentIndex(0);
         setSelectedAnswers({});
+        setSubmittedQuestion(null);
         setScoreData(null);
+      } else {
+        setError(data.error || 'Failed to generate quiz questions. Please try again.');
       }
-    } catch (e) {
+    } catch (e: any) {
+      setError(e.name === 'TimeoutError' ? 'Quiz generation timed out. Please try again.' : 'Failed to connect to server.');
       console.error(e);
     } finally {
       setLoading(false);
@@ -39,15 +62,21 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
   };
 
   const handleSelectOption = (option: string) => {
+    if (submittedQuestion === questions[currentIndex].id) return; // locked
     setSelectedAnswers(prev => ({
       ...prev,
       [questions[currentIndex].id]: option
     }));
   };
 
+  const handleSubmitAnswer = () => {
+    setSubmittedQuestion(questions[currentIndex].id);
+  };
+
   const nextQuestion = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1);
+      setSubmittedQuestion(null);
     }
   };
 
@@ -62,7 +91,7 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
     const finalScore = correctCount / questions.length;
 
     try {
-      const res = await fetch('/api/assessment/ai-quiz/submit', {
+      const res = await fetch(`${API_BASE}/assessment/ai-quiz/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -79,11 +108,16 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
           score: finalScore,
           correct: correctCount,
           total: questions.length,
-          emaData: data.data
+          emaData: data.data,
+          questions,
+          selectedAnswers,
         });
         if (onComplete) onComplete();
+      } else {
+        setError(data.error || 'Failed to submit quiz.');
       }
     } catch (e) {
+      setError('Failed to submit quiz. Please try again.');
       console.error(e);
     } finally {
       setLoading(false);
@@ -100,9 +134,17 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
           </p>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              {error}
+            </div>
+          )}
           <Button size="lg" onClick={startQuiz} disabled={loading} className="mt-4">
             {loading ? 'Generating AI Quiz...' : 'Start Assessment'}
           </Button>
+          {loading && (
+            <p className="text-xs text-muted-foreground mt-3">This may take up to 30 seconds while AI generates your questions...</p>
+          )}
         </CardContent>
       </Card>
     );
@@ -110,7 +152,7 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
 
   if (quizState === 'COMPLETED') {
     return (
-      <Card className="max-w-xl mx-auto">
+      <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
           <CardTitle>Assessment Complete!</CardTitle>
         </CardHeader>
@@ -137,8 +179,48 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
             </div>
           )}
 
-          <div className="flex justify-center mt-6">
-            <Button variant="outline" onClick={() => setQuizState('IDLE')}>Return</Button>
+          {/* Answer review */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Answer Review</h3>
+            {scoreData.questions.map((q: QuizQuestion, idx: number) => {
+              const userAnswer = scoreData.selectedAnswers[q.id];
+              const isCorrect = userAnswer === q.correctAnswer;
+              return (
+                <div key={q.id} className={`p-3 rounded-lg border text-sm ${isCorrect ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10' : 'border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-900/10'}`}>
+                  <p className="font-medium text-foreground mb-1">{idx + 1}. {q.question}</p>
+                  <p className={`text-xs ${isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                    Your answer: {userAnswer || '(not answered)'} {isCorrect ? '✓' : '✗'}
+                  </p>
+                  {!isCorrect && (
+                    <p className="text-xs text-green-700 dark:text-green-400">Correct: {q.correctAnswer}</p>
+                  )}
+                  {q.explanation && (
+                    <p className="text-xs text-muted-foreground mt-1">{q.explanation}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3 mt-6">
+            <Button variant="outline" onClick={() => setQuizState('IDLE')} className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              Take Again
+            </Button>
+            {nextLessonId && (
+              <Link to="/lesson/$lessonId" params={{ lessonId: String(nextLessonId) }}>
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full">
+                  Continue to Lesson {nextLessonId}
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            )}
+            <Link to="/roadmap">
+              <Button variant="ghost" className="gap-2 text-muted-foreground w-full">
+                <LayoutDashboard className="w-4 h-4" />
+                Back to Dashboard
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
@@ -147,6 +229,8 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
 
   const currentQ = questions[currentIndex];
   const selected = selectedAnswers[currentQ.id];
+  const isSubmitted = submittedQuestion === currentQ.id;
+  const isLastQuestion = currentIndex === questions.length - 1;
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -159,41 +243,64 @@ export function QuizSessionManager({ userId, topic, onComplete }: { userId: stri
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
-          {currentQ.options.map((opt, i) => (
-            <div 
-              key={i}
-              onClick={() => handleSelectOption(opt)}
-              className={`
-                p-4 border-2 rounded-lg cursor-pointer transition-all duration-200
-                ${selected === opt 
-                  ? 'border-primary bg-primary/10 text-primary font-medium' 
-                  : 'border-border bg-card hover:border-primary/50 hover:bg-muted'}
-              `}
-            >
-              {opt}
-            </div>
-          ))}
+          {currentQ.options.map((opt, i) => {
+            const isSelected = selected === opt;
+            const isCorrect = opt === currentQ.correctAnswer;
+            let cls = 'p-4 border-2 rounded-lg transition-all duration-200 ';
+            if (!isSubmitted) {
+              cls += isSelected
+                ? 'border-primary bg-primary/10 text-primary font-medium cursor-pointer'
+                : 'border-border bg-card hover:border-primary/50 hover:bg-muted cursor-pointer';
+            } else {
+              if (isCorrect) cls += 'border-green-500 bg-green-500/10 text-green-700 dark:text-green-400 font-medium cursor-default';
+              else if (isSelected) cls += 'border-red-500 bg-red-500/10 text-red-700 dark:text-red-400 cursor-default';
+              else cls += 'border-border opacity-50 cursor-default';
+            }
+            return (
+              <div
+                key={i}
+                onClick={() => !isSubmitted && handleSelectOption(opt)}
+                className={cls}
+              >
+                <span className="font-mono text-xs text-muted-foreground mr-2">{String.fromCharCode(65 + i)}.</span>
+                {opt}
+                {isSubmitted && isCorrect && <span className="ml-2 text-green-600">✓</span>}
+                {isSubmitted && isSelected && !isCorrect && <span className="ml-2 text-red-600">✗</span>}
+              </div>
+            );
+          })}
         </div>
 
+        {isSubmitted && currentQ.explanation && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-900/20 text-sm">
+            <span className="font-semibold text-blue-900 dark:text-blue-300">💡 Explanation: </span>
+            <span className="text-blue-800 dark:text-blue-200">{currentQ.explanation}</span>
+          </div>
+        )}
+
         <div className="flex justify-between items-center pt-6 border-t border-border mt-8">
-          <Button 
-            variant="outline" 
-            disabled={currentIndex === 0} 
-            onClick={() => setCurrentIndex(prev => prev - 1)}
+          <Button
+            variant="outline"
+            disabled={currentIndex === 0}
+            onClick={() => { setCurrentIndex(prev => prev - 1); setSubmittedQuestion(null); }}
           >
             Previous
           </Button>
-          
-          {currentIndex === questions.length - 1 ? (
-            <Button 
-              onClick={submitQuiz} 
-              disabled={!selected || loading}
+
+          {!isSubmitted ? (
+            <Button onClick={handleSubmitAnswer} disabled={!selected}>
+              Submit Answer
+            </Button>
+          ) : isLastQuestion ? (
+            <Button
+              onClick={submitQuiz}
+              disabled={loading}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {loading ? 'Submitting...' : 'Submit Assessment'}
+              {loading ? 'Submitting...' : 'Finish Quiz'}
             </Button>
           ) : (
-            <Button onClick={nextQuestion} disabled={!selected}>
+            <Button onClick={nextQuestion}>
               Next Question
             </Button>
           )}

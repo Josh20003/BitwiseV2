@@ -20,6 +20,7 @@ import { Route as CalculatorRouteImport } from './routes/calculator'
 import { Route as BinaryCodesRouteImport } from './routes/binary-codes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RoadmapRefactoredRouteImport } from './routes/roadmap.refactored'
+import { Route as QuizTopicRouteImport } from './routes/quiz/$topic'
 import { Route as LessonLessonIdRouteImport } from './routes/lesson/$lessonId'
 import { Route as AssessmentAssessmentIdRouteImport } from './routes/assessment/$assessmentId'
 
@@ -78,6 +79,11 @@ const RoadmapRefactoredRoute = RoadmapRefactoredRouteImport.update({
   path: '/refactored',
   getParentRoute: () => RoadmapRoute,
 } as any)
+const QuizTopicRoute = QuizTopicRouteImport.update({
+  id: '/quiz/$topic',
+  path: '/quiz/$topic',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LessonLessonIdRoute = LessonLessonIdRouteImport.update({
   id: '/lesson/$lessonId',
   path: '/lesson/$lessonId',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
   '/lesson/$lessonId': typeof LessonLessonIdRoute
+  '/quiz/$topic': typeof QuizTopicRoute
   '/roadmap/refactored': typeof RoadmapRefactoredRoute
 }
 export interface FileRoutesByTo {
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
   '/lesson/$lessonId': typeof LessonLessonIdRoute
+  '/quiz/$topic': typeof QuizTopicRoute
   '/roadmap/refactored': typeof RoadmapRefactoredRoute
 }
 export interface FileRoutesById {
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
   '/lesson/$lessonId': typeof LessonLessonIdRoute
+  '/quiz/$topic': typeof QuizTopicRoute
   '/roadmap/refactored': typeof RoadmapRefactoredRoute
 }
 export interface FileRouteTypes {
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/assessment/$assessmentId'
     | '/lesson/$lessonId'
+    | '/quiz/$topic'
     | '/roadmap/refactored'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/assessment/$assessmentId'
     | '/lesson/$lessonId'
+    | '/quiz/$topic'
     | '/roadmap/refactored'
   id:
     | '__root__'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/assessment/$assessmentId'
     | '/lesson/$lessonId'
+    | '/quiz/$topic'
     | '/roadmap/refactored'
   fileRoutesById: FileRoutesById
 }
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   AssessmentAssessmentIdRoute: typeof AssessmentAssessmentIdRoute
   LessonLessonIdRoute: typeof LessonLessonIdRoute
+  QuizTopicRoute: typeof QuizTopicRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoadmapRefactoredRouteImport
       parentRoute: typeof RoadmapRoute
     }
+    '/quiz/$topic': {
+      id: '/quiz/$topic'
+      path: '/quiz/$topic'
+      fullPath: '/quiz/$topic'
+      preLoaderRoute: typeof QuizTopicRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lesson/$lessonId': {
       id: '/lesson/$lessonId'
       path: '/lesson/$lessonId'
@@ -318,6 +338,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   AssessmentAssessmentIdRoute: AssessmentAssessmentIdRoute,
   LessonLessonIdRoute: LessonLessonIdRoute,
+  QuizTopicRoute: QuizTopicRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
