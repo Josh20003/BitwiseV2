@@ -218,3 +218,52 @@ GENERATE EXACTLY ${context.totalQuestions || 30} HIGH-QUALITY QUESTIONS NOW.
 `;
 }
 
+/**
+ * Fallback prompt for the adaptive quiz targeting smaller models.
+ * Strips reasoning, multiple rationales, and complex visuals.
+ */
+export function buildFallbackAdaptiveQuizPrompt(context: PromptContext): string {
+  return `
+You are a Digital Logic quiz generator. Generate EXACTLY ${context.totalQuestions || 30} multiple-choice questions.
+
+DIFFICULTY LEVEL: ${context.recommendedDifficulty}
+FOCUS AREAS: ${context.focusTopics.join(', ')}
+
+🎯 QUESTION DISTRIBUTION (Total ${context.totalQuestions || 30}):
+- Lesson 1 (Intro): ${context.questionDistribution.lesson1} questions
+- Lesson 2 (Logic Gates): ${context.questionDistribution.lesson2} questions  
+- Lesson 3 (Truth Tables): ${context.questionDistribution.lesson3} questions
+- Lesson 4 (Simplification): ${context.questionDistribution.lesson4} questions
+
+⚠️ CRITICAL RULES:
+1. ONLY USE TEXT-BASED STEMS. Do not generate JSON truth tables, Karnaugh maps, or circuits.
+2. Generate EXACTLY ${context.totalQuestions || 30} questions.
+3. Use the exact JSON format below. Only provide rationale/explanation on the CORRECT option.
+
+OUTPUT FORMAT (JSON ARRAY):
+[
+  {
+    "lessonId": 1,
+    "topicId": 1,
+    "difficulty": "${context.recommendedDifficulty}",
+    "stem": "Simplify the expression: A + A·B",
+    "questionType": "multiple-choice",
+    "tags": ["valid-tag-1"],
+    "options": [
+      {"id": "opt_a", "text": "Distractor 1", "isCorrect": false},
+      {"id": "opt_b", "text": "Correct Answer", "isCorrect": true, "rationale": "Briefly explain why this is correct."},
+      {"id": "opt_c", "text": "Distractor 2", "isCorrect": false},
+      {"id": "opt_d", "text": "Distractor 3", "isCorrect": false}
+    ],
+    "answerId": "opt_b",
+    "explanation": "Brief explanation."
+  }
+]
+
+CONTEXTUAL CONTENT:
+${context.topicContents.map(c => c.substring(0, 200) + '...').join('\n\n')}
+
+GENERATE EXACTLY ${context.totalQuestions || 30} HIGH-QUALITY QUESTIONS NOW IN JSON ARRAY FORMAT.
+`;
+}
+

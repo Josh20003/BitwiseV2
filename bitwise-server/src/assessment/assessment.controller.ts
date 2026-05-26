@@ -54,10 +54,10 @@ export class AssessmentController {
   @Post('start-lesson-practice')
   async startLessonPractice(@Body() body: { uid: string; lessonId: number }) {
     try {
-      if (!body.lessonId || body.lessonId < 1 || body.lessonId > 4) {
+      if (!body.lessonId || body.lessonId < 1) {
         return {
           success: false,
-          error: 'Invalid lessonId. Must be 1, 2, 3, or 4.'
+          error: 'Invalid lessonId.'
         };
       }
 

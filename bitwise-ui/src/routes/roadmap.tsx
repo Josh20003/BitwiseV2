@@ -5,8 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useRoadmapData } from '@/hooks/useRoadmapData'
-import { apiService } from '@/services/api.service'
-import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp, Zap } from 'lucide-react'
+import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -525,11 +524,9 @@ const csQuotes = [
 
 function RouteComponent() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
-  const [loadingAssessment, setLoadingAssessment] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [statusFilter, setStatusFilter] = useState<string>('All Status')
   const [showLessonSelectModal, setShowLessonSelectModal] = useState(false)
-  const [selectedPracticeLesson, setSelectedPracticeLesson] = useState<number | null>(null)
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
   const navigate = useNavigate()
   const { user } = useAuthContext() || {}
@@ -547,7 +544,6 @@ function RouteComponent() {
     analytics,
     statistics,
     error: roadmapError,
-    refresh: refreshRoadmapData,
   } = useRoadmapData(user?.id, lessonIds)
 
   // Rotate quotes every 10 seconds
@@ -605,47 +601,34 @@ function RouteComponent() {
     setShowLessonSelectModal(true)
   }
 
-  // Start lesson-specific practice
-  const handleStartLessonPractice = async (lessonId: number) => {
+  // Map lesson ID → quiz topic slug (same as in $lessonId.tsx)
+  const lessonToQuizTopic: Record<number, string> = {
+    1: 'boolean-algebra',
+    2: 'logic-gates',
+    3: 'truth-tables',
+    4: 'karnaugh-maps',
+    5: 'number-systems',
+    6: 'number-systems',
+    7: 'number-systems',
+    8: 'binary-arithmetic',
+    9: 'complements',
+    10: 'number-systems',
+    11: 'number-systems',
+  }
+
+  // Start lesson-specific practice — reuses the post-lesson quiz pipeline
+  const handleStartLessonPractice = (lessonId: number) => {
     if (!effectiveUser) {
       toast.error('Please log in to start an assessment')
       return
     }
-    setSelectedPracticeLesson(lessonId)
-    setLoadingAssessment(true)
-    try {
-      const result = await apiService.post<{
-        success: boolean
-        data: { attemptId: number }
-        error?: string
-      }>(
-        '/assessment/start-lesson-practice',
-        { uid: effectiveUser.id, lessonId },
-        true,
-        { timeout: 60000 }
-      )
-      if (result.success) {
-        setShowLessonSelectModal(false)
-        navigate({
-          to: '/assessment/$assessmentId',
-          params: { assessmentId: result.data.attemptId.toString() },
-        })
-        refreshRoadmapData()
-      } else {
-        throw new Error(result.error || 'Failed to start assessment')
-      }
-    } catch (error) {
-      console.error('Failed to start lesson practice:', error)
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      if (errorMessage.toLowerCase().includes('rate limit')) {
-        toast.error('AI service is temporarily busy. Please try again in a few minutes.')
-      } else {
-        toast.error('Failed to start practice. Please try again.')
-      }
-    } finally {
-      setLoadingAssessment(false)
-      setSelectedPracticeLesson(null)
+    const topic = lessonToQuizTopic[lessonId]
+    if (!topic) {
+      toast.error('No quiz available for this lesson yet')
+      return
     }
+    setShowLessonSelectModal(false)
+    navigate({ to: '/quiz/$topic', params: { topic }, search: { lessonId } })
   }
 
   // Get topic mastery info for a specific lesson
@@ -805,10 +788,9 @@ function RouteComponent() {
                 </div>
                 <Button
                   onClick={handleOpenLessonSelect}
-                  disabled={loadingAssessment}
                   className="bg-white text-blue-600 hover:bg-blue-50 font-semibold"
                 >
-                  {loadingAssessment ? 'Loading...' : 'Start Practice'}
+                  Start Practice
                 </Button>
               </div>
             </div>
@@ -881,15 +863,28 @@ function RouteComponent() {
                       // Sort by lowest progress first (focus areas = weakest topics)
                       const sorted = [...allTopicsList].sort((a, b) => a.progress - b.progress)
 
+                      const hasAnalyticsData = allTopicsList.some(t => t.progress > 0)
+
+                      if (!hasAnalyticsData) {
+                        return (
+                          <div className="flex flex-col items-center justify-center py-4 px-3 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/30 dark:bg-gray-900/10 my-1">
+                            <Brain className="w-6 h-6 text-purple-400 dark:text-purple-500 mb-2 animate-pulse" />
+                            <p className="text-[10px] text-muted-foreground leading-normal font-medium max-w-[180px]">
+                              No mastery data available yet. Start a practice assessment or complete lesson topics to see your focus areas!
+                            </p>
+                          </div>
+                        )
+                      }
+
                       return sorted.slice(0, 5).map((topic) => (
                         <div
                           key={topic.id}
                           className="flex items-center justify-between text-xs"
                         >
-                          <span className="text-gray-600 dark:text-gray-400 truncate mr-2">
+                          <span className="text-gray-600 dark:text-gray-400 truncate mr-2 font-medium">
                             {topic.title}
                           </span>
-                          <span className={`font-medium shrink-0 ${
+                          <span className={`font-semibold shrink-0 ${
                             topic.progress >= 0.7 ? 'text-green-600' :
                             topic.progress >= 0.4 ? 'text-yellow-600' : 'text-red-600'
                           }`}>
@@ -1163,7 +1158,7 @@ function RouteComponent() {
       <Dialog
         open={showLessonSelectModal}
         onOpenChange={(open: boolean) => {
-          if (!open && !loadingAssessment) {
+          if (!open) {
             setShowLessonSelectModal(false)
           }
         }}
@@ -1191,17 +1186,12 @@ function RouteComponent() {
               {lessons.map((lesson) => {
                 const masteryInfo = getLessonTopicMastery(lesson.id)
                 const lessonTopics = lesson.topics
-                const isLoading = loadingAssessment && selectedPracticeLesson === lesson.id
 
                 return (
                   <div
                     key={lesson.id}
-                    className={`relative border rounded-xl p-4 transition-all duration-200 ${
-                      isLoading
-                        ? 'border-blue-300 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md cursor-pointer'
-                    }`}
-                    onClick={() => !loadingAssessment && handleStartLessonPractice(lesson.id)}
+                    className="relative border rounded-xl p-4 transition-all duration-200 border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md cursor-pointer"
+                    onClick={() => handleStartLessonPractice(lesson.id)}
                   >
                     {/* Lesson Header */}
                     <div className="flex items-start gap-3 mb-3">
@@ -1215,7 +1205,7 @@ function RouteComponent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                            LESSON {lesson.id}
+                            LESSON {lessons.findIndex(l => l.id === lesson.id) + 1}
                           </span>
                           {masteryInfo.hasData && (
                             <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
@@ -1270,25 +1260,15 @@ function RouteComponent() {
 
                     {/* Start Button */}
                     <Button
-                      className="w-full"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                       size="sm"
-                      disabled={loadingAssessment}
                       onClick={(e) => {
                         e.stopPropagation()
                         handleStartLessonPractice(lesson.id)
                       }}
                     >
-                      {isLoading ? (
-                        <>
-                          <Zap className="w-4 h-4 mr-2 animate-pulse" />
-                          Generating Questions...
-                        </>
-                      ) : (
-                        <>
-                          <BookOpen className="w-4 h-4 mr-2" />
-                          Practice This Lesson
-                        </>
-                      )}
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Practice This Lesson
                     </Button>
 
                     {/* Question Distribution Info */}
@@ -1314,7 +1294,6 @@ function RouteComponent() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowLessonSelectModal(false)}
-                disabled={loadingAssessment}
               >
                 Cancel
               </Button>

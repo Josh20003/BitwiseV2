@@ -69,10 +69,76 @@ function getLessonGuidelines(lessonId: number): string {
 - EASY: Apply single law (Identity, Null), 2-variable K-map
 - MEDIUM: Multi-law simplification, 3-variable K-map grouping
 - HARD: Complex expressions, 4-variable K-maps, optimal grouping
-- Use K-maps for visual questions, text for law application`
+- Use K-maps for visual questions, text for law application`,
+
+    5: `**LESSON 5: Introduction to Number Systems**
+- Focus: Base-2, base-8, base-10, base-16; positional values; digit representation
+- Question Types: Text-based conceptual questions, positional value calculations
+- Visual Requirement: 10-20% (mostly text-based)
+- EASY: Identify the base/radix of a number, count digits in a base
+- MEDIUM: Positional value of a digit, largest digit allowed in a base
+- HARD: Compare values across bases, identify the number of symbols in a base
+- DO NOT ask about converting between bases (that is Lesson 7)`,
+
+    6: `**LESSON 6: Types of Number Systems**
+- Focus: Relationships between binary, decimal, octal, hex; grouping patterns
+- Question Types: Text questions about relationships and groupings
+- Visual Requirement: 10-20%
+- EASY: Identify which number systems are used in computing, 4-bit grouping = 1 hex digit
+- MEDIUM: Binary-to-hex shortcut (group 4 bits), binary-to-octal (group 3 bits)
+- HARD: Compare grouping schemes, identify patterns across systems
+- DO NOT ask step-by-step conversion procedures`,
+
+    7: `**LESSON 7: Conversion of Number Systems**
+- Focus: Manual conversion between decimal, binary, hex, octal (division/remainder, expansion)
+- Question Types: Step-by-step conversion calculations
+- Visual Requirement: 10-20%
+- EASY: Convert small decimal to binary (≤16) or binary to decimal
+- MEDIUM: Convert decimal to hex/octal or hex to binary
+- HARD: Multi-step conversions (decimal → hex → binary)
+- Always show intermediate calculation steps in solutionSteps`,
+
+    8: `**LESSON 8: Binary Arithmetic**
+- Focus: Binary addition, subtraction, multiplication, division
+- Question Types: Arithmetic calculation problems
+- Visual Requirement: 10-20%
+- EASY: Single-bit addition (with carry), 4-bit + 4-bit without overflow
+- MEDIUM: 4-8 bit addition with carry chain, binary subtraction with borrow
+- HARD: Multi-byte addition, binary multiplication (shift-and-add)
+- Show binary arithmetic working column-by-column in solutionSteps`,
+
+    9: `**LESSON 9: Complements**
+- Focus: 1's complement (bit inversion), 2's complement (invert + 1), cascading carry
+- Question Types: Complement calculation problems
+- Visual Requirement: 10-20%
+- EASY: 1's complement of a 4-bit number (just invert)
+- MEDIUM: 2's complement of a 6-8 bit number
+- HARD: Use 2's complement to perform subtraction (A - B = A + ~B + 1)
+- DO NOT ask about overflow conditions or signed interpretation (MSB)`,
+
+    10: `**LESSON 10: BCD and Special Codes**
+- Focus: BCD encoding/decoding, excess-3, Gray code basics
+- Question Types: Encoding/decoding calculations
+- Visual Requirement: 10-20%
+- EASY: Convert single decimal digit to BCD (e.g., 7 → 0111)
+- MEDIUM: Convert multi-digit decimal to BCD or BCD to decimal
+- HARD: Identify invalid BCD codes, convert using Excess-3`,
+
+    11: `**LESSON 11: Gray Code and Hamming**
+- Focus: Gray code conversion (binary↔Gray), single-bit error detection
+- Question Types: Gray code conversion steps
+- Visual Requirement: 10-20%
+- EASY: MSB of Gray code = MSB of binary; next bit = XOR with previous
+- MEDIUM: Convert 4-bit binary to Gray or vice versa
+- HARD: Apply Gray code in sequencing (count without multiple bit changes)`
   };
 
-  return guidelines[lessonId] || guidelines[1];
+  return guidelines[lessonId] || `**Lesson ${lessonId}**
+- Focus: Core concepts relevant to this lesson
+- Question Types: Text-based conceptual and calculation questions
+- EASY: Basic definitions and simple single-step problems
+- MEDIUM: Multi-step reasoning and application
+- HARD: Complex scenarios combining multiple concepts`;
 }
 
 /**
@@ -91,8 +157,9 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
    - Tags to use: ${topic.tags.join(', ')}
    - Content Summary: ${topic.contentText.substring(0, 300)}...`;
   }).join('\n');
+  const isLogicVisualLesson = [2, 3, 4].includes(context.lessonId);
 
-  const difficultyGuidelines = `
+  const difficultyGuidelines = isLogicVisualLesson ? `
 📊 DIFFICULTY GUIDELINES:
 
 **EASY Questions** (for mastery < 40%):
@@ -117,35 +184,28 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
 - 3-4 variable expressions → truth tables have 8-16 rows
 - **The expression MUST use all 3-4 variables!**
 - Optimization and edge cases
-- **solutionSteps**: 5-7 comprehensive steps with full mathematical derivations`;
+- **solutionSteps**: 5-7 comprehensive steps with full mathematical derivations` : `
+📊 DIFFICULTY GUIDELINES:
 
-  return `
-You are a distinguished University Professor of Digital Logic and Boolean Algebra. Your task is to generate a focused, high-quality **10-question** assessment for a single lesson.
+**EASY Questions** (for mastery < 40%):
+- Single-step calculations or conceptual questions
+- Direct application of base/positional rules
+- Small values or straightforward base identification
+- **solutionSteps**: 2-3 simple steps showing the basic calculation
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 LESSON: ${context.lessonTitle} (Lesson ID: ${context.lessonId})
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**MEDIUM Questions** (for mastery 40-69%):
+- Multi-step calculations required
+- Comparing or combining multiple representations
+- Medium range values or intermediate calculations
+- **solutionSteps**: 3-5 detailed steps showing intermediate calculations and conversion/arithmetic stages
 
-${getLessonGuidelines(context.lessonId)}
+**HARD Questions** (for mastery ≥ 70%):
+- Complex multi-step problems or word problems
+- Comparing multiple expressions or values across different bases
+- Larger values or complex encoding/decoding sequences
+- **solutionSteps**: 5-7 comprehensive steps with detailed calculations and logic verified`;
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 TOPIC-SPECIFIC REQUIREMENTS (MUST FOLLOW EXACTLY)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${topicInstructions}
-
-${difficultyGuidelines}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 MANDATORY: GENERATE EXACTLY ${context.totalQuestions} QUESTIONS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⚠️ CRITICAL RULES:
-1. **MATCH DIFFICULTY TO TOPIC**: Each question's difficulty MUST match the topic's assigned difficulty
-2. **EXACT QUESTION COUNT**: Generate exactly ${context.topics.map(t => t.questionCount).join(' + ')} = ${context.totalQuestions} questions
-3. **CORRECT TOPIC IDs**: Each question must have the correct topicId from above
-4. **NO MEMORIZATION**: Use "Calculate", "Analyze", "Design", "Simplify" - NOT "Define" or "What is"
-5. **ONE CORRECT ANSWER**: Exactly one option must be correct with clear mathematical justification
-
+  const visualFormatsSection = isLogicVisualLesson ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📐 VISUAL ELEMENT FORMATS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -201,7 +261,7 @@ ${difficultyGuidelines}
 - **Output Naming**: Use descriptive names like "A_NOT" for NOT gates, "G2_OUT" for intermediate outputs
 - **Position Grid**: x=column (left to right), y=row (top to bottom). Space gates appropriately
 - **Final Output**: Must be the output of the last gate in the signal path
-- **Complexity Levels**:
+- **Complexity Levels:**
   - EASY: 1-2 gates, single path (e.g., NOT→AND or just AND)
   - MEDIUM: 2-3 gates, may have parallel paths converging
   - HARD: 3-5 gates, multiple levels, parallel paths, requires careful tracing
@@ -235,7 +295,19 @@ ${difficultyGuidelines}
 
 **TYPE 4: TEXT-ONLY** (for Lessons 1, 3, 4 algebraic)
 Just use a string: "Simplify the expression: A + A·B"
+` : `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📐 VISUAL ELEMENT FORMATS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+**TEXT-ONLY (MANDATORY for Lesson ${context.lessonId})**
+For number systems and arithmetic, do not use circuits, truth tables, or Karnaugh maps. Instead, the "stem" of each question MUST be a pure string.
+Example stems: 
+- "What is the positional value of the digit '5' in the octal number 357_8?"
+- "Compare the following numbers. Which one represents the largest value? A = 10110_2, B = 24_10, C = 17_16"
+`;
+
+  const outputFormatSection = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📤 OUTPUT FORMAT (JSON ARRAY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -247,7 +319,7 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
     "lessonId": ${context.lessonId},
     "topicId": <topic_id_from_above>,
     "difficulty": "<easy|medium|hard matching topic>",
-    "stem": "<string OR visual object>",
+    "stem": ${isLogicVisualLesson ? '"<string OR visual object>"' : '"<pure string stem>"'},
     "questionType": "multiple-choice",
     "tags": ["<valid-tags-from-topic>"],
     "_reasoning": "Internal verification of the correct answer (not shown to user)",
@@ -279,16 +351,17 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
     ],
     "answerId": "opt_b",
     "solutionSteps": [
-      "Step 1: [For Lessons 2-4] Begin with the given information or expression. State what we're solving for.",
-      "Step 2: Show the first calculation or transformation. Be specific with values.",
-      "Step 3: Continue with intermediate steps. Show ALL work, don't skip steps.",
-      "Step 4: Apply relevant rules/laws/techniques (name them explicitly).",
-      "Step 5: [If needed] Verify the result by substitution or alternative method.",
-      "Final Step: State the answer clearly and connect it back to the question."
+      "Step 1: State the problem or calculation to be performed.",
+      "Step 2: Show the first calculation or conversion step.",
+      "Step 3: Show intermediate calculation steps or comparisons.",
+      "Step 4: Execute the final calculation or conversion stage.",
+      "Final Step: Conclude with the final result matching the correct option."
     ]
   }
 ]
+`;
 
+  const criticalRequirementsSection = isLogicVisualLesson ? `
 ⚠️ **CRITICAL REQUIREMENTS FOR solutionSteps AND rationale:**
 
 **For solutionSteps (Lessons 2, 3, 4 - PROBLEM SOLVING):**
@@ -317,20 +390,17 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   - Step 5: Verify by truth table or expansion
   - Example: "Group cells [1,3]: A'B' + A'B = A'(B'+B) = A'(1) = A'"
 
-- **LESSON 1**: Can use simpler steps (2-3 steps) for conceptual questions
+- **LESSON 1**: Can use simpler steps (2-3 steps) for conceptual questions` : `
+⚠️ **CRITICAL REQUIREMENTS FOR solutionSteps AND rationale:**
 
-**For rationale (ALL OPTIONS):**
-- **Correct option**: 3-4 sentences minimum
-  - Sentence 1: State why it's correct
-  - Sentence 2: Show mathematical verification
-  - Sentence 3: Connect to underlying concept/rule
-  - Sentence 4: Optional - relate to common applications
+**For solutionSteps (Number Systems & Arithmetic):**
+- Step 1: Clearly define the starting value/expression and goal (e.g. converting a value, finding positional value, complements, arithmetic operations)
+- Step 2: Perform the primary calculation/conversion step, showing intermediate values (e.g. dividing by base, multiplying weights, inverting bits)
+- Step 3: Complete subsequent steps, showing all calculations explicitly
+- Final Step: Conclude with the final result and relate it directly to the correct answer choice
+- ALWAYS write detailed, easy-to-follow explanations so students can learn from mistakes!`;
 
-- **Incorrect options**: 2-3 sentences minimum
-  - Sentence 1: Identify the specific error or misconception
-  - Sentence 2: Explain what would be needed for this to be correct
-  - Sentence 3: Optional - show correct calculation for comparison
-
+  const logicVerificationSection = isLogicVisualLesson ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ LOGIC VERIFICATION (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -353,7 +423,68 @@ You MUST verify answers in "_reasoning" field:
 - RIGHT: Expression "Y = A' + B' + C" with table columns [A, B, C] ✓
 - RIGHT: Expression "Y = A·B·C'" with table columns [A, B, C] ✓
 
-DO NOT HALLUCINATE. Verify before outputting.
+DO NOT HALLUCINATE. Verify before outputting.` : `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You MUST verify answers in "_reasoning" field:
+- Check all conversions and calculations manually.
+- Double-check positional powers (e.g. 2^0 = 1, 2^1 = 2, 2^2 = 4, 8^0 = 1, 8^1 = 8, 16^0 = 1, 16^1 = 16).
+- Ensure that subtraction borrows and addition carries are calculated correctly for binary arithmetic.
+- Verify complement calculations (1's complement = flip all bits; 2's complement = flip all bits and add 1).
+
+DO NOT HALLUCINATE. Verify before outputting.`;
+
+  const correctOptionRationaleDesc = `
+**For rationale (ALL OPTIONS):**
+- **Correct option**: 3-4 sentences minimum
+  - Sentence 1: State why it's correct
+  - Sentence 2: Show mathematical verification
+  - Sentence 3: Connect to underlying concept/rule
+  - Sentence 4: Optional - relate to common applications
+
+- **Incorrect options**: 2-3 sentences minimum
+  - Sentence 1: Identify the specific error or misconception
+  - Sentence 2: Explain what would be needed for this to be correct
+  - Sentence 3: Optional - show correct calculation for comparison`;
+
+  return `
+You are a distinguished University Professor of Digital Logic and Boolean Algebra. Your task is to generate a focused, high-quality **10-question** assessment for a single lesson.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 LESSON: ${context.lessonTitle} (Lesson ID: ${context.lessonId})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${getLessonGuidelines(context.lessonId)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 TOPIC-SPECIFIC REQUIREMENTS (MUST FOLLOW EXACTLY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${topicInstructions}
+
+${difficultyGuidelines}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 MANDATORY: GENERATE EXACTLY ${context.totalQuestions} QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ CRITICAL RULES:
+1. **MATCH DIFFICULTY TO TOPIC**: Each question's difficulty MUST match the topic's assigned difficulty
+2. **EXACT QUESTION COUNT**: Generate exactly ${context.topics.map(t => t.questionCount).join(' + ')} = ${context.totalQuestions} questions
+3. **CORRECT TOPIC IDs**: Each question must have the correct topicId from above
+4. **NO MEMORIZATION**: Use "Calculate", "Analyze", "Design", "Simplify" - NOT "Define" or "What is"
+5. **ONE CORRECT ANSWER**: Exactly one option must be correct with clear mathematical justification
+
+${visualFormatsSection}
+
+${outputFormatSection}
+
+${criticalRequirementsSection}
+
+${correctOptionRationaleDesc}
+
+${logicVerificationSection}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🚀 GENERATE ${context.totalQuestions} QUESTIONS NOW
@@ -361,7 +492,72 @@ DO NOT HALLUCINATE. Verify before outputting.
 
 Remember:
 ${context.topics.map(t => `- ${t.topicTitle}: ${t.questionCount} ${t.difficulty.toUpperCase()} questions`).join('\n')}
-
 Total: ${context.totalQuestions} questions in valid JSON array format.
+`;
+}
+
+/**
+ * Build the fallback lesson-specific quiz prompt
+ * This is a stripped down version of the prompt designed specifically for smaller,
+ * lower-context models (like llama-3.1-8b-instant). It removes complex JSON properties
+ * like reasoning, solutionSteps, and incorrect rationales.
+ */
+export function buildFallbackLessonQuizPrompt(context: LessonQuizContext): string {
+  const topicInstructions = context.topics.map(topic => {
+    return `
+📚 **${topic.topicTitle}** (Topic ID: ${topic.topicId})
+   - Difficulty: **${topic.difficulty.toUpperCase()}**
+   - Questions: **${topic.questionCount}**
+   - Content Summary: ${topic.contentText.substring(0, 150)}...`;
+  }).join('\n');
+
+  const outputFormatSection = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📤 OUTPUT FORMAT (JSON ARRAY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return ONLY a valid JSON array. No markdown, no text before/after.
+
+[
+  {
+    "lessonId": ${context.lessonId},
+    "topicId": <topic_id_from_above>,
+    "difficulty": "<easy|medium|hard matching topic>",
+    "stem": "<pure string stem>",
+    "questionType": "multiple-choice",
+    "tags": ["<valid-tags-from-topic>"],
+    "options": [
+      { "id": "opt_a", "text": "Option A", "isCorrect": false },
+      { "id": "opt_b", "text": "Option B", "isCorrect": true, "rationale": "Briefly explain why this is CORRECT." },
+      { "id": "opt_c", "text": "Option C", "isCorrect": false },
+      { "id": "opt_d", "text": "Option D", "isCorrect": false }
+    ],
+    "answerId": "opt_b",
+    "explanation": "Brief explanation of the correct answer."
+  }
+]
+`;
+
+  return `
+You are a Digital Logic quiz generator. Generate a focused **${context.totalQuestions}-question** assessment.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 LESSON: ${context.lessonTitle} (Lesson ID: ${context.lessonId})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${getLessonGuidelines(context.lessonId)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 TOPICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${topicInstructions}
+
+⚠️ CRITICAL RULES:
+1. NO VISUAL FORMATS (no circuits, no truth tables). Stems must be TEXT ONLY.
+2. Generate EXACTLY ${context.totalQuestions} questions.
+3. Only the correct option should have a "rationale" string.
+4. Return ONLY raw JSON array.
+
+${outputFormatSection}
 `;
 }

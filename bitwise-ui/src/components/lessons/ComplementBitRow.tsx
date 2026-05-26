@@ -97,23 +97,21 @@ export function ComplementBitRow() {
 
   const resumeAnimation = () => {
     if (phase === 'PAUSED') {
-      if (phase === 'PAUSED') {
-        // Figure out which phase we were in before pausing
-        if (cascadeStepIdx >= 0) {
-          setPhase('CASCADE');
-          autoPlayIntervalRef.current = setInterval(() => {
-            setCascadeStepIdx((prev) => {
-              if (resultData && prev >= resultData.cascadeSteps.length - 1) {
-                clearInterval(autoPlayIntervalRef.current!);
-                setPhase('DONE');
-                return prev;
-              }
-              return prev + 1;
-            });
-          }, 800);
-        } else if (phase === 'PAUSE_ONES' || phase === 'FLIP') {
-          startAnimation();
-        }
+      // Figure out which phase we were in before pausing
+      if (cascadeStepIdx >= 0) {
+        setPhase('CASCADE');
+        autoPlayIntervalRef.current = setInterval(() => {
+          setCascadeStepIdx((prev) => {
+            if (resultData && prev >= resultData.cascadeSteps.length - 1) {
+              clearInterval(autoPlayIntervalRef.current!);
+              setPhase('DONE');
+              return prev;
+            }
+            return prev + 1;
+          });
+        }, 800);
+      } else {
+        startAnimation();
       }
     }
   };
@@ -206,7 +204,7 @@ export function ComplementBitRow() {
           {resultData && (phase !== 'IDLE') && (
             <div className="text-xs text-muted-foreground font-mono space-y-1">
               <div>Original: {originalValue}</div>
-              {(phase !== 'IDLE') && <div className="text-primary">1's Complement: {onesComplement}</div>}
+              <div className="text-primary">1's Complement: {onesComplement}</div>
               {(phase === 'CASCADE' || phase === 'DONE' || phase === 'PAUSED') && (
                 <div className="text-emerald-600 dark:text-emerald-400 font-bold">
                   2's Complement: {twosComplement}

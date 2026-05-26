@@ -146,14 +146,29 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
 
     try {
       const groq = createGroq({ apiKey: groqApiKey });
+      let text = '';
 
-      const { text } = await (generateText as any)({
-        model: groq('llama-3.3-70b-versatile'),
-        system: systemPrompt,
-        prompt: userPrompt,
-        maxTokens: 4096,
-        temperature: 0.7,
-      });
+      try {
+        this.logger.log(`Attempting to generate quiz with llama-3.3-70b-versatile...`);
+        const result = await (generateText as any)({
+          model: groq('llama-3.3-70b-versatile'),
+          system: systemPrompt,
+          prompt: userPrompt,
+          maxTokens: 4096,
+          temperature: 0.7,
+        });
+        text = result.text;
+      } catch (primaryError: any) {
+        this.logger.warn(`Primary model failed: ${primaryError.message}. Falling back to llama-3.1-8b-instant...`);
+        const fallbackResult = await (generateText as any)({
+          model: groq('llama-3.1-8b-instant'),
+          system: systemPrompt,
+          prompt: userPrompt,
+          maxTokens: 4096,
+          temperature: 0.7,
+        });
+        text = fallbackResult.text;
+      }
 
       this.logger.log(`Groq response received, parsing JSON...`);
 
