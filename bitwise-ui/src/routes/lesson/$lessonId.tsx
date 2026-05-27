@@ -348,21 +348,21 @@ function RouteComponent() {
   const getToolForLesson = (lessonId: number) => {
     switch (lessonId) {
       case 1:
-        return 'calculator'
       case 2:
-        return 'circuit'
       case 3:
-        return 'kmap'
-      case 5:
       case 6:
       case 7:
-      case 10:
-      case 11:
         return 'converter'
-      case 8:
+      case 4:
         return 'arithmetic'
-      case 9:
+      case 5:
         return 'complements'
+      case 8:
+        return 'calculator'
+      case 9:
+        return 'circuit'
+      case 10:
+        return 'kmap'
       default:
         return null
     }
@@ -370,17 +370,17 @@ function RouteComponent() {
 
   // Map lesson ID to AI quiz topic slug
   const lessonToQuizTopic: Record<number, string> = {
-    1: 'boolean-algebra',
-    2: 'logic-gates',
-    3: 'truth-tables',
-    4: 'boolean-algebra',
-    5: 'number-systems',
+    1: 'number-systems',
+    2: 'number-systems',
+    3: 'number-systems',
+    4: 'binary-arithmetic',
+    5: 'complements',
     6: 'number-systems',
     7: 'number-systems',
-    8: 'binary-arithmetic',
-    9: 'complements',
-    10: 'number-systems',
-    11: 'number-systems',
+    8: 'boolean-algebra',
+    9: 'logic-gates',
+    10: 'truth-tables',
+    11: 'boolean-algebra',
   }
   const quizTopic = lesson ? lessonToQuizTopic[lesson.id] : null
 

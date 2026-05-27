@@ -40,30 +40,30 @@ async function fetchAttempt(attemptId: number) {
   return result.data
 }
 
-// Mapping from topic/tag to lessonIdFf
+// Mapping from topic/tag to lessonId
 const topicToLessonId: Record<string, number> = {
-  intro: 1,
-  'boolean-values': 1,
-  applications: 1,
-  'and-gate': 2,
-  'or-gate': 2,
-  'not-gate': 2,
-  'nand-gate': 2,
-  'nor-gate': 2,
-  'xor-gate': 2,
-  'xnor-gate': 2,
-  'truth-table-construction': 3,
-  'truth-table-reading': 3,
-  'truth-table-for-gates': 3,
-  'identity-law': 4,
-  'null-law': 4,
-  'idempotent-law': 4,
-  'inverse-law': 4,
-  'commutative-law': 4,
-  'absorption-law': 4,
-  'distributive-law': 4,
-  simplification: 4,
-  'karnaugh-maps': 4,
+  intro: 8,
+  'boolean-values': 8,
+  applications: 8,
+  'and-gate': 9,
+  'or-gate': 9,
+  'not-gate': 9,
+  'nand-gate': 9,
+  'nor-gate': 9,
+  'xor-gate': 9,
+  'xnor-gate': 9,
+  'truth-table-construction': 10,
+  'truth-table-reading': 10,
+  'truth-table-for-gates': 10,
+  'identity-law': 11,
+  'null-law': 11,
+  'idempotent-law': 11,
+  'inverse-law': 11,
+  'commutative-law': 11,
+  'absorption-law': 11,
+  'distributive-law': 11,
+  simplification: 11,
+  'karnaugh-maps': 11,
 }
 
 // Mapping from topic ID to topic name
@@ -85,10 +85,10 @@ const topicIdToName: Record<number, string> = {
 
 // Mapping from topic ID to lesson ID
 const topicIdToLessonId: Record<number, number> = {
-  1: 1, 2: 1, 3: 1,  // Lesson 1
-  4: 2, 5: 2, 6: 2,  // Lesson 2
-  7: 3, 8: 3, 9: 3,  // Lesson 3
-  10: 4, 11: 4, 12: 4,  // Lesson 4
+  1: 8, 2: 8, 3: 8,     // Lesson 8 (Intro to Boolean Algebra)
+  4: 9, 5: 9, 6: 9,     // Lesson 9 (Logic Gates)
+  7: 10, 8: 10, 9: 10,  // Lesson 10 (Truth Tables)
+  10: 11, 11: 11, 12: 11,  // Lesson 11 (Simplification)
 }
 
 // Component to render truth tables

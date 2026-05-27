@@ -34,7 +34,68 @@ export function getDifficultyFromMastery(mastery: number): 'easy' | 'medium' | '
  */
 function getLessonGuidelines(lessonId: number): string {
   const guidelines: Record<number, string> = {
-    1: `**LESSON 1: Introduction to Boolean Algebra**
+    1: `**LESSON 1: Introduction to Number Systems**
+- Focus: Base-2, base-8, base-10, base-16; positional values; digit representation
+- Question Types: Text-based conceptual questions, positional value calculations
+- Visual Requirement: 10-20% (mostly text-based)
+- EASY: Identify the base/radix of a number, count digits in a base
+- MEDIUM: Positional value of a digit, largest digit allowed in a base
+- HARD: Compare values across bases, identify the number of symbols in a base
+- DO NOT ask about converting between bases (that is Lesson 3)`,
+
+    2: `**LESSON 2: Types of Number Systems**
+- Focus: Relationships between binary, decimal, octal, hex; grouping patterns
+- Question Types: Text questions about relationships and groupings
+- Visual Requirement: 10-20%
+- EASY: Identify which number systems are used in computing, 4-bit grouping = 1 hex digit
+- MEDIUM: Binary-to-hex shortcut (group 4 bits), binary-to-octal (group 3 bits)
+- HARD: Compare grouping schemes, identify patterns across systems
+- DO NOT ask step-by-step conversion procedures`,
+
+    3: `**LESSON 3: Conversion of Number Systems**
+- Focus: Manual conversion between decimal, binary, hex, octal (division/remainder, expansion)
+- Question Types: Step-by-step conversion calculations
+- Visual Requirement: 10-20%
+- EASY: Convert small decimal to binary (≤16) or binary to decimal
+- MEDIUM: Convert decimal to hex/octal or hex to binary
+- HARD: Multi-step conversions (decimal → hex → binary)
+- Always show intermediate calculation steps in solutionSteps`,
+
+    4: `**LESSON 4: Binary Arithmetic**
+- Focus: Binary addition, subtraction, multiplication, division
+- Question Types: Arithmetic calculation problems
+- Visual Requirement: 10-20%
+- EASY: Single-bit addition (with carry), 4-bit + 4-bit without overflow
+- MEDIUM: 4-8 bit addition with carry chain, binary subtraction with borrow
+- HARD: Multi-byte addition, binary multiplication (shift-and-add)
+- Show binary arithmetic working column-by-column in solutionSteps`,
+
+    5: `**LESSON 5: Complements**
+- Focus: 1's complement (bit inversion), 2's complement (invert + 1), cascading carry
+- Question Types: Complement calculation problems
+- Visual Requirement: 10-20%
+- EASY: 1's complement of a 4-bit number (just invert)
+- MEDIUM: 2's complement of a 6-8 bit number
+- HARD: Use 2's complement to perform subtraction (A - B = A + ~B + 1)
+- DO NOT ask about overflow conditions or signed interpretation (MSB)`,
+
+    6: `**LESSON 6: Signed and Unsigned Numbers**
+- Focus: MSB role, signed vs unsigned interpretation, range calculations
+- Question Types: Interpretation and range calculation problems
+- Visual Requirement: 10-20%
+- EASY: Identify MSB of a binary number, determine if signed or unsigned
+- MEDIUM: Calculate the range of n-bit signed vs unsigned numbers
+- HARD: Interpret the same binary pattern as both signed and unsigned`,
+
+    7: `**LESSON 7: Binary Codes (BCD & ASCII)**
+- Focus: BCD encoding/decoding, ASCII character codes
+- Question Types: Encoding/decoding calculations
+- Visual Requirement: 10-20%
+- EASY: Convert single decimal digit to BCD (e.g., 7 → 0111)
+- MEDIUM: Convert multi-digit decimal to BCD or BCD to decimal
+- HARD: Identify invalid BCD codes, ASCII character lookups`,
+
+    8: `**LESSON 8: Introduction to Boolean Algebra**
 - Focus: Basic concepts, Boolean values (0/1, true/false), real-world applications
 - Question Types: Text-based conceptual questions, simple calculations
 - Visual Requirement: 20-30% (mostly text-based)
@@ -43,7 +104,7 @@ function getLessonGuidelines(lessonId: number): string {
 - HARD: Complex application scenarios, edge cases
 - Example stems: "Calculate A OR B when A=1, B=0", "Which expression equals 1?"`,
 
-    2: `**LESSON 2: Logic Gates**
+    9: `**LESSON 9: Logic Gates**
 - Focus: AND, OR, NOT, NAND, NOR, XOR, XNOR gate behavior and symbols
 - Question Types: **MUST USE CIRCUIT DIAGRAMS AND TRUTH TABLES**
 - Visual Requirement: 80-90% (circuits and tables are essential)
@@ -52,7 +113,7 @@ function getLessonGuidelines(lessonId: number): string {
 - HARD: 3+ gate circuits, complex signal tracing
 - Limit truth tables to 2 questions max; prefer circuits`,
 
-    3: `**LESSON 3: Truth Tables**
+    10: `**LESSON 10: Truth Tables**
 - Focus: Reading and analyzing truth tables to derive expressions
 - Question Types: **TRUTH TABLES AND ALGEBRAIC EXPRESSIONS** (READ ONLY - DO NOT ASK TO CONSTRUCT)
 - Visual Requirement: 60-70% (truth tables are the focus)
@@ -62,7 +123,7 @@ function getLessonGuidelines(lessonId: number): string {
 - **CRITICAL**: Always provide the truth table in the question. Ask students to READ/ANALYZE it, NOT to construct it
 - Example: "Given the truth table below, which expression represents the output Y?"`,
 
-    4: `**LESSON 4: Simplification & K-Maps**
+    11: `**LESSON 11: Simplification & K-Maps**
 - Focus: Boolean laws, Karnaugh maps, SOP/POS optimization
 - Question Types: **KARNAUGH MAPS AND ALGEBRAIC SIMPLIFICATION**
 - Visual Requirement: 70-80% (K-maps for optimization, text for laws)
@@ -70,67 +131,6 @@ function getLessonGuidelines(lessonId: number): string {
 - MEDIUM: Multi-law simplification, 3-variable K-map grouping
 - HARD: Complex expressions, 4-variable K-maps, optimal grouping
 - Use K-maps for visual questions, text for law application`,
-
-    5: `**LESSON 5: Introduction to Number Systems**
-- Focus: Base-2, base-8, base-10, base-16; positional values; digit representation
-- Question Types: Text-based conceptual questions, positional value calculations
-- Visual Requirement: 10-20% (mostly text-based)
-- EASY: Identify the base/radix of a number, count digits in a base
-- MEDIUM: Positional value of a digit, largest digit allowed in a base
-- HARD: Compare values across bases, identify the number of symbols in a base
-- DO NOT ask about converting between bases (that is Lesson 7)`,
-
-    6: `**LESSON 6: Types of Number Systems**
-- Focus: Relationships between binary, decimal, octal, hex; grouping patterns
-- Question Types: Text questions about relationships and groupings
-- Visual Requirement: 10-20%
-- EASY: Identify which number systems are used in computing, 4-bit grouping = 1 hex digit
-- MEDIUM: Binary-to-hex shortcut (group 4 bits), binary-to-octal (group 3 bits)
-- HARD: Compare grouping schemes, identify patterns across systems
-- DO NOT ask step-by-step conversion procedures`,
-
-    7: `**LESSON 7: Conversion of Number Systems**
-- Focus: Manual conversion between decimal, binary, hex, octal (division/remainder, expansion)
-- Question Types: Step-by-step conversion calculations
-- Visual Requirement: 10-20%
-- EASY: Convert small decimal to binary (≤16) or binary to decimal
-- MEDIUM: Convert decimal to hex/octal or hex to binary
-- HARD: Multi-step conversions (decimal → hex → binary)
-- Always show intermediate calculation steps in solutionSteps`,
-
-    8: `**LESSON 8: Binary Arithmetic**
-- Focus: Binary addition, subtraction, multiplication, division
-- Question Types: Arithmetic calculation problems
-- Visual Requirement: 10-20%
-- EASY: Single-bit addition (with carry), 4-bit + 4-bit without overflow
-- MEDIUM: 4-8 bit addition with carry chain, binary subtraction with borrow
-- HARD: Multi-byte addition, binary multiplication (shift-and-add)
-- Show binary arithmetic working column-by-column in solutionSteps`,
-
-    9: `**LESSON 9: Complements**
-- Focus: 1's complement (bit inversion), 2's complement (invert + 1), cascading carry
-- Question Types: Complement calculation problems
-- Visual Requirement: 10-20%
-- EASY: 1's complement of a 4-bit number (just invert)
-- MEDIUM: 2's complement of a 6-8 bit number
-- HARD: Use 2's complement to perform subtraction (A - B = A + ~B + 1)
-- DO NOT ask about overflow conditions or signed interpretation (MSB)`,
-
-    10: `**LESSON 10: BCD and Special Codes**
-- Focus: BCD encoding/decoding, excess-3, Gray code basics
-- Question Types: Encoding/decoding calculations
-- Visual Requirement: 10-20%
-- EASY: Convert single decimal digit to BCD (e.g., 7 → 0111)
-- MEDIUM: Convert multi-digit decimal to BCD or BCD to decimal
-- HARD: Identify invalid BCD codes, convert using Excess-3`,
-
-    11: `**LESSON 11: Gray Code and Hamming**
-- Focus: Gray code conversion (binary↔Gray), single-bit error detection
-- Question Types: Gray code conversion steps
-- Visual Requirement: 10-20%
-- EASY: MSB of Gray code = MSB of binary; next bit = XOR with previous
-- MEDIUM: Convert 4-bit binary to Gray or vice versa
-- HARD: Apply Gray code in sequencing (count without multiple bit changes)`
   };
 
   return guidelines[lessonId] || `**Lesson ${lessonId}**
@@ -157,7 +157,7 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
    - Tags to use: ${topic.tags.join(', ')}
    - Content Summary: ${topic.contentText.substring(0, 300)}...`;
   }).join('\n');
-  const isLogicVisualLesson = [2, 3, 4].includes(context.lessonId);
+  const isLogicVisualLesson = [9, 10, 11].includes(context.lessonId);
 
   const difficultyGuidelines = isLogicVisualLesson ? `
 📊 DIFFICULTY GUIDELINES:
@@ -210,7 +210,7 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
 📐 VISUAL ELEMENT FORMATS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**TYPE 1: TRUTH TABLE** (for Lessons 2, 3)
+**TYPE 1: TRUTH TABLE** (for Lessons 9, 10)
 {
   "type": "table",
   "table": {
@@ -220,7 +220,7 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
   }
 }
 
-**TYPE 2: CIRCUIT DIAGRAM** (for Lesson 2)
+**TYPE 2: CIRCUIT DIAGRAM** (for Lesson 9)
 {
   "type": "circuit",
   "circuit": {
@@ -282,7 +282,7 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
   }
 }
 
-**TYPE 3: KARNAUGH MAP** (for Lesson 4)
+**TYPE 3: KARNAUGH MAP** (for Lesson 11)
 {
   "type": "karnaughMap",
   "karnaughMap": {
@@ -293,7 +293,7 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
   }
 }
 
-**TYPE 4: TEXT-ONLY** (for Lessons 1, 3, 4 algebraic)
+**TYPE 4: TEXT-ONLY** (for Lessons 8, 10, 11 algebraic)
 Just use a string: "Simplify the expression: A + A·B"
 ` : `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -364,8 +364,8 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   const criticalRequirementsSection = isLogicVisualLesson ? `
 ⚠️ **CRITICAL REQUIREMENTS FOR solutionSteps AND rationale:**
 
-**For solutionSteps (Lessons 2, 3, 4 - PROBLEM SOLVING):**
-- **LESSON 2 (Logic Gates)**: 
+**For solutionSteps (Lessons 9, 10, 11 - PROBLEM SOLVING):**
+- **LESSON 9 (Logic Gates)**: 
   - Step 1: Identify the gate types and inputs
   - Step 2: Trace signal through first gate with specific values
   - Step 3: Show intermediate outputs
@@ -373,7 +373,7 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   - Step 5: Derive final expression or output
   - Example: "Apply NOT to A (1) → A' = 0", "AND gate: A'(0) AND B(1) = 0"
 
-- **LESSON 3 (Truth Tables)**:
+- **LESSON 10 (Truth Tables)**:
   - Step 1: Examine the provided truth table and identify the pattern
   - Step 2: Look at rows where output Y = 1 (identify minterms)
   - Step 3: Write the expression for each minterm (e.g., A'B'C for row where A=0, B=0, C=1 gives Y=1)
@@ -382,7 +382,7 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   - Step 6: Verify by checking the expression against the table
   - Example: "Rows with Y=1: [0,0,0], [0,1,1] → Minterms: A'B'C' + A'BC → Expression found"
 
-- **LESSON 4 (Simplification & K-Maps)**:
+- **LESSON 11 (Simplification & K-Maps)**:
   - Step 1: Write the original expression
   - Step 2: Identify groupings in K-map or applicable Boolean law
   - Step 3: Apply law/grouping (show explicitly: A + A'B = A + B by Absorption)
@@ -390,7 +390,7 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   - Step 5: Verify by truth table or expansion
   - Example: "Group cells [1,3]: A'B' + A'B = A'(B'+B) = A'(1) = A'"
 
-- **LESSON 1**: Can use simpler steps (2-3 steps) for conceptual questions` : `
+- **LESSON 8**: Can use simpler steps (2-3 steps) for conceptual questions` : `
 ⚠️ **CRITICAL REQUIREMENTS FOR solutionSteps AND rationale:**
 
 **For solutionSteps (Number Systems & Arithmetic):**

@@ -15,14 +15,15 @@ export const Route = createFileRoute('/quiz/$topic')({
 })
 
 // Fallback map used only when no lessonId is in the URL (e.g. direct navigation)
+// Values are database IDs for the next lesson in display order
 const topicToNextLesson: Record<string, number> = {
-  'boolean-algebra': 2,
-  'logic-gates': 3,
-  'truth-tables': 4,
-  'number-systems': 8,
-  'binary-arithmetic': 9,
-  'complements': 10,
-  'karnaugh-maps': 5,
+  'number-systems': 4,       // After number systems → Binary Arithmetic (lesson 4)
+  'binary-arithmetic': 5,    // After binary arithmetic → Complements (lesson 5)
+  'complements': 6,          // After complements → Signed/Unsigned (lesson 6)
+  'boolean-algebra': 9,      // After boolean algebra → Logic Gates (lesson 9)
+  'logic-gates': 10,         // After logic gates → Truth Tables (lesson 10)
+  'truth-tables': 11,        // After truth tables → Simplification (lesson 11)
+  'karnaugh-maps': 8,        // After karnaugh maps → Intro to Boolean Algebra (lesson 8)
 }
 
 function RouteComponent() {
@@ -39,9 +40,11 @@ function RouteComponent() {
 
   if (!user) return null
 
-  // If we came from a lesson page, go to the very next lesson (lessonId + 1).
-  // Otherwise fall back to the topic→next-lesson map for direct URL navigation.
-  const nextLessonId = lessonId ? lessonId + 1 : topicToNextLesson[topic]
+  // IDs are now sequential (1-11), so lessonId + 1 works for next lesson.
+  // Cap at 11 (last lesson). Fall back to the topic→next-lesson map for direct URL navigation.
+  const nextLessonId = lessonId
+    ? (lessonId < 11 ? lessonId + 1 : undefined)
+    : topicToNextLesson[topic]
 
   return (
     <div className="min-h-screen bg-background">
