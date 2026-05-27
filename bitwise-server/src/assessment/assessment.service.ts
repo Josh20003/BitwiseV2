@@ -467,6 +467,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
       return {
         ...q,
+        id: q.id || `q-${Date.now()}-${index}`,
         difficulty: recommendations.recommendedDifficulty,
         tags: (q.tags || []).filter((tag: string) => this.allowedTags.includes(tag)),
         // Ensure required fields
@@ -754,6 +755,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
         return {
           ...q,
+          id: q.id || `q-${Date.now()}-${index}`,
           questionType: q.questionType || 'multiple-choice',
           solutionSteps: q.solutionSteps || ['Analyze the problem', 'Apply relevant concepts', 'Verify the answer']
         };
