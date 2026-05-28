@@ -105,11 +105,6 @@ const lessons: Lesson[] = [
         title: 'Hexadecimal',
         description: 'The base-16 system used in programming and memory.',
       },
-      {
-        id: '1-5',
-        title: 'Radix Slider Visualizer',
-        description: 'See how values look across different bases.',
-      },
     ],
   },
   {
@@ -134,11 +129,6 @@ const lessons: Lesson[] = [
         title: 'Digit Groupings',
         description: 'Nibbles, bytes, and words explained.',
       },
-      {
-        id: '2-4',
-        title: 'Color-coded Comparison Grid',
-        description: 'Side-by-side comparison of all four systems.',
-      },
     ],
   },
   {
@@ -162,11 +152,6 @@ const lessons: Lesson[] = [
         id: '3-3',
         title: 'Hex Conversion',
         description: 'Convert between hex, binary, decimal, and octal.',
-      },
-      {
-        id: '3-4',
-        title: 'Step-by-step Conversion Trees',
-        description: 'Visualize the best conversion paths.',
       },
     ],
   },
@@ -197,11 +182,6 @@ const lessons: Lesson[] = [
         title: 'Division',
         description: 'Binary long division step by step.',
       },
-      {
-        id: '4-5',
-        title: 'Carry/Borrow Animation',
-        description: 'Visualize carry chains and borrow propagation.',
-      },
     ],
   },
   {
@@ -225,11 +205,6 @@ const lessons: Lesson[] = [
         id: '5-3',
         title: 'Bit Inversion',
         description: 'The NOT operation foundation.',
-      },
-      {
-        id: '5-4',
-        title: 'Cascading +1 Animation',
-        description: 'Visualize carry propagation in +1 step.',
       },
     ],
   },
@@ -255,11 +230,6 @@ const lessons: Lesson[] = [
         title: 'Unsigned Representation',
         description: 'Non-negative values with wider range.',
       },
-      {
-        id: '6-4',
-        title: 'Sign Bit Visualizer',
-        description: 'See how MSB changes interpretation.',
-      },
     ],
   },
   {
@@ -283,11 +253,6 @@ const lessons: Lesson[] = [
         id: '7-3',
         title: 'Character-to-Binary Translator',
         description: 'Convert text to binary and back.',
-      },
-      {
-        id: '7-4',
-        title: 'Split-screen Visualizer',
-        description: 'BCD vs ASCII side-by-side comparison.',
       },
     ],
   },
