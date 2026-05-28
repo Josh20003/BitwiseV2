@@ -323,40 +323,40 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
     "questionType": "multiple-choice",
     "tags": ["<valid-tags-from-topic>"],
     "_reasoning": "Internal verification of the correct answer (not shown to user)",
-    "options": [
-      {
-        "id": "opt_a", 
-        "text": "Option A", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Point out the specific error or misconception."
-      },
-      {
-        "id": "opt_b", 
-        "text": "Option B", 
-        "isCorrect": true, 
-        "rationale": "Comprehensive explanation why this is CORRECT. Justify with mathematical reasoning, show verification, and connect to concepts."
-      },
-      {
-        "id": "opt_c", 
-        "text": "Option C", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Identify the mistake made."
-      },
-      {
-        "id": "opt_d", 
-        "text": "Option D", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Clarify the misconception."
-      }
-    ],
-    "answerId": "opt_b",
     "solutionSteps": [
       "Step 1: State the problem or calculation to be performed.",
       "Step 2: Show the first calculation or conversion step.",
       "Step 3: Show intermediate calculation steps or comparisons.",
       "Step 4: Execute the final calculation or conversion stage.",
       "Final Step: Conclude with the final result matching the correct option."
-    ]
+    ],
+    "options": [
+      {
+        "id": "opt_a", 
+        "text": "First conceptually distinct distractor", 
+        "isCorrect": false, 
+        "rationale": "Detailed explanation why this is WRONG. Point out the specific error or misconception."
+      },
+      {
+        "id": "opt_b", 
+        "text": "Correct Answer", 
+        "isCorrect": true, 
+        "rationale": "Comprehensive explanation why this is CORRECT. Justify with mathematical reasoning, show verification, and connect to concepts."
+      },
+      {
+        "id": "opt_c", 
+        "text": "Second conceptually distinct distractor", 
+        "isCorrect": false, 
+        "rationale": "Detailed explanation why this is WRONG. Identify the mistake made."
+      },
+      {
+        "id": "opt_d", 
+        "text": "Third conceptually distinct distractor", 
+        "isCorrect": false, 
+        "rationale": "Detailed explanation why this is WRONG. Clarify the misconception."
+      }
+    ],
+    "answerId": "opt_b"
   }
 ]
 `;
@@ -455,6 +455,16 @@ You are a distinguished University Professor of Digital Logic and Boolean Algebr
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 LESSON: ${context.lessonTitle} (Lesson ID: ${context.lessonId})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
+- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
+- "Medium": Requires combining 2 or more concepts or multi-step execution.
+- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting.
+
+🛑 STRICT OPTION UNIQUENESS & INTEGRITY CONSTRAINTS:
+- Each of the 4 choices generated must be completely distinct in both text and conceptual meaning. Under no circumstances may two options evaluate to or display the same value.
+- Distractors (incorrect choices) must be derived from common student misconceptions or logical slips related to the question, not random filler data.
+- The 'answerId' must point exclusively to the correct option that matches your 'solutionSteps'.
 
 ${getLessonGuidelines(context.lessonId)}
 

@@ -404,11 +404,10 @@ private async calculateDifficultyProgression(userId: string): Promise<{
     };
 
     const prompt = buildAdaptiveQuizPrompt(promptContext);
-    const fallbackPrompt = buildFallbackAdaptiveQuizPrompt(promptContext);
 
     const requestQuestions = async () => {
       try {
-        const text = await this.llmProvider.generateWithFailover(prompt, fallbackPrompt);
+        const text = await this.llmProvider.generateStrict(prompt);
         return await this.extractJsonArray(text);
       } catch (err) {
         console.warn('Failed to generate or parse JSON:', err.message);
@@ -660,13 +659,13 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
       // Generate questions using AI
       const prompt = buildLessonQuizPrompt(promptContext);
-      const fallbackPrompt = buildFallbackLessonQuizPrompt(promptContext);
       
       console.log(`Generating ${totalQuestions} questions using LlmProviderService...`);
 
-      const requestQuestions = async () => {
+      const requestQuestions = async (attempt: number = 1): Promise<any[] | null> => {
         try {
-          const text = await this.llmProvider.generateWithFailover(prompt, fallbackPrompt, { maxOutputTokens: 8192 });
+          console.log(`Generation attempt ${attempt} for lesson ${lessonId}...`);
+          const text = await this.llmProvider.generateStrict(prompt, { maxOutputTokens: 8192 });
           return await this.extractJsonArray(text);
         } catch (err) {
           console.warn('Failed to generate or parse JSON:', err.message);

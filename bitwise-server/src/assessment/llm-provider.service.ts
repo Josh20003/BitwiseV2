@@ -7,12 +7,10 @@ export class LlmProviderService {
   private readonly logger = new Logger(LlmProviderService.name);
 
   /**
-   * Executes a prompt with the primary model, automatically falling back
-   * to a secondary model and fallback prompt if the primary fails.
+   * Executes a prompt with the primary model strictly, throwing an error if it fails.
    */
-  async generateWithFailover(
+  async generateStrict(
     primaryPrompt: string,
-    fallbackPrompt: string,
     options?: {
       temperature?: number;
       topP?: number;
@@ -34,24 +32,8 @@ export class LlmProviderService {
       });
       return primaryResult.text;
     } catch (primaryError: any) {
-      this.logger.warn(`Primary model failed: ${primaryError.message}. Initiating failover.`);
-      
-      // Attempt Fallback Model with simplified prompt
-      try {
-        const fallbackModel = 'llama-3.1-8b-instant';
-        this.logger.log(`Executing fallback prompt with model: ${fallbackModel}`);
-        const fallbackResult = await generateText({
-          model: groq(fallbackModel),
-          prompt: fallbackPrompt,
-          temperature: Math.max(0.1, temp - 0.1), // Slightly lower temp for consistency
-          topP: topP,
-          maxOutputTokens: 2048, // Reduced token limit for smaller model
-        });
-        return fallbackResult.text;
-      } catch (fallbackError: any) {
-        this.logger.error(`Fallback model also failed: ${fallbackError.message}`);
-        throw new Error(`AI generation failed completely. Primary: ${primaryError.message}, Fallback: ${fallbackError.message}`);
-      }
+      this.logger.error(`Primary model failed: ${primaryError.message}. No fallback configured.`);
+      throw primaryError;
     }
   }
 }

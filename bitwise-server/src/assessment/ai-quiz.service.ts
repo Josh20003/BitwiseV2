@@ -109,18 +109,28 @@ STRICT SCOPE BOUNDARIES:
 4. Options: Create exactly 4 plausible options. The incorrect options must be common mistakes related ONLY to the permitted scope. Never include labels like "Option A" or "(Correct)" in the text.
 5. Output format: Return STRICTLY as a raw JSON object matching the exact schema below. No markdown formatting, backticks, or conversational text.
 
-REQUIRED JSON SCHEMA:
+🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
+- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
+- "Medium": Requires combining 2 or more concepts or multi-step execution.
+- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting.
+
+🛑 STRICT OPTION UNIQUENESS & INTEGRITY CONSTRAINTS:
+- Each of the 4 choices generated must be completely distinct in both text and conceptual meaning. Under no circumstances may two options evaluate to or display the same value.
+- Distractors (incorrect choices) must be derived from common student misconceptions or logical slips related to the question, not random filler data.
+- Verify that exactly ONE option matches your 'stepByStepDerivation' perfectly. The 'correctOptionIndex' must point exclusively to that option.
+
+REQUIRED JSON SCHEMA (You MUST output the fields in this exact order):
 [
   {
     "question": "The specific question text.",
+    "stepByStepDerivation": "Perform the required math/logic and explicitly derive the correct answer first.",
     "options": [
-      "First option",
-      "Second option",
-      "Third option",
-      "Fourth option"
+      "First conceptually distinct option",
+      "Second conceptually distinct option",
+      "Third conceptually distinct option",
+      "Fourth conceptually distinct option"
     ],
-    "correctOptionIndex": 0, 
-    "explanation": "Explanation of the correct answer, referencing ONLY the permitted scope."
+    "correctOptionIndex": 0
   }
 ]`;
 
@@ -159,15 +169,8 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
         });
         text = result.text;
       } catch (primaryError: any) {
-        this.logger.warn(`Primary model failed: ${primaryError.message}. Falling back to llama-3.1-8b-instant...`);
-        const fallbackResult = await (generateText as any)({
-          model: groq('llama-3.1-8b-instant'),
-          system: systemPrompt,
-          prompt: userPrompt,
-          maxTokens: 4096,
-          temperature: 0.7,
-        });
-        text = fallbackResult.text;
+        this.logger.error(`llama-3.3-70b-versatile failed: ${primaryError.message}. No fallback configured.`);
+        throw primaryError;
       }
 
       this.logger.log(`Groq response received, parsing JSON...`);
@@ -183,7 +186,7 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
         question: string;
         options: string[];
         correctOptionIndex: number;
-        explanation: string;
+        stepByStepDerivation: string;
       }> = JSON.parse(jsonMatch[0]);
 
       if (!Array.isArray(parsed) || parsed.length === 0) {
@@ -201,7 +204,7 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
           question: q.question,
           options: q.options,
           correctAnswer: q.options[idx],
-          explanation: q.explanation,
+          explanation: q.stepByStepDerivation,
         };
       });
 

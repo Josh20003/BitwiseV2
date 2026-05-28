@@ -46,6 +46,16 @@ Create questions that test DEEP UNDERSTANDING, PROBLEM-SOLVING, and APPLICATION.
 Avoid trivial definition questions. Focus on analysis, synthesis, and evaluation.
 Pay EXTRA attention to the user's weakest topics identified above.
 
+🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
+- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
+- "Medium": Requires combining 2 or more concepts or multi-step execution.
+- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting.
+
+🛑 STRICT OPTION UNIQUENESS & INTEGRITY CONSTRAINTS:
+- Each of the 4 choices generated must be completely distinct in both text and conceptual meaning. Under no circumstances may two options evaluate to or display the same value.
+- Distractors (incorrect choices) must be derived from common student misconceptions or logical slips related to the question, not random filler data.
+- The 'answerId' must point exclusively to the correct option that matches your 'solutionSteps'.
+
 🎯 MANDATORY: GENERATE EXACTLY ${context.totalQuestions || 30} QUESTIONS - NO MORE, NO LESS! 🎯
 
 QUESTION DISTRIBUTION (Total ${context.totalQuestions || 30}) - MUST BE STRICTLY FOLLOWED:
@@ -168,15 +178,15 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
     },
     "questionType": "multiple-choice",
     "tags": ["valid-tag-1", "valid-tag-2"],
+    "solutionSteps": ["Step 1...", "Step 2..."],
     "_reasoning": "Step-by-step logic used to generate this question and verify the answer.",
     "options": [
-      {"id": "opt_a", "text": "Distractor 1", "isCorrect": false, "explanation": "Why wrong"},
+      {"id": "opt_a", "text": "First conceptually distinct distractor", "isCorrect": false, "explanation": "Why wrong"},
       {"id": "opt_b", "text": "Correct Answer", "isCorrect": true, "explanation": "Why right"},
-      {"id": "opt_c", "text": "Distractor 2", "isCorrect": false, "explanation": "Why wrong"},
-      {"id": "opt_d", "text": "Distractor 3", "isCorrect": false, "explanation": "Why wrong"}
+      {"id": "opt_c", "text": "Second conceptually distinct distractor", "isCorrect": false, "explanation": "Why wrong"},
+      {"id": "opt_d", "text": "Third conceptually distinct distractor", "isCorrect": false, "explanation": "Why wrong"}
     ],
-    "answerId": "opt_b",
-    "solutionSteps": ["Step 1...", "Step 2..."]
+    "answerId": "opt_b"
   }
 ]
 
