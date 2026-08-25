@@ -10,7 +10,8 @@ import {
 import { useAuthContext } from '@/contexts/AuthContext'
 
 import { Button } from '@/components/ui/button'
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Brain } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 import { Confetti, type ConfettiRef } from '@/components/magicui/confetti'
 import BitBotGuide from '@/components/BitBotGuide'
 import ToolSpotlight from '@/components/ToolSpotlight'
@@ -146,14 +147,12 @@ function RouteComponent() {
       setCompletionError(null)
       setIsCompleting(true)
       await markCompletedMutation.mutateAsync(topicId)
-      onSuccess()
     } catch (error) {
-      console.error('❌ Error marking topic as completed:', error)
-      setCompletionError(
-        'Failed to mark this topic as completed. Please try again.'
-      )
+      console.warn('⚠️ Could not save topic progress (continuing anyway):', error)
     } finally {
       setIsCompleting(false)
+      // Always proceed — progress tracking should never block navigation
+      onSuccess()
     }
   }
 
@@ -349,15 +348,41 @@ function RouteComponent() {
   const getToolForLesson = (lessonId: number) => {
     switch (lessonId) {
       case 1:
-        return 'calculator'
       case 2:
-        return 'circuit'
       case 3:
+      case 6:
+      case 7:
+        return 'converter'
+      case 4:
+        return 'arithmetic'
+      case 5:
+        return 'complements'
+      case 8:
+        return 'calculator'
+      case 9:
+        return 'circuit'
+      case 10:
         return 'kmap'
       default:
         return null
     }
   }
+
+  // Map lesson ID to AI quiz topic slug
+  const lessonToQuizTopic: Record<number, string> = {
+    1: 'number-systems',
+    2: 'number-systems',
+    3: 'number-systems',
+    4: 'binary-arithmetic',
+    5: 'complements',
+    6: 'number-systems',
+    7: 'number-systems',
+    8: 'boolean-algebra',
+    9: 'logic-gates',
+    10: 'truth-tables',
+    11: 'boolean-algebra',
+  }
+  const quizTopic = lesson ? lessonToQuizTopic[lesson.id] : null
 
   const toolToSpotlight = lesson ? getToolForLesson(lesson.id) : null
 
@@ -472,7 +497,7 @@ function RouteComponent() {
               </div>
             </div>
 
-            <div className="flex gap-4 relative z-10">
+            <div className="flex flex-col sm:flex-row gap-4 relative z-10 items-center">
               <Button
                 variant="outline"
                 className="w-40"
@@ -483,6 +508,14 @@ function RouteComponent() {
               >
                 Restart Lesson
               </Button>
+              {user && quizTopic && (
+                <Link to="/quiz/$topic" params={{ topic: quizTopic }} search={{ lessonId: lesson.id }}>
+                  <Button className="w-52 gap-2 bg-purple-600 hover:bg-purple-700 text-white">
+                    <Brain className="w-4 h-4" />
+                    Take AI Quiz
+                  </Button>
+                </Link>
+              )}
               <Button
                 className="w-40"
                 onClick={() => {

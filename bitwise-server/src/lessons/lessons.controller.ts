@@ -1,12 +1,16 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { LessonsService } from './lessons.service';
+import { LessonsConverterService } from './lessons-converter.service';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { CreateTopicDto, CreateTopicsDto } from './dto/create-topic.dto';
 
 @ApiTags('lessons')
 @Controller('lessons')
 export class LessonsController {
-  constructor(private readonly lessonsService: LessonsService) {}
+  constructor(
+    private readonly lessonsService: LessonsService,
+    private readonly lessonsConverterService: LessonsConverterService
+  ) {}
 
   @Post()
   @ApiBody({
@@ -77,5 +81,25 @@ export class LessonsController {
   @Get('display-content/blocks')
   async getAllDisplayContentBlocks() {
     return this.lessonsService.getAllDisplayContentBlocks();
+  }
+
+  @Post('convert')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        value: { type: 'string', example: '10' },
+        fromBase: { type: 'number', example: 10 },
+        toBase: { type: 'number', example: 2 },
+      },
+      required: ['value', 'fromBase', 'toBase']
+    }
+  })
+  async generateConversionSteps(
+    @Body('value') value: string,
+    @Body('fromBase') fromBase: number,
+    @Body('toBase') toBase: number,
+  ) {
+    return this.lessonsConverterService.generateConversionSteps(value, fromBase, toBase);
   }
 }

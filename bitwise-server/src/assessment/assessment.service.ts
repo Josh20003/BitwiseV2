@@ -2,15 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { generateText } from 'ai';
 import { PrismaService } from 'prisma/prisma.service';
 import { AdaptiveService } from '../adaptive/adaptive.service';
-import { buildAdaptiveQuizPrompt } from './prompts/adaptive-quiz-generation';
-import { buildLessonQuizPrompt, getDifficultyFromMastery, LessonQuizContext } from './prompts/lesson-quiz-generation';
+import { EmaMasteryService } from './ema-mastery.service';
+import { buildAdaptiveQuizPrompt, buildFallbackAdaptiveQuizPrompt } from './prompts/adaptive-quiz-generation';
+import { buildLessonQuizPrompt, buildFallbackLessonQuizPrompt, getDifficultyFromMastery, LessonQuizContext } from './prompts/lesson-quiz-generation';
+import { jsonrepair } from 'jsonrepair';
 import { AI_CONFIG, groq } from '../config/ai.config';
+import { LlmProviderService } from './llm-provider.service';
 
 @Injectable()
 export class AssessmentService {
   constructor(
     private prisma: PrismaService,
-    private adaptiveService: AdaptiveService
+    private adaptiveService: AdaptiveService,
+    private emaMasteryService: EmaMasteryService,
+    private llmProvider: LlmProviderService
   ) {}
 
   // Only allow these tags
@@ -59,15 +64,16 @@ export class AssessmentService {
       throw new Error('AI response did not contain a valid JSON array');
     }
 
-    // 2. Clean the JSON string to handle common LLM errors
-    // Remove single-line comments (// ...)
-    jsonString = jsonString.replace(/\/\/.*$/gm, '');
-    // Remove multi-line comments (/* ... */)
-    jsonString = jsonString.replace(/\/\*[\s\S]*?\*\//g, '');
-    // Remove trailing commas before closing brackets/braces
-    jsonString = jsonString.replace(/,(\s*[\]}])/g, '$1');
-    // Fix unquoted keys (simple cases like key: "value")
-    jsonString = jsonString.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+    // 2. Clean the JSON string using jsonrepair to handle common LLM formatting errors
+    try {
+      jsonString = jsonrepair(jsonString);
+    } catch (e) {
+      console.warn('jsonrepair failed to repair string:', e.message);
+      // Fall back to manual regex cleaning if jsonrepair fails
+      jsonString = jsonString.replace(/\/\/.*$/gm, '');
+      jsonString = jsonString.replace(/\/\*[\s\S]*?\*\//g, '');
+      jsonString = jsonString.replace(/,(\s*[\]}])/g, '$1');
+    }
 
     try {
       const parsed = JSON.parse(jsonString);
@@ -378,7 +384,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       Content: ${topic.contentText}
     `);
 
-    const prompt = buildAdaptiveQuizPrompt({
+    const promptContext = {
       userMasteryPercent: parseFloat((recommendations.overallMastery * 100).toFixed(1)),
       recommendedDifficulty: recommendations.recommendedDifficulty,
       focusTopics: recommendations.focusTopics.map(t => t.topicTitle),
@@ -395,37 +401,26 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         topicTitle: wt.topic.title,
         mastery: wt.mastery
       }))
-    });
+    };
 
-    // Read model and sampling controls from AI_CONFIG
-    const modelName = AI_CONFIG.modelName;
-    const temp = AI_CONFIG.temperature;
-    const topP = AI_CONFIG.topP;
+    const prompt = buildAdaptiveQuizPrompt(promptContext);
 
     const requestQuestions = async () => {
-      const { text } = await generateText({
-        model: groq(modelName),
-        prompt,
-        temperature: temp,
-        topP: topP,
-      });
-      return this.extractJsonArray(text);
+      try {
+        const text = await this.llmProvider.generateStrict(prompt);
+        return await this.extractJsonArray(text);
+      } catch (err) {
+        console.warn('Failed to generate or parse JSON:', err.message);
+        return null; // Forces retry
+      }
     };
 
     let questions = await requestQuestions();
 
     // Ensure questions is always an array
     if (!Array.isArray(questions)) {
-      console.error('AI generated non-array response:', questions);
-      // Retry once with slightly lower temperature for consistency
-      const retryTemp = Math.max(0.1, temp - 0.1);
-      const { text: retryText } = await generateText({
-        model: groq(modelName),
-        prompt,
-        temperature: retryTemp,
-        topP: topP,
-      });
-      questions = await this.extractJsonArray(retryText);
+      console.error('AI generated non-array response or failed parsing, retrying...');
+      questions = await requestQuestions();
       if (!Array.isArray(questions)) {
         throw new Error('Failed to generate valid questions array from AI response (after retry)');
       }
@@ -471,6 +466,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
       return {
         ...q,
+        id: q.id || `q-${Date.now()}-${index}`,
         difficulty: recommendations.recommendedDifficulty,
         tags: (q.tags || []).filter((tag: string) => this.allowedTags.includes(tag)),
         // Ensure required fields
@@ -664,31 +660,25 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       // Generate questions using AI
       const prompt = buildLessonQuizPrompt(promptContext);
       
-      const modelName = AI_CONFIG.modelName;
-      const temp = AI_CONFIG.temperature;
-      const topP = AI_CONFIG.topP;
+      console.log(`Generating ${totalQuestions} questions using LlmProviderService...`);
 
-      console.log(`Generating ${totalQuestions} questions using ${modelName}...`);
+      const requestQuestions = async (attempt: number = 1): Promise<any[] | null> => {
+        try {
+          console.log(`Generation attempt ${attempt} for lesson ${lessonId}...`);
+          const text = await this.llmProvider.generateStrict(prompt, { maxOutputTokens: 8192 });
+          return await this.extractJsonArray(text);
+        } catch (err) {
+          console.warn('Failed to generate or parse JSON:', err.message);
+          return null; // Forces retry
+        }
+      };
 
-      const { text } = await generateText({
-        model: groq(modelName),
-        prompt,
-        temperature: temp,
-        topP: topP,
-      });
-
-      let questions = await this.extractJsonArray(text);
+      let questions = await requestQuestions();
 
       // Validate and clean questions
       if (!Array.isArray(questions)) {
-        console.error('AI generated non-array response, retrying...');
-        const { text: retryText } = await generateText({
-          model: groq(modelName),
-          prompt,
-          temperature: Math.max(0.1, temp - 0.1),
-          topP: topP,
-        });
-        questions = await this.extractJsonArray(retryText);
+        console.error('AI generated non-array response or failed parsing, retrying...');
+        questions = await requestQuestions();
         
         if (!Array.isArray(questions)) {
           throw new Error('Failed to generate valid questions array');
@@ -764,6 +754,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
         return {
           ...q,
+          id: q.id || `q-${Date.now()}-${index}`,
           questionType: q.questionType || 'multiple-choice',
           solutionSteps: q.solutionSteps || ['Analyze the problem', 'Apply relevant concepts', 'Verify the answer']
         };
@@ -1057,6 +1048,23 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       }
     });
 
+    // Map lesson ID → topic slug (same as in frontend)
+    const lessonToTopicSlug: Record<number, string> = {
+      1: 'boolean-algebra',
+      2: 'logic-gates',
+      3: 'truth-tables',
+      4: 'karnaugh-maps',
+      5: 'number-systems',
+      6: 'number-systems',
+      7: 'number-systems',
+      8: 'binary-arithmetic',
+      9: 'complements',
+      10: 'number-systems',
+      11: 'number-systems',
+    };
+
+    let finalEmaData: any = null;
+
     // Update mastery for each lesson
     for (const [lessonId, data] of lessonScores.entries()) {
       const lessonScore = data.correct / data.total;
@@ -1065,6 +1073,22 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         lessonId,
         lessonScore
       );
+
+      // Process EMA and Streaks
+      const topicSlug = lessonToTopicSlug[lessonId];
+      if (topicSlug) {
+        const emaResult = await this.emaMasteryService.processScore(
+          attempt.userId,
+          topicSlug,
+          lessonScore
+        );
+        finalEmaData = {
+          topic: topicSlug,
+          previousEMA: emaResult.previousEMA,
+          newEMA: emaResult.newEMA,
+          score: emaResult.score
+        };
+      }
     }
 
 
@@ -1081,7 +1105,8 @@ private async calculateDifficultyProgression(userId: string): Promise<{
             weakestTopics: weakestTopics, // Topic IDs
             strongestTopics: strongestTopics, // Topic IDs
             attemptFeedback: attemptFeedback,
-            recommendations: recommendations
+            recommendations: recommendations,
+            emaData: finalEmaData
           }
         },
       },
@@ -1104,7 +1129,8 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       strongestAreas: strongestTopics,
       recommendations: recommendations,
       topicPerformance: performanceData,
-      difficultyProgression: updatedProgression // Include progression status
+      difficultyProgression: updatedProgression, // Include progression status
+      emaData: finalEmaData // Direct return for unified front-end access!
     };
   }
 

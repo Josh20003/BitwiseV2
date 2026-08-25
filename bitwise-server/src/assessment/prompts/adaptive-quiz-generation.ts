@@ -46,6 +46,16 @@ Create questions that test DEEP UNDERSTANDING, PROBLEM-SOLVING, and APPLICATION.
 Avoid trivial definition questions. Focus on analysis, synthesis, and evaluation.
 Pay EXTRA attention to the user's weakest topics identified above.
 
+🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
+- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
+- "Medium": Requires combining 2 or more concepts or multi-step execution.
+- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting.
+
+🛑 STRICT OPTION UNIQUENESS & INTEGRITY CONSTRAINTS:
+- Each of the 4 choices generated must be completely distinct in both text and conceptual meaning. Under no circumstances may two options evaluate to or display the same value.
+- Distractors (incorrect choices) must be derived from common student misconceptions or logical slips related to the question, not random filler data.
+- The 'answerId' must point exclusively to the correct option that matches your 'solutionSteps'.
+
 🎯 MANDATORY: GENERATE EXACTLY ${context.totalQuestions || 30} QUESTIONS - NO MORE, NO LESS! 🎯
 
 QUESTION DISTRIBUTION (Total ${context.totalQuestions || 30}) - MUST BE STRICTLY FOLLOWED:
@@ -168,15 +178,15 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
     },
     "questionType": "multiple-choice",
     "tags": ["valid-tag-1", "valid-tag-2"],
+    "solutionSteps": ["Step 1...", "Step 2..."],
     "_reasoning": "Step-by-step logic used to generate this question and verify the answer.",
     "options": [
-      {"id": "opt_a", "text": "Distractor 1", "isCorrect": false, "explanation": "Why wrong"},
+      {"id": "opt_a", "text": "First conceptually distinct distractor", "isCorrect": false, "explanation": "Why wrong"},
       {"id": "opt_b", "text": "Correct Answer", "isCorrect": true, "explanation": "Why right"},
-      {"id": "opt_c", "text": "Distractor 2", "isCorrect": false, "explanation": "Why wrong"},
-      {"id": "opt_d", "text": "Distractor 3", "isCorrect": false, "explanation": "Why wrong"}
+      {"id": "opt_c", "text": "Second conceptually distinct distractor", "isCorrect": false, "explanation": "Why wrong"},
+      {"id": "opt_d", "text": "Third conceptually distinct distractor", "isCorrect": false, "explanation": "Why wrong"}
     ],
-    "answerId": "opt_b",
-    "solutionSteps": ["Step 1...", "Step 2..."]
+    "answerId": "opt_b"
   }
 ]
 
@@ -215,6 +225,55 @@ GENERATE EXACTLY ${context.totalQuestions || 30} HIGH-QUALITY QUESTIONS NOW.
 5. Return a valid JSON array with ${context.totalQuestions || 30} question objects
 
 🔍 BEFORE SUBMITTING: Count your questions and ensure you have EXACTLY ${context.totalQuestions || 30}!
+`;
+}
+
+/**
+ * Fallback prompt for the adaptive quiz targeting smaller models.
+ * Strips reasoning, multiple rationales, and complex visuals.
+ */
+export function buildFallbackAdaptiveQuizPrompt(context: PromptContext): string {
+  return `
+You are a Digital Logic quiz generator. Generate EXACTLY ${context.totalQuestions || 30} multiple-choice questions.
+
+DIFFICULTY LEVEL: ${context.recommendedDifficulty}
+FOCUS AREAS: ${context.focusTopics.join(', ')}
+
+🎯 QUESTION DISTRIBUTION (Total ${context.totalQuestions || 30}):
+- Lesson 1 (Intro): ${context.questionDistribution.lesson1} questions
+- Lesson 2 (Logic Gates): ${context.questionDistribution.lesson2} questions  
+- Lesson 3 (Truth Tables): ${context.questionDistribution.lesson3} questions
+- Lesson 4 (Simplification): ${context.questionDistribution.lesson4} questions
+
+⚠️ CRITICAL RULES:
+1. ONLY USE TEXT-BASED STEMS. Do not generate JSON truth tables, Karnaugh maps, or circuits.
+2. Generate EXACTLY ${context.totalQuestions || 30} questions.
+3. Use the exact JSON format below. Only provide rationale/explanation on the CORRECT option.
+
+OUTPUT FORMAT (JSON ARRAY):
+[
+  {
+    "lessonId": 1,
+    "topicId": 1,
+    "difficulty": "${context.recommendedDifficulty}",
+    "stem": "Simplify the expression: A + A·B",
+    "questionType": "multiple-choice",
+    "tags": ["valid-tag-1"],
+    "options": [
+      {"id": "opt_a", "text": "Distractor 1", "isCorrect": false},
+      {"id": "opt_b", "text": "Correct Answer", "isCorrect": true, "rationale": "Briefly explain why this is correct."},
+      {"id": "opt_c", "text": "Distractor 2", "isCorrect": false},
+      {"id": "opt_d", "text": "Distractor 3", "isCorrect": false}
+    ],
+    "answerId": "opt_b",
+    "explanation": "Brief explanation."
+  }
+]
+
+CONTEXTUAL CONTENT:
+${context.topicContents.map(c => c.substring(0, 200) + '...').join('\n\n')}
+
+GENERATE EXACTLY ${context.totalQuestions || 30} HIGH-QUALITY QUESTIONS NOW IN JSON ARRAY FORMAT.
 `;
 }
 

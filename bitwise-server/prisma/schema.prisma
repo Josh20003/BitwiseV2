@@ -131,3 +131,197 @@ model BooleanExample {
   @@index([variableCount])
   @@index([isActive])
 }
+
+// Module 2: Number System Converter Models
+model NumberSystem {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  name           String   @unique
+  base           Int
+  digits         String
+  description    String?
+  examples       String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([base])
+}
+
+model ConversionExample {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  sourceBase     Int
+  targetBase     Int
+  sourceValue    String
+  targetValue    String
+  steps          Json     // Array of conversion steps
+  explanation    String
+  difficulty     String
+  category       String   // (binary, decimal, hex, etc)
+  tags           String[]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([sourceBase, targetBase])
+  @@index([difficulty])
+  @@index([category])
+}
+
+// Module 3: Binary Codes Models
+model BinaryCode {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  name           String   // (BCD, Gray Code, Hamming, etc)
+  description    String
+  encodingRules  Json     // Rules for encoding
+  decodingRules  Json     // Rules for decoding
+  examples       Json     // Array of {input: string, output: string}
+  complexity     String   // (beginner, intermediate, advanced)
+  tags           String[]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([complexity])
+}
+
+// Module 4: Quiz and Assessment Models
+model QuizQuestion {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  topicId        Int
+  content        String
+  type           String   // (multiple-choice, true-false, short-answer)
+  options        Json?    // For multiple choice
+  correctAnswer  String
+  explanation    String
+  difficulty     String   // (easy, medium, hard)
+  bloomLevel     String   // (remember, understand, apply, analyze, evaluate, create)
+  estimatedTime  Int      // in seconds
+  tags           String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([topicId])
+  @@index([difficulty])
+  @@index([bloomLevel])
+}
+
+model QuizSession {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId         String
+  topicId        Int
+  status         String   @default("in-progress")  // (in-progress, completed, abandoned)
+  totalQuestions Int
+  correctAnswers Int      @default(0)
+  score          Float    @default(0.0)
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([topicId])
+  @@index([status])
+}
+
+model QuizResponse {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  sessionId      String
+  questionId     String
+  userAnswer     String
+  isCorrect      Boolean
+  timeSpent      Int      // in seconds
+  feedback       String?
+  createdAt      DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([questionId])
+}
+
+// User Progress and Analytics Models
+model UserProgress {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId         String
+  topicId        Int
+  emaScore       Float    @default(0.5)    // Exponential Moving Average
+  masteryLevel   Float    @default(0.0)    // 0-1 scale
+  totalAttempts  Int      @default(0)
+  correctCount   Int      @default(0)
+  currentLevel   String   @default("novice")  // novice, beginner, intermediate, advanced, expert
+  lastActivityAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, topicId])
+  @@index([userId])
+  @@index([masteryLevel])
+}
+
+model LearningPath {
+  id             String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  userId         String
+  lessonId       Int
+  recommendedAt  DateTime @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  status         String   @default("recommended") // (recommended, in-progress, completed, skipped)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Bitwise Extended SDD Required Tables
+
+model module_progress {
+  id          String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id     String
+  module_id   Int
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([user_id, module_id])
+  @@index([user_id])
+}
+
+model quiz_results {
+  id          String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id     String
+  topic       String
+  score       Float
+  quizDate    DateTime @default(now())
+  answersJson Json
+
+  @@index([user_id])
+  @@index([topic])
+}
+
+model ema_mastery {
+  id         String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id    String
+  topic      String
+  currentEMA Float    @default(0.0)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([user_id, topic])
+  @@index([user_id])
+}
+
+model user_streaks {
+  id            String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id       String   @unique
+  currentStreak Int      @default(0)
+  bestStreak    Int      @default(0)
+  lastUpdated   DateTime @updatedAt
+
+  @@index([user_id])
+}
+
+model calculator_history {
+  id         String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id    String
+  mode       String   // BINARY, BOOLEAN, COMPLEMENT, CONVERTER
+  input      String
+  result     String
+  createdAt  DateTime @default(now())
+
+  @@index([user_id])
+}

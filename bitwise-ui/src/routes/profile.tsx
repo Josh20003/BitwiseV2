@@ -3,6 +3,7 @@ import { ProtectedRoute } from '../components/ProtectedRoute'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useBackendProfile } from '../hooks/useAuthQueries'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import RadarChartDashboard from '@/components/dashboard/RadarChartDashboard'
 
 export const Route = createFileRoute('/profile')({
   component: RouteComponent,
@@ -159,6 +160,13 @@ function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Module 4: AI Mastery Analytics */}
+        {user?.id && (
+          <div className="mt-8">
+            <RadarChartDashboard userId={user.id} />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -5,8 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useRoadmapData } from '@/hooks/useRoadmapData'
-import { apiService } from '@/services/api.service'
-import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp, Zap } from 'lucide-react'
+import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,13 @@ import introPhoto from '@/assets/photos/intro.png'
 import logicGatesPhoto from '@/assets/photos/logic gates.png'
 import truthTablesPhoto from '@/assets/photos/truth tables.png'
 import simplificationPhoto from '@/assets/photos/simplification.png'
+import numberSystemsPhoto from '@/assets/photos/intro number systems.png'
+import typesNumberSystemsPhoto from '@/assets/photos/types number systems2.png'
+import conversionPhoto from '@/assets/photos/conversion.png'
+import binaryArithmeticPhoto from '@/assets/photos/binary arithmetic.png'
+import complementsPhoto from '@/assets/photos/complements.png'
+import signedUnsignedPhoto from '@/assets/photos/signed unsigned.png'
+import binaryCodesPhoto from '@/assets/photos/binary codes.png'
 import { LessonMasteryRadar } from '@/components/LessonMasteryRadar'
 import { toast } from 'sonner'
 
@@ -70,99 +76,277 @@ interface TopicMastery {
   level: number
 }
 
-// Lessons with topics
+// Lessons with topics — IDs now match display order (1-7 Number Systems, 8-11 Boolean Algebra)
 const lessons: Lesson[] = [
   {
     id: 1,
+    title: 'Introduction to Number Systems',
+    description: 'Basics of radix systems, positional values, and digit representation.',
+    details:
+      'Number systems define how we represent quantities using symbols and positional values. Learn the foundations of binary, decimal, octal, and hexadecimal systems.',
+    topics: [
+      {
+        id: '1-1',
+        title: 'Binary',
+        description: 'The base-2 number system used by all digital computers.',
+      },
+      {
+        id: '1-2',
+        title: 'Decimal',
+        description: 'The base-10 system we use in everyday life.',
+      },
+      {
+        id: '1-3',
+        title: 'Octal',
+        description: 'The base-8 system used in Unix permissions.',
+      },
+      {
+        id: '1-4',
+        title: 'Hexadecimal',
+        description: 'The base-16 system used in programming and memory.',
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: 'Types of Number Systems',
+    description: 'Learn the relationships between number systems.',
+    details:
+      'Explore how binary, decimal, octal, and hexadecimal relate to each other through grouping patterns and direct conversion shortcuts.',
+    topics: [
+      {
+        id: '2-1',
+        title: 'Binary ↔ Decimal',
+        description: 'The relationship between base-2 and base-10.',
+      },
+      {
+        id: '2-2',
+        title: 'Binary ↔ Hex',
+        description: 'The 4-bit grouping connection between binary and hex.',
+      },
+      {
+        id: '2-3',
+        title: 'Digit Groupings',
+        description: 'Nibbles, bytes, and words explained.',
+      },
+    ],
+  },
+  {
+    id: 3,
+    title: 'Conversion of Number Systems',
+    description: 'Convert numbers manually and automatically.',
+    details:
+      'Master the techniques to convert between decimal, binary, hexadecimal, and octal using division, expansion, and regrouping methods.',
+    topics: [
+      {
+        id: '3-1',
+        title: 'Decimal to Binary',
+        description: 'Division-remainder and subtraction methods.',
+      },
+      {
+        id: '3-2',
+        title: 'Binary to Decimal',
+        description: 'Positional expansion and doubling methods.',
+      },
+      {
+        id: '3-3',
+        title: 'Hex Conversion',
+        description: 'Convert between hex, binary, decimal, and octal.',
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: 'Binary Arithmetic',
+    description: 'Perform arithmetic operations using binary values.',
+    details:
+      'Master the four fundamental arithmetic operations in binary: addition, subtraction, multiplication, and division, including carry and borrow mechanics.',
+    topics: [
+      {
+        id: '4-1',
+        title: 'Binary Addition',
+        description: 'Add binary numbers with carry rules.',
+      },
+      {
+        id: '4-2',
+        title: 'Subtraction',
+        description: 'Subtract binary numbers with borrow.',
+      },
+      {
+        id: '4-3',
+        title: 'Multiplication',
+        description: 'Shift-and-add multiplication method.',
+      },
+      {
+        id: '4-4',
+        title: 'Division',
+        description: 'Binary long division step by step.',
+      },
+    ],
+  },
+  {
+    id: 5,
+    title: 'Complements',
+    description: 'Understand signed binary transformations.',
+    details:
+      "Learn how computers represent negative numbers using 1's and 2's complement, and understand the bit inversion and cascading carry mechanics behind them.",
+    topics: [
+      {
+        id: '5-1',
+        title: "1's Complement",
+        description: 'Invert all bits to represent negatives.',
+      },
+      {
+        id: '5-2',
+        title: "2's Complement",
+        description: 'The standard signed number representation.',
+      },
+      {
+        id: '5-3',
+        title: 'Bit Inversion',
+        description: 'The NOT operation foundation.',
+      },
+    ],
+  },
+  {
+    id: 6,
+    title: 'Signed and Unsigned Numbers',
+    description: 'Interpret binary values in different contexts.',
+    details:
+      'Learn how the same binary pattern can represent different values depending on whether it is interpreted as signed or unsigned, and the role of the MSB.',
+    topics: [
+      {
+        id: '6-1',
+        title: 'MSB (Most Significant Bit)',
+        description: 'The leftmost bit and its dual role.',
+      },
+      {
+        id: '6-2',
+        title: 'Signed Representation',
+        description: 'Representing positive and negative values.',
+      },
+      {
+        id: '6-3',
+        title: 'Unsigned Representation',
+        description: 'Non-negative values with wider range.',
+      },
+    ],
+  },
+  {
+    id: 7,
+    title: 'Binary Codes (BCD & ASCII)',
+    description: 'Encode numbers and characters in binary.',
+    details:
+      'Learn how BCD encodes decimal digits and ASCII encodes text characters in binary, and compare their approaches side by side.',
+    topics: [
+      {
+        id: '7-1',
+        title: 'BCD Encoding',
+        description: 'Represent each decimal digit with 4 bits.',
+      },
+      {
+        id: '7-2',
+        title: 'ASCII Conversion',
+        description: 'Map characters to 7-bit binary codes.',
+      },
+      {
+        id: '7-3',
+        title: 'Character-to-Binary Translator',
+        description: 'Convert text to binary and back.',
+      },
+    ],
+  },
+  {
+    id: 8,
     title: 'Intro to Boolean Algebra',
     description: 'Basics, history, and importance in logic.',
     details:
       "Boolean Algebra deals with true/false values. It's key in computer science and circuit design.",
     topics: [
       {
-        id: '1-1',
+        id: '8-1',
         title: 'What is Boolean Algebra?',
         description: 'Definition and origins.',
       },
       {
-        id: '1-2',
+        id: '8-2',
         title: 'Boolean Values',
         description: 'True/False, 1/0, and their meaning.',
       },
       {
-        id: '1-3',
+        id: '8-3',
         title: 'Applications',
         description: 'Where Boolean Algebra is used.',
       },
     ],
   },
   {
-    id: 2,
+    id: 9,
     title: 'Logic Gates',
     description: 'Learn AND, OR, NOT, and more.',
     details:
       'Logic gates are digital circuit components that execute Boolean functions.',
     topics: [
       {
-        id: '2-1',
+        id: '9-1',
         title: 'AND, OR, NOT',
         description: 'Basic gates and their symbols.',
       },
       {
-        id: '2-2',
+        id: '9-2',
         title: 'NAND, NOR',
         description: 'Universal gates and their uses.',
       },
       {
-        id: '2-3',
+        id: '9-3',
         title: 'XOR, XNOR',
         description: 'Exclusive gates and applications.',
       },
     ],
   },
   {
-    id: 3,
+    id: 10,
     title: 'Truth Tables',
     description: 'Make and read truth tables.',
     details:
       'Truth tables show all possible input/output combinations for logical expressions.',
     topics: [
       {
-        id: '3-1',
+        id: '10-1',
         title: 'Constructing Truth Tables',
         description: 'Step-by-step process.',
       },
       {
-        id: '3-2',
+        id: '10-2',
         title: 'Reading Truth Tables',
         description: 'How to interpret results.',
       },
       {
-        id: '3-3',
+        id: '10-3',
         title: 'Truth Tables for Gates',
         description: 'Examples for each gate.',
       },
     ],
   },
   {
-    id: 4,
+    id: 11,
     title: 'Simplification',
     description: 'Reduce logic expressions efficiently.',
     details:
       'Simplifying logic reduces circuit complexity and improves performance.',
     topics: [
       {
-        id: '4-1',
+        id: '11-1',
         title: 'Boolean Laws',
         description: 'Commutative, Associative, Distributive.',
       },
       {
-        id: '4-2',
+        id: '11-2',
         title: 'Karnaugh Maps',
         description: 'Visual simplification method.',
       },
       {
-        id: '4-3',
+        id: '11-3',
         title: 'Practical Examples',
         description: 'Simplifying real expressions.',
       },
@@ -170,12 +354,19 @@ const lessons: Lesson[] = [
   },
 ]
 
-// Map lesson id -> photo
+// Map lesson id -> photo (IDs now match display order)
 const lessonImages: Record<number, string> = {
-  1: introPhoto,
-  2: logicGatesPhoto,
-  3: truthTablesPhoto,
-  4: simplificationPhoto,
+  1: numberSystemsPhoto,
+  2: typesNumberSystemsPhoto,
+  3: conversionPhoto,
+  4: binaryArithmeticPhoto,
+  5: complementsPhoto,
+  6: signedUnsignedPhoto,
+  7: binaryCodesPhoto,
+  8: introPhoto,
+  9: logicGatesPhoto,
+  10: truthTablesPhoto,
+  11: simplificationPhoto,
 }
 
 export const Route = createFileRoute('/roadmap')({
@@ -298,11 +489,9 @@ const csQuotes = [
 
 function RouteComponent() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
-  const [loadingAssessment, setLoadingAssessment] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [statusFilter, setStatusFilter] = useState<string>('All Status')
   const [showLessonSelectModal, setShowLessonSelectModal] = useState(false)
-  const [selectedPracticeLesson, setSelectedPracticeLesson] = useState<number | null>(null)
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
   const navigate = useNavigate()
   const { user } = useAuthContext() || {}
@@ -320,7 +509,6 @@ function RouteComponent() {
     analytics,
     statistics,
     error: roadmapError,
-    refresh: refreshRoadmapData,
   } = useRoadmapData(user?.id, lessonIds)
 
   // Rotate quotes every 10 seconds
@@ -378,47 +566,34 @@ function RouteComponent() {
     setShowLessonSelectModal(true)
   }
 
-  // Start lesson-specific practice
-  const handleStartLessonPractice = async (lessonId: number) => {
+  // Map lesson ID → quiz topic slug (same as in $lessonId.tsx)
+  const lessonToQuizTopic: Record<number, string> = {
+    1: 'number-systems',
+    2: 'number-systems',
+    3: 'number-systems',
+    4: 'binary-arithmetic',
+    5: 'complements',
+    6: 'number-systems',
+    7: 'number-systems',
+    8: 'boolean-algebra',
+    9: 'logic-gates',
+    10: 'truth-tables',
+    11: 'karnaugh-maps',
+  }
+
+  // Start lesson-specific practice — reuses the post-lesson quiz pipeline
+  const handleStartLessonPractice = (lessonId: number) => {
     if (!effectiveUser) {
       toast.error('Please log in to start an assessment')
       return
     }
-    setSelectedPracticeLesson(lessonId)
-    setLoadingAssessment(true)
-    try {
-      const result = await apiService.post<{
-        success: boolean
-        data: { attemptId: number }
-        error?: string
-      }>(
-        '/assessment/start-lesson-practice',
-        { uid: effectiveUser.id, lessonId },
-        true,
-        { timeout: 60000 }
-      )
-      if (result.success) {
-        setShowLessonSelectModal(false)
-        navigate({
-          to: '/assessment/$assessmentId',
-          params: { assessmentId: result.data.attemptId.toString() },
-        })
-        refreshRoadmapData()
-      } else {
-        throw new Error(result.error || 'Failed to start assessment')
-      }
-    } catch (error) {
-      console.error('Failed to start lesson practice:', error)
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      if (errorMessage.toLowerCase().includes('rate limit')) {
-        toast.error('AI service is temporarily busy. Please try again in a few minutes.')
-      } else {
-        toast.error('Failed to start practice. Please try again.')
-      }
-    } finally {
-      setLoadingAssessment(false)
-      setSelectedPracticeLesson(null)
+    const topic = lessonToQuizTopic[lessonId]
+    if (!topic) {
+      toast.error('No quiz available for this lesson yet')
+      return
     }
+    setShowLessonSelectModal(false)
+    navigate({ to: '/quiz/$topic', params: { topic }, search: { lessonId } })
   }
 
   // Get topic mastery info for a specific lesson
@@ -470,7 +645,9 @@ function RouteComponent() {
           : isStarted
             ? 'in-progress'
             : 'not-started',
-        progress: Math.round((progress?.progress || 0) * 100),
+        progress: progress?.progress !== undefined 
+          ? Math.round(progress.progress > 1 ? progress.progress : progress.progress * 100)
+          : 0,
         masteryScore,
         isLocked: false, // No locks - all lessons accessible
       }
@@ -576,10 +753,9 @@ function RouteComponent() {
                 </div>
                 <Button
                   onClick={handleOpenLessonSelect}
-                  disabled={loadingAssessment}
                   className="bg-white text-blue-600 hover:bg-blue-50 font-semibold"
                 >
-                  {loadingAssessment ? 'Loading...' : 'Start Practice'}
+                  Start Practice
                 </Button>
               </div>
             </div>
@@ -612,38 +788,72 @@ function RouteComponent() {
                   </p>
                   <div className="space-y-1.5">
                     {(() => {
-                      // Get top 5 lowest mastery topics
-                      const allTopics = analytics?.skillsByLesson?.flatMap(lesson =>
-                        lesson.skills.map(skill => ({
-                          ...skill,
-                          lessonTitle: lesson.lessonTitle
-                        }))
-                      ) || []
-                      const sortedTopics = [...allTopics]
-                        .sort((a, b) => a.mastery - b.mastery)
-                        .slice(0, 5)
-                      
-                      if (sortedTopics.length === 0) {
+                      // Build topic list from ALL lessons with progress from multiple sources
+                      const allTopicsList = lessons.flatMap(lesson =>
+                        lesson.topics.map((topic, idx) => {
+                          // 1. Check topic completion progress (from viewing/completing topics)
+                          const lessonTopics = topicsProgress[lesson.id] as Array<{
+                            topicId: string | number
+                            status: string
+                            topic?: { title: string }
+                          }> | undefined
+                          const topicProgress = lessonTopics?.find(
+                            (t) => t.topicId === idx + 1 || String(t.topicId) === topic.id.split('-')[1]
+                          )
+                          const completionProgress = topicProgress?.status === 'completed' ? 1.0
+                            : topicProgress?.status === 'viewed' ? 0.5
+                            : 0
+
+                          // 2. Check assessment mastery (from AI practice)
+                          const lessonAnalytics = analytics?.skillsByLesson?.find(
+                            (l) => l.lessonId === lesson.id
+                          )
+                          const skillData = lessonAnalytics?.skills?.find(
+                            (s) => s.topicId === idx + 1 || String(s.topicId) === topic.id.split('-')[1]
+                          )
+                          const assessmentMastery = skillData?.mastery ?? 0
+
+                          // Use the higher of the two
+                          const effectiveProgress = Math.max(completionProgress, assessmentMastery)
+
+                          return {
+                            id: topic.id,
+                            title: topic.title,
+                            progress: effectiveProgress,
+                            lessonId: lesson.id,
+                          }
+                        })
+                      )
+
+                      // Sort by lowest progress first (focus areas = weakest topics)
+                      const sorted = [...allTopicsList].sort((a, b) => a.progress - b.progress)
+
+                      const hasAnalyticsData = allTopicsList.some(t => t.progress > 0)
+
+                      if (!hasAnalyticsData) {
                         return (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Complete assessments to see focus areas
-                          </p>
+                          <div className="flex flex-col items-center justify-center py-4 px-3 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/30 dark:bg-gray-900/10 my-1">
+                            <Brain className="w-6 h-6 text-purple-400 dark:text-purple-500 mb-2 animate-pulse" />
+                            <p className="text-[10px] text-muted-foreground leading-normal font-medium max-w-[180px]">
+                              No mastery data available yet. Start a practice assessment or complete lesson topics to see your focus areas!
+                            </p>
+                          </div>
                         )
                       }
-                      
-                      return sortedTopics.map((topic, idx) => (
+
+                      return sorted.slice(0, 5).map((topic) => (
                         <div
-                          key={topic.topicId || idx}
+                          key={topic.id}
                           className="flex items-center justify-between text-xs"
                         >
-                          <span className="text-gray-600 dark:text-gray-400 truncate mr-2">
-                            {topic.topicTitle}
+                          <span className="text-gray-600 dark:text-gray-400 truncate mr-2 font-medium">
+                            {topic.title}
                           </span>
-                          <span className={`font-medium shrink-0 ${
-                            topic.mastery >= 0.7 ? 'text-green-600' :
-                            topic.mastery >= 0.4 ? 'text-yellow-600' : 'text-red-600'
+                          <span className={`font-semibold shrink-0 ${
+                            topic.progress >= 0.7 ? 'text-green-600' :
+                            topic.progress >= 0.4 ? 'text-yellow-600' : 'text-red-600'
                           }`}>
-                            {Math.round(topic.mastery * 100)}%
+                            {Math.round(topic.progress * 100)}%
                           </span>
                         </div>
                       ))
@@ -658,7 +868,7 @@ function RouteComponent() {
                 onClick={() => setShowAnalyticsModal(true)}
                 title="Click to view detailed analytics"
               >
-                <LessonMasteryRadar analytics={analytics} />
+                <LessonMasteryRadar analytics={analytics} lessonProgress={lessonProgress} />
                 <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                   Click to view details
                 </p>
@@ -767,7 +977,7 @@ function RouteComponent() {
                     <div className="p-5 flex-1 flex flex-col">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                          Lesson {lesson.id}
+                          Lesson {lessons.findIndex(l => l.id === lesson.id) + 1}
                         </span>
                         {status === 'in-progress' && (
                           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -847,7 +1057,7 @@ function RouteComponent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                            Lesson {lesson.id}
+                            Lesson {lessons.findIndex(l => l.id === lesson.id) + 1}
                           </span>
                           <span className="text-gray-300 dark:text-gray-700">
                             •
@@ -913,7 +1123,7 @@ function RouteComponent() {
       <Dialog
         open={showLessonSelectModal}
         onOpenChange={(open: boolean) => {
-          if (!open && !loadingAssessment) {
+          if (!open) {
             setShowLessonSelectModal(false)
           }
         }}
@@ -941,17 +1151,12 @@ function RouteComponent() {
               {lessons.map((lesson) => {
                 const masteryInfo = getLessonTopicMastery(lesson.id)
                 const lessonTopics = lesson.topics
-                const isLoading = loadingAssessment && selectedPracticeLesson === lesson.id
 
                 return (
                   <div
                     key={lesson.id}
-                    className={`relative border rounded-xl p-4 transition-all duration-200 ${
-                      isLoading
-                        ? 'border-blue-300 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md cursor-pointer'
-                    }`}
-                    onClick={() => !loadingAssessment && handleStartLessonPractice(lesson.id)}
+                    className="relative border rounded-xl p-4 transition-all duration-200 border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md cursor-pointer"
+                    onClick={() => handleStartLessonPractice(lesson.id)}
                   >
                     {/* Lesson Header */}
                     <div className="flex items-start gap-3 mb-3">
@@ -965,7 +1170,7 @@ function RouteComponent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                            LESSON {lesson.id}
+                            LESSON {lessons.findIndex(l => l.id === lesson.id) + 1}
                           </span>
                           {masteryInfo.hasData && (
                             <span className="text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
@@ -1020,25 +1225,15 @@ function RouteComponent() {
 
                     {/* Start Button */}
                     <Button
-                      className="w-full"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                       size="sm"
-                      disabled={loadingAssessment}
                       onClick={(e) => {
                         e.stopPropagation()
                         handleStartLessonPractice(lesson.id)
                       }}
                     >
-                      {isLoading ? (
-                        <>
-                          <Zap className="w-4 h-4 mr-2 animate-pulse" />
-                          Generating Questions...
-                        </>
-                      ) : (
-                        <>
-                          <BookOpen className="w-4 h-4 mr-2" />
-                          Practice This Lesson
-                        </>
-                      )}
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Practice This Lesson
                     </Button>
 
                     {/* Question Distribution Info */}
@@ -1064,7 +1259,6 @@ function RouteComponent() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowLessonSelectModal(false)}
-                disabled={loadingAssessment}
               >
                 Cancel
               </Button>
@@ -1260,7 +1454,7 @@ function RouteComponent() {
                 </h3>
                 <div className="bg-linear-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-lg p-6 border border-purple-100 dark:border-purple-900/30">
                   <div className="w-full h-[400px]">
-                    <LessonMasteryRadar analytics={analytics} />
+                    <LessonMasteryRadar analytics={analytics} lessonProgress={lessonProgress} />
                   </div>
                 </div>
               </div>
