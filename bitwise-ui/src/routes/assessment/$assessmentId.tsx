@@ -1,5 +1,6 @@
 import { useAuthContext } from '@/contexts/AuthContext'
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link, redirect } from '@tanstack/react-router'
+import { supabase } from '@/utils/supabase'
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -254,6 +255,14 @@ const QuestionStemRenderer = ({ stem }: { stem: any }) => {
 }
 
 export const Route = createFileRoute('/assessment/$assessmentId')({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw redirect({
+        to: '/login',
+      })
+    }
+  },
   component: RouteComponent,
 })
 

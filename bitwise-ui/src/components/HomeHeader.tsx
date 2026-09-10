@@ -37,7 +37,7 @@ function useTheme(): 'light' | 'dark' {
 import NavLogo from '@/assets/icons/std-logo-black.svg'
 import NavLogoDark from '@/assets/icons/nav-bar-logo.svg'
 import { useScrollDirection } from '@/hooks/useScrollDirection'
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, Menu } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
@@ -121,7 +121,13 @@ const HomeHeader = () => {
   const theme = useTheme()
   const isVisible = useScrollDirection()
   const location = useLocation()
+  const navigate = useNavigate()
   const { isAuthenticated, signOut, user } = useAuthContext()
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate({ to: '/' })
+  }
   const { data: backendProfile } = useBackendProfile()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const md = backendProfile?.metadata ?? {}
@@ -259,7 +265,7 @@ const HomeHeader = () => {
                         variant="ghost"
                         size="sm"
                         className="w-full justify-start px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 font-normal"
-                        onClick={signOut}
+                        onClick={handleSignOut}
                       >
                         Sign Out
                       </Button>
@@ -292,7 +298,7 @@ const HomeHeader = () => {
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>
                   <img
@@ -388,7 +394,7 @@ const HomeHeader = () => {
                       variant="destructive"
                       className="w-full min-h-[44px]"
                       onClick={() => {
-                        signOut()
+                        handleSignOut()
                         setMobileMenuOpen(false)
                       }}
                     >
