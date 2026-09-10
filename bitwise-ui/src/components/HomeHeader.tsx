@@ -270,12 +270,9 @@ const HomeHeader = () => {
             </NavigationMenu>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="hover:bg-muted rounded-full">
-                <ThemeToggle />
-              </div>
               <Link to="/login">
                 <Button
-                  variant={'outlinez'}
+                  variant={'outlinez' as any}
                   className="hover:bg-transparent text-foreground"
                 >
                   Learn for free <span aria-hidden="true">&rarr;</span>
