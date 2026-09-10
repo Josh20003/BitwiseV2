@@ -143,17 +143,17 @@ export function BinaryArithmeticWorkspace() {
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex gap-4 items-end">
-            <div>
-              <label className="text-sm">Operand 1 (Binary)</label>
-              <Input value={operand1} onChange={e => setOperand1(e.target.value.replace(/[^01]/g, ''))} className="w-32 font-mono" />
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end w-full">
+            <div className="w-full sm:flex-1">
+              <label className="text-sm block mb-1">Operand 1 (Binary)</label>
+              <Input value={operand1} onChange={e => setOperand1(e.target.value.replace(/[^01]/g, ''))} className="w-full font-mono" />
             </div>
-            <div>
-              <label className="text-sm">Operation</label>
+            <div className="w-full sm:w-auto">
+              <label className="text-sm block mb-1">Operation</label>
               <select 
                 value={operation} 
                 onChange={e => setOperation(e.target.value as '+' | '-' | '*' | '/')}
-                className="flex h-10 w-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full sm:w-28 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="+">Add (+)</option>
                 <option value="-">Sub (-)</option>
@@ -161,11 +161,11 @@ export function BinaryArithmeticWorkspace() {
                 <option value="/">Div (/)</option>
               </select>
             </div>
-            <div>
-              <label className="text-sm">Operand 2 (Binary)</label>
-              <Input value={operand2} onChange={e => setOperand2(e.target.value.replace(/[^01]/g, ''))} className="w-32 font-mono" />
+            <div className="w-full sm:flex-1">
+              <label className="text-sm block mb-1">Operand 2 (Binary)</label>
+              <Input value={operand2} onChange={e => setOperand2(e.target.value.replace(/[^01]/g, ''))} className="w-full font-mono" />
             </div>
-            <Button onClick={calculate}>Calculate</Button>
+            <Button onClick={calculate} className="w-full sm:w-auto mt-2 sm:mt-0 h-10">Calculate</Button>
           </div>
           
           {error && (

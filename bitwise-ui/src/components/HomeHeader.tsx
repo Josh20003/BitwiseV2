@@ -213,12 +213,10 @@ const HomeHeader = () => {
         </div>
 
         {/* Desktop Right Side - Hidden on small screens */}
-        <div className="hidden md:flex">
+        <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           {isAuthenticated ? (
             <NavigationMenu>
-              <div className="hover:bg-muted rounded-full">
-                <ThemeToggle />
-              </div>
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent h-12">
@@ -342,7 +340,7 @@ const HomeHeader = () => {
                 <div className="w-full">
                   <Link
                     to="/roadmap"
-                    className="flex items-center justify-between rounded-lg px-3 py-2 text-base font-semibold hover:bg-accent/30 transition-colors"
+                    className="flex items-center justify-between rounded-lg px-2 py-2 text-base font-semibold hover:bg-accent/30 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Learn
@@ -350,16 +348,16 @@ const HomeHeader = () => {
                 </div>
 
                 {/* Tools (mobile) */}
-                <div className="w-full px-2">
-                  <div className="px-1 text-base font-semibold pb-2">Tools</div>
-                  <div className="flex flex-col space-y-2">
+                <div className="w-full">
+                  <div className="px-2 text-base font-semibold pb-2">Tools</div>
+                  <div className="flex flex-col space-y-1">
                     {toolItems.map((item) => {
                       const Icon = item.icon
                       return (
                         <Link
                           key={item.key}
                           to={item.to}
-                          className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-accent/30 transition-colors"
+                          className="flex items-start gap-3 rounded-lg px-2 py-2 hover:bg-accent/30 transition-colors"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <Icon className="h-5 w-5 mt-0.5" />
