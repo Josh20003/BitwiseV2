@@ -6,7 +6,7 @@ import { EmaMasteryService } from './ema-mastery.service';
 import { buildAdaptiveQuizPrompt, buildFallbackAdaptiveQuizPrompt } from './prompts/adaptive-quiz-generation';
 import { buildLessonQuizPrompt, buildFallbackLessonQuizPrompt, getDifficultyFromMastery, LessonQuizContext } from './prompts/lesson-quiz-generation';
 import { jsonrepair } from 'jsonrepair';
-import { AI_CONFIG, groq } from '../config/ai.config';
+import { AI_CONFIG, google } from '../config/ai.config';
 import { LlmProviderService } from './llm-provider.service';
 
 @Injectable()
@@ -628,8 +628,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       ));
       console.log(`Weakest topic: ${sortedByMastery[0].topicTitle}`);
 
-      // Distribute questions: 3 per topic, weakest gets 4 (bonus)
-      // Total: 3 + 3 + 4 = 10 questions
+      // Distribute exactly 10 questions: 2 per topic, weakest gets 2 bonus questions.
       const topicsForPrompt = topicsWithMastery.map(topic => {
         const isWeakest = topic.topicId === weakestTopicId;
         const difficulty = getDifficultyFromMastery(topic.mastery);
@@ -639,7 +638,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
           topicTitle: topic.topicTitle,
           mastery: topic.mastery,
           difficulty,
-          questionCount: isWeakest ? 4 : 3, // Weakest gets bonus question
+          questionCount: isWeakest ? 4 : 2,
           contentText: topic.contentText,
           tags: topic.tags
         };
@@ -662,10 +661,13 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       
       console.log(`Generating ${totalQuestions} questions using LlmProviderService...`);
 
-      const requestQuestions = async (attempt: number = 1): Promise<any[] | null> => {
+      const requestQuestions = async (
+        generationPrompt: string,
+        attempt: number = 1,
+      ): Promise<any[] | null> => {
         try {
           console.log(`Generation attempt ${attempt} for lesson ${lessonId}...`);
-          const text = await this.llmProvider.generateStrict(prompt, { maxOutputTokens: 8192 });
+          const text = await this.llmProvider.generateStrict(generationPrompt, { maxOutputTokens: 16384 });
           return await this.extractJsonArray(text);
         } catch (err) {
           console.warn('Failed to generate or parse JSON:', err.message);
@@ -673,12 +675,19 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         }
       };
 
-      let questions = await requestQuestions();
+      let questions = await requestQuestions(prompt);
+
+      // The full prompt asks for lengthy explanations and can exceed the model's
+      // output budget. Retry with the compact schema before rejecting the attempt.
+      if (Array.isArray(questions) && questions.length < totalQuestions) {
+        console.warn(`Only ${questions.length} questions returned, retrying with compact prompt...`);
+        questions = await requestQuestions(buildFallbackLessonQuizPrompt(promptContext), 2);
+      }
 
       // Validate and clean questions
       if (!Array.isArray(questions)) {
         console.error('AI generated non-array response or failed parsing, retrying...');
-        questions = await requestQuestions();
+        questions = await requestQuestions(buildFallbackLessonQuizPrompt(promptContext), 2);
         
         if (!Array.isArray(questions)) {
           throw new Error('Failed to generate valid questions array');

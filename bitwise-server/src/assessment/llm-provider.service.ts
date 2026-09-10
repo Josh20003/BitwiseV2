@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { generateText } from 'ai';
-import { AI_CONFIG, groq } from '../config/ai.config';
+import { AI_CONFIG, google } from '../config/ai.config';
 
 @Injectable()
 export class LlmProviderService {
@@ -24,7 +24,7 @@ export class LlmProviderService {
     try {
       this.logger.log(`Executing primary prompt with model: ${AI_CONFIG.modelName}`);
       const primaryResult = await generateText({
-        model: groq(AI_CONFIG.modelName),
+        model: google(AI_CONFIG.modelName),
         prompt: primaryPrompt,
         temperature: temp,
         topP: topP,
