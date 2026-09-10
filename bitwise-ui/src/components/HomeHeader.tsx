@@ -323,11 +323,11 @@ const HomeHeader = () => {
                           </AvatarFallback>
                         )}
                       </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="font-medium text-sm truncate">
                           {displayName}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground truncate">
                           {user?.email}
                         </span>
                       </div>
