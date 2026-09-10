@@ -59,3 +59,10 @@ Detailed documentation is organized in the [`docs/`](./docs) folder:
 - **[API Reference Guide](./docs/API_REFERENCE.md):** Complete reference of all REST endpoints, request/response formats, and error codes.
 - **[Modules & Features Guide](./docs/FEATURES.md):** Comprehensive details on each functional module and algorithm.
 - **[Deployment & Integration Guide](./docs/DEPLOYMENT_GUIDE.md):** Database migration, server setup, verification procedures, and troubleshooting.
+
+
+## AI Installment
+```bash
+npm install @ai-sdk/google@2.0.30
+npm run build
+```
