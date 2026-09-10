@@ -65,6 +65,8 @@ export function LoginForm({
                 id="email"
                 type="email"
                 placeholder="m@example.com"
+                autoComplete="email"
+                inputMode="email"
                 {...register('email')}
                 disabled={signInMutation.isPending}
               />
@@ -80,6 +82,7 @@ export function LoginForm({
                 id="password"
                 type="password"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 {...register('password')}
                 disabled={signInMutation.isPending}
               />

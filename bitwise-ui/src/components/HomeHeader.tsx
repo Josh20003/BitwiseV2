@@ -381,19 +381,28 @@ const HomeHeader = () => {
 
                 {/* Auth Actions */}
                 {isAuthenticated ? (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => {
-                      signOut()
-                      setMobileMenuOpen(false)
-                    }}
-                  >
-                    Sign Out
-                  </Button>
+                  <>
+                    <Link
+                      to="/profile"
+                      className="flex items-center justify-between rounded-lg px-3 py-3 text-base font-medium hover:bg-accent/30 transition-colors min-h-[44px]"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <Button
+                      variant="destructive"
+                      className="w-full min-h-[44px]"
+                      onClick={() => {
+                        signOut()
+                        setMobileMenuOpen(false)
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
                 ) : (
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="default" className="w-full">
+                    <Button variant="default" className="w-full min-h-[44px]">
                       Learn for free <span aria-hidden="true">&rarr;</span>
                     </Button>
                   </Link>

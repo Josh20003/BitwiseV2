@@ -15,10 +15,12 @@ function RouteComponent() {
           userSelect: 'none',
           WebkitUserSelect: 'none',
           MozUserSelect: 'none',
+          pointerEvents: 'none',
         }}
         draggable="false"
         src={RightLanding001}
-        alt="My Icon"
+        alt=""
+        aria-hidden="true"
         className="pointer-events-none select-none hidden md:flex absolute h-full bottom-0 md:bottom-auto right-0 z-0"
       />
       <img
@@ -26,10 +28,12 @@ function RouteComponent() {
           userSelect: 'none',
           WebkitUserSelect: 'none',
           MozUserSelect: 'none',
+          pointerEvents: 'none',
         }}
         draggable="false"
         src={LeftLanding001}
-        alt="My Icon"
+        alt=""
+        aria-hidden="true"
         className="pointer-events-none select-none hidden md:flex absolute h-full left-0 z-0"
       />
       <div className="relative z-10 w-full max-w-sm">

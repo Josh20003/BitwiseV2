@@ -740,39 +740,41 @@ export const FactoringDemo: React.FC<FactoringDemoProps> = () => {
           {/* Input Section */}
           <form onSubmit={fetchRemoteScript} className="space-y-3">
             {/* Main Input Row */}
-            <div className="flex flex-col sm:flex-row gap-2 input-section">
+            <div className="flex flex-col gap-2 input-section">
               <input
                 ref={inputRef}
                 value={expressionInput}
                 onChange={(e) => setExpressionInput(e.target.value)}
-                className="flex-1 px-4 py-2.5 border border-input rounded-lg text-base font-mono focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all bg-background text-foreground placeholder:text-muted-foreground"
+                className="w-full px-4 py-2.5 border border-input rounded-lg text-base font-mono focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all bg-background text-foreground placeholder:text-muted-foreground"
                 placeholder="e.g. A ∧ B ∨ ¬A"
                 aria-label="Boolean expression"
               />
-              <Button
-                variant="default"
-                type="submit"
-                className="simplify-button px-6 cursor-pointer w-full sm:w-auto"
-                disabled={loadingRemote}
-              >
-                {loadingRemote ? 'Solving...' : 'Solve'}
-              </Button>
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() => setShowExamples(true)}
-                className="examples-button px-4 cursor-pointer text-muted-foreground w-full sm:w-auto"
-              >
-                Examples
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={handleReset}
-                className="px-3 cursor-pointer text-muted-foreground w-full sm:w-auto"
-                title="Reset"
-              >
-                ↺
-              </Button>
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-row">
+                <Button
+                  variant="default"
+                  type="submit"
+                  className="simplify-button col-span-3 sm:col-span-1 px-6 cursor-pointer"
+                  disabled={loadingRemote}
+                >
+                  {loadingRemote ? 'Solving...' : 'Solve'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  type="button"
+                  onClick={() => setShowExamples(true)}
+                  className="examples-button px-4 cursor-pointer text-muted-foreground"
+                >
+                  Examples
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleReset}
+                  className="px-3 cursor-pointer text-muted-foreground"
+                  title="Reset"
+                >
+                  ↺ Reset
+                </Button>
+              </div>
             </div>
 
             {/* Quick Insert - Compact */}
@@ -818,7 +820,7 @@ export const FactoringDemo: React.FC<FactoringDemoProps> = () => {
             </div>
 
             {/* Display Options - Minimal */}
-            <div className="flex items-center gap-6 text-sm display-options pt-2">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm display-options pt-2">
               <div className="flex items-center gap-2">
                 <Switch
                   id="rulecard-toggle"

@@ -68,6 +68,8 @@ export function SignUpForm({
                 id="email"
                 type="email"
                 placeholder="m@example.com"
+                autoComplete="email"
+                inputMode="email"
                 {...register('email')}
                 disabled={signUpMutation.isPending}
               />
@@ -83,6 +85,7 @@ export function SignUpForm({
                 id="username"
                 type="text"
                 placeholder="Your username"
+                autoComplete="username"
                 {...register('username')}
                 disabled={signUpMutation.isPending}
               />
@@ -98,6 +101,7 @@ export function SignUpForm({
                 id="password"
                 type="password"
                 placeholder="••••••••"
+                autoComplete="new-password"
                 {...register('password')}
                 disabled={signUpMutation.isPending}
               />
@@ -113,6 +117,7 @@ export function SignUpForm({
                 id="confirmPassword"
                 type="password"
                 placeholder="••••••••"
+                autoComplete="new-password"
                 {...register('confirmPassword')}
                 disabled={signUpMutation.isPending}
               />

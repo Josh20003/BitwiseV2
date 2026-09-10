@@ -60,14 +60,14 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
     <div className="space-y-4">
       <div>
         <h3 className="font-semibold">Original Expression:</h3>
-        <p className="font-mono bg-gray-100 p-2 rounded">
+        <p className="font-mono bg-muted p-2 rounded">
           {result.originalExpression}
         </p>
       </div>
 
       <div>
         <h3 className="font-semibold">Simplified Expression:</h3>
-        <p className="font-mono bg-green-100 p-2 rounded">
+        <p className="font-mono bg-green-100 dark:bg-green-900/30 p-2 rounded">
           {result.simplifiedExpression}
         </p>
       </div>
@@ -92,7 +92,7 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
     <div className="space-y-4">
       <div>
         <h3 className="font-semibold">Expression:</h3>
-        <p className="font-mono bg-gray-100 p-2 rounded">{result.expression}</p>
+        <p className="font-mono bg-muted p-2 rounded">{result.expression}</p>
       </div>
 
       <div>
@@ -100,7 +100,7 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse border border-gray-300">
             <thead>
-              <tr className="bg-gray-100">
+              <tr className="bg-muted">
                 {result.variables.map((variable) => (
                   <th
                     key={variable}
@@ -116,7 +116,7 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
               {result.rows.map((row, index) => (
                 <tr
                   key={index}
-                  className={index % 2 === 0 ? 'bg-background' : 'bg-gray-50'}
+                  className={index % 2 === 0 ? 'bg-background' : 'bg-muted/50'}
                 >
                   {result.variables.map((variable) => (
                     <td
@@ -153,7 +153,7 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
               type="text"
               value={expression}
               onChange={(e) => setExpression(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
               placeholder="Enter a boolean expression (e.g., A ∧ B ∨ ¬A)"
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -167,7 +167,7 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
             <select
               value={operation}
               onChange={(e) => setOperation(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground w-full sm:w-auto"
             >
               <option value="simplify">Simplify</option>
               <option value="evaluate">Evaluate</option>
@@ -236,7 +236,7 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
           <button
             onClick={handleCalculate}
             disabled={loading || !expression.trim()}
-            className="px-6 py-2 bg-blue-600 text-background rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Calculating...' : 'Calculate'}
           </button>
@@ -244,7 +244,7 @@ export const CalculatorDemo: React.FC<CalculatorDemoProps> = ({
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded mb-6">
             <strong>Error:</strong> {error}
           </div>
         )}
