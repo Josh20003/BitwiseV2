@@ -21,11 +21,11 @@ const buttonVariants = cva(
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-[var(--color-bluez)] underline-offset-4 hover:underline',
         bluezOutline:
-          'text-background bg-[var(--color-bluez)] btn-shadow addgrotesk px-5 py-2 font-semibold text-sm/6 hover:bg-[var(--color-bluez)]/90',
+          'text-white bg-[var(--color-bluez)] btn-shadow addgrotesk px-5 py-2 font-semibold text-sm/6 hover:brightness-110 transition-all',
         outlinez:
           'text-primary btn-shadow addgrotesk px-5 py-2 font-semibold text-sm/6 hover:bg-[var(--color-bluez)]/90 border border-primary dark:border-secondary-foreground dark:hover:bg-input/50',
         bluez:
-          'text-background bg-[var(--color-bluez)] px-5 py-2 font-semibold text-sm/6 hover:bg-[var(--color-bluez)]/90',
+          'text-white bg-[var(--color-bluez)] px-5 py-2 font-semibold text-sm/6 hover:brightness-110 transition-all active:scale-[0.99]',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',
