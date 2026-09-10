@@ -1,12 +1,12 @@
-import { 
-  IsString, 
-  IsInt, 
-  IsArray, 
-  IsOptional, 
+import {
+  IsString,
+  IsInt,
+  IsArray,
+  IsOptional,
   IsBoolean,
   IsIn,
-  Min, 
-  Max 
+  Min,
+  Max,
 } from 'class-validator';
 
 export class CreateExampleDto {
@@ -54,4 +54,3 @@ export class CreateExampleDto {
   @IsBoolean()
   isActive?: boolean;
 }
-

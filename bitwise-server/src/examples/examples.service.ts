@@ -18,15 +18,19 @@ export class ExamplesService {
    */
   async findAll(filters: FilterExamplesDto = {}) {
     const cacheAge = Date.now() - this.cacheTimestamp;
-    
+
     // Use cache if fresh and no specific filters
-    if (cacheAge < this.CACHE_TTL && this.cachedExamples.length > 0 && !this.hasFilters(filters)) {
+    if (
+      cacheAge < this.CACHE_TTL &&
+      this.cachedExamples.length > 0 &&
+      !this.hasFilters(filters)
+    ) {
       this.logger.debug('Returning cached examples');
       return this.cachedExamples;
     }
 
     this.logger.debug('Fetching examples from database');
-    
+
     const where: any = { isActive: true };
 
     // Apply filters
@@ -122,7 +126,9 @@ export class ExamplesService {
    */
   extractVariables(expr: string): string[] {
     const matches = expr.match(/[A-Z]/g) || [];
-    const uniqueVars = [...new Set(matches)].filter(v => v !== 'T' && v !== 'F');
+    const uniqueVars = [...new Set(matches)].filter(
+      (v) => v !== 'T' && v !== 'F',
+    );
     return uniqueVars.sort();
   }
 

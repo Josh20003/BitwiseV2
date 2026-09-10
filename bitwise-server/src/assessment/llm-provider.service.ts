@@ -15,14 +15,16 @@ export class LlmProviderService {
       temperature?: number;
       topP?: number;
       maxOutputTokens?: number;
-    }
+    },
   ): Promise<string> {
     const temp = options?.temperature ?? AI_CONFIG.temperature;
     const topP = options?.topP ?? AI_CONFIG.topP;
-    
+
     // Attempt Primary Model
     try {
-      this.logger.log(`Executing primary prompt with model: ${AI_CONFIG.modelName}`);
+      this.logger.log(
+        `Executing primary prompt with model: ${AI_CONFIG.modelName}`,
+      );
       const primaryResult = await generateText({
         model: google(AI_CONFIG.modelName),
         prompt: primaryPrompt,
@@ -32,7 +34,9 @@ export class LlmProviderService {
       });
       return primaryResult.text;
     } catch (primaryError: any) {
-      this.logger.error(`Primary model failed: ${primaryError.message}. No fallback configured.`);
+      this.logger.error(
+        `Primary model failed: ${primaryError.message}. No fallback configured.`,
+      );
       throw primaryError;
     }
   }

@@ -7,6 +7,9 @@ export class CreateAssessmentDto {
   @ApiProperty({ example: 1, description: 'User ID taking the assessment' })
   userId: number;
 
-  @ApiProperty({ example: 'easy', description: 'Difficulty level (easy, medium, hard)' })
+  @ApiProperty({
+    example: 'easy',
+    description: 'Difficulty level (easy, medium, hard)',
+  })
   difficulty: string;
 }

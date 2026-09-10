@@ -11,8 +11,8 @@ export class LessonsService {
   async createLesson(title: string) {
     return this.prisma.lesson.create({
       data: {
-        title
-      }
+        title,
+      },
     });
   }
 
@@ -20,8 +20,8 @@ export class LessonsService {
   async getLessons() {
     return this.prisma.lesson.findMany({
       include: {
-        topics: true
-      }
+        topics: true,
+      },
     });
   }
 
@@ -31,9 +31,9 @@ export class LessonsService {
       where: { id },
       include: {
         topics: {
-          orderBy: { id: 'asc' } // Order topics by id ascending
-        }
-      }
+          orderBy: { id: 'asc' }, // Order topics by id ascending
+        },
+      },
     });
   }
 
@@ -41,14 +41,14 @@ export class LessonsService {
   async updateLesson(id: number, title: string) {
     return this.prisma.lesson.update({
       where: { id },
-      data: { title }
+      data: { title },
     });
   }
 
   // Delete a lesson
   async deleteLesson(id: number) {
     return this.prisma.lesson.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -60,13 +60,13 @@ export class LessonsService {
         tags: createTopicDto.tags ?? [],
         contentText: createTopicDto.contentText ?? '',
         displayContent: createTopicDto.displayContent,
-      }
+      },
     });
   }
 
   async createTopics(topics: CreateTopicDto[]) {
     return this.prisma.topic.createMany({
-      data: topics.map(topic => ({
+      data: topics.map((topic) => ({
         title: topic.title,
         lessonId: topic.lessonId,
         tags: topic.tags ?? [],
@@ -79,7 +79,7 @@ export class LessonsService {
   // Get topics for a lesson
   async getTopicsForLesson(lessonId: number) {
     return this.prisma.topic.findMany({
-      where: { lessonId }
+      where: { lessonId },
     });
   }
 
@@ -87,8 +87,8 @@ export class LessonsService {
     return this.prisma.topic.findMany({
       select: {
         id: true,
-        displayContent: true
-      }
+        displayContent: true,
+      },
     });
   }
 }

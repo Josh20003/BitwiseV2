@@ -65,7 +65,7 @@ export class BinaryCodesService {
    */
   decodeBCD(bcdValue: string): BinaryCodeResult {
     const steps: DecodingStep[] = [];
-    const bcdGroups = bcdValue.split(/\s+/).filter(g => g.length > 0);
+    const bcdGroups = bcdValue.split(/\s+/).filter((g) => g.length > 0);
     const decimalDigits: string[] = [];
 
     steps.push({
@@ -75,7 +75,9 @@ export class BinaryCodesService {
 
     for (const group of bcdGroups) {
       if (group.length !== 4 || !/^[01]{4}$/.test(group)) {
-        throw new Error(`Invalid BCD group: ${group} (must be 4 binary digits)`);
+        throw new Error(
+          `Invalid BCD group: ${group} (must be 4 binary digits)`,
+        );
       }
       const decimal = parseInt(group, 2);
       decimalDigits.push(decimal.toString());
@@ -157,7 +159,9 @@ export class BinaryCodesService {
 
     // Remaining bits are XOR of previous binary bit and current gray bit
     for (let i = 1; i < grayBits.length; i++) {
-      const xorResult = (parseInt(binaryBits[i - 1]) ^ parseInt(grayBits[i])).toString();
+      const xorResult = (
+        parseInt(binaryBits[i - 1]) ^ parseInt(grayBits[i])
+      ).toString();
       binaryBits.push(xorResult);
       steps.push({
         description: `B[${i}] = B[${i - 1}] ⊕ G[${i}] = ${binaryBits[i - 1]} ⊕ ${grayBits[i]} = ${xorResult}`,

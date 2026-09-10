@@ -11,11 +11,11 @@ export class UserProgressService {
   async markTopicViewed(userId: string, topicId: number) {
     // Check if user topic record exists
     const existingUserTopic = await this.prisma.userTopic.findUnique({
-      where: { userId_topicId: { userId, topicId } }
+      where: { userId_topicId: { userId, topicId } },
     });
 
     const updatePayload: Record<string, any> = {
-      lastViewedAt: new Date()
+      lastViewedAt: new Date(),
     };
 
     if (existingUserTopic?.status !== 'completed') {
@@ -29,13 +29,13 @@ export class UserProgressService {
         userId,
         topicId,
         status: 'viewed',
-        firstViewedAt: new Date()
-      }
+        firstViewedAt: new Date(),
+      },
     });
 
     // Update lesson progress
     await this.updateLessonProgress(userId, topicId);
-    
+
     return userTopic;
   }
 
@@ -48,19 +48,19 @@ export class UserProgressService {
       update: {
         status: 'completed',
         completedAt: new Date(),
-        lastViewedAt: new Date()
+        lastViewedAt: new Date(),
       },
       create: {
         userId,
         topicId,
         status: 'completed',
         firstViewedAt: new Date(),
-        completedAt: new Date()
-      }
+        completedAt: new Date(),
+      },
     });
 
     await this.updateLessonProgress(userId, topicId);
-    
+
     return userTopic;
   }
 
@@ -70,30 +70,34 @@ export class UserProgressService {
   private async updateLessonProgress(userId: string, topicId: number) {
     const topic = await this.prisma.topic.findUnique({
       where: { id: topicId },
-      select: { lessonId: true }
+      select: { lessonId: true },
     });
-    
+
     if (!topic) return;
 
     // Get all topics in this lesson
     const allTopics = await this.prisma.topic.findMany({
       where: { lessonId: topic.lessonId },
-      select: { id: true }
+      select: { id: true },
     });
 
     // Get user's progress on these topics
     const userTopics = await this.prisma.userTopic.findMany({
       where: {
         userId,
-        topicId: { in: allTopics.map(t => t.id) }
-      }
+        topicId: { in: allTopics.map((t) => t.id) },
+      },
     });
 
     // Calculate progress percentage
     const totalTopics = allTopics.length;
-    const completedCount = userTopics.filter(ut => ut.status === 'completed').length;
+    const completedCount = userTopics.filter(
+      (ut) => ut.status === 'completed',
+    ).length;
 
-    const viewedCount = userTopics.filter(ut => ut.status !== 'not-started').length;
+    const viewedCount = userTopics.filter(
+      (ut) => ut.status !== 'not-started',
+    ).length;
     const progress = totalTopics > 0 ? completedCount / totalTopics : 0;
 
     // Determine lesson status
@@ -106,7 +110,7 @@ export class UserProgressService {
 
     // Get existing lesson record to preserve masteryScore
     const existingLesson = await this.prisma.userLesson.findUnique({
-      where: { userId_lessonId: { userId, lessonId: topic.lessonId } }
+      where: { userId_lessonId: { userId, lessonId: topic.lessonId } },
     });
 
     // Update or create UserLesson
@@ -116,7 +120,7 @@ export class UserProgressService {
         progress,
         status,
         lastViewedAt: new Date(),
-        completedAt: status === 'completed' ? new Date() : null
+        completedAt: status === 'completed' ? new Date() : null,
       },
       create: {
         userId,
@@ -124,8 +128,8 @@ export class UserProgressService {
         progress,
         status,
         startedAt: new Date(),
-        masteryScore: existingLesson?.masteryScore || null
-      }
+        masteryScore: existingLesson?.masteryScore || null,
+      },
     });
   }
 
@@ -141,13 +145,13 @@ export class UserProgressService {
             topics: {
               include: {
                 userTopics: {
-                  where: { userId }
-                }
-              }
-            }
-          }
-        }
-      }
+                  where: { userId },
+                },
+              },
+            },
+          },
+        },
+      },
     });
   }
 
@@ -158,9 +162,9 @@ export class UserProgressService {
     return await this.prisma.userLesson.findMany({
       where: { userId },
       include: {
-        lesson: true
+        lesson: true,
       },
-      orderBy: { lessonId: 'asc' }
+      orderBy: { lessonId: 'asc' },
     });
   }
 
@@ -172,18 +176,18 @@ export class UserProgressService {
       where: { lessonId },
       include: {
         userTopics: {
-          where: { userId }
-        }
-      }
+          where: { userId },
+        },
+      },
     });
 
-    return topics.map(topic => ({
+    return topics.map((topic) => ({
       ...topic,
       userProgress: topic.userTopics[0] || {
         status: 'not-started',
         viewCount: 0,
-        completedAt: null
-      }
+        completedAt: null,
+      },
     }));
   }
 
@@ -193,22 +197,27 @@ export class UserProgressService {
   async getUserStatistics(userId: string) {
     const [userLessons, userTopics] = await Promise.all([
       this.prisma.userLesson.findMany({ where: { userId } }),
-      this.prisma.userTopic.findMany({ where: { userId } })
+      this.prisma.userTopic.findMany({ where: { userId } }),
     ]);
 
     const totalLessons = await this.prisma.lesson.count();
     const totalTopics = await this.prisma.topic.count();
 
     return {
-      lessonsStarted: userLessons.filter(l => l.status !== 'not-started').length,
-      lessonsCompleted: userLessons.filter(l => l.status === 'completed').length,
+      lessonsStarted: userLessons.filter((l) => l.status !== 'not-started')
+        .length,
+      lessonsCompleted: userLessons.filter((l) => l.status === 'completed')
+        .length,
       totalLessons,
-      topicsViewed: userTopics.filter(t => t.status !== 'not-started').length,
-      topicsCompleted: userTopics.filter(t => t.status === 'completed').length,
+      topicsViewed: userTopics.filter((t) => t.status !== 'not-started').length,
+      topicsCompleted: userTopics.filter((t) => t.status === 'completed')
+        .length,
       totalTopics,
-      averageProgress: userLessons.length > 0
-        ? userLessons.reduce((sum, l) => sum + l.progress, 0) / userLessons.length
-        : 0
+      averageProgress:
+        userLessons.length > 0
+          ? userLessons.reduce((sum, l) => sum + l.progress, 0) /
+            userLessons.length
+          : 0,
     };
   }
 }

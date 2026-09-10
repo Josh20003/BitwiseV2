@@ -15,12 +15,12 @@ export class AdaptiveController {
       const skills = await this.adaptiveService.getUserSkills(userId);
       return {
         success: true,
-        data: skills
+        data: skills,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -32,15 +32,16 @@ export class AdaptiveController {
   @Get('recommendations/:userId')
   async getRecommendations(@Param('userId') userId: string) {
     try {
-      const recommendations = await this.adaptiveService.getAdaptiveRecommendations(userId);
+      const recommendations =
+        await this.adaptiveService.getAdaptiveRecommendations(userId);
       return {
         success: true,
-        data: recommendations
+        data: recommendations,
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -54,7 +55,7 @@ export class AdaptiveController {
     try {
       const [skills, recommendations] = await Promise.all([
         this.adaptiveService.getUserSkills(userId),
-        this.adaptiveService.getAdaptiveRecommendations(userId)
+        this.adaptiveService.getAdaptiveRecommendations(userId),
       ]);
 
       // Organize skills by lesson for better display
@@ -64,7 +65,7 @@ export class AdaptiveController {
           acc[lessonId] = {
             lessonId,
             lessonTitle: skill.topic.lesson.title,
-            skills: []
+            skills: [],
           };
         }
         acc[lessonId].skills.push({
@@ -74,7 +75,8 @@ export class AdaptiveController {
           level: skill.level,
           attempts: skill.attempts,
           correct: skill.correct,
-          accuracy: skill.attempts > 0 ? (skill.correct / skill.attempts) * 100 : 0
+          accuracy:
+            skill.attempts > 0 ? (skill.correct / skill.attempts) * 100 : 0,
         });
         return acc;
       }, {});
@@ -88,13 +90,13 @@ export class AdaptiveController {
           focusAreas: recommendations.focusTopics,
           reinforcementNeeded: recommendations.reinforcementNeeded,
           totalAttempts: skills.reduce((sum, skill) => sum + skill.attempts, 0),
-          totalCorrect: skills.reduce((sum, skill) => sum + skill.correct, 0)
-        }
+          totalCorrect: skills.reduce((sum, skill) => sum + skill.correct, 0),
+        },
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -107,15 +109,18 @@ export class AdaptiveController {
   async getUserProgress(@Param('userId') userId: string) {
     try {
       const skills = await this.adaptiveService.getUserSkills(userId);
-      
+
       // Create progress data for visualization
-      const progressData = skills.map(skill => ({
+      const progressData = skills.map((skill) => ({
         topicTitle: skill.topic.title,
         lessonTitle: skill.topic.lesson.title,
         mastery: Math.round(skill.mastery * 100),
         level: Math.round(skill.level * 100),
         attempts: skill.attempts,
-        accuracy: skill.attempts > 0 ? Math.round((skill.correct / skill.attempts) * 100) : 0
+        accuracy:
+          skill.attempts > 0
+            ? Math.round((skill.correct / skill.attempts) * 100)
+            : 0,
       }));
 
       // Group by lesson for better chart organization
@@ -133,17 +138,29 @@ export class AdaptiveController {
           individual: progressData,
           byLesson: lessonProgress,
           summary: {
-            avgMastery: Math.round(progressData.reduce((sum, item) => sum + item.mastery, 0) / progressData.length),
-            avgLevel: Math.round(progressData.reduce((sum, item) => sum + item.level, 0) / progressData.length),
-            totalAttempts: progressData.reduce((sum, item) => sum + item.attempts, 0),
-            avgAccuracy: Math.round(progressData.reduce((sum, item) => sum + item.accuracy, 0) / progressData.length)
-          }
-        }
+            avgMastery: Math.round(
+              progressData.reduce((sum, item) => sum + item.mastery, 0) /
+                progressData.length,
+            ),
+            avgLevel: Math.round(
+              progressData.reduce((sum, item) => sum + item.level, 0) /
+                progressData.length,
+            ),
+            totalAttempts: progressData.reduce(
+              (sum, item) => sum + item.attempts,
+              0,
+            ),
+            avgAccuracy: Math.round(
+              progressData.reduce((sum, item) => sum + item.accuracy, 0) /
+                progressData.length,
+            ),
+          },
+        },
       };
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }

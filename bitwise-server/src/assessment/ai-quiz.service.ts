@@ -29,23 +29,39 @@ export class AiQuizService {
    */
   async generateQuiz(userId: string, topic: string): Promise<QuizQuestion[]> {
     const mastery = await this.prisma.ema_mastery.findUnique({
-      where: { user_id_topic: { user_id: userId, topic } }
+      where: { user_id_topic: { user_id: userId, topic } },
     });
 
     const ema = mastery ? Number(mastery.currentEMA) : 0.0;
 
     // Determine difficulty spread based on EMA
-    let easyCount = 4, mediumCount = 4, hardCount = 2;
+    let easyCount = 4,
+      mediumCount = 4,
+      hardCount = 2;
     if (ema < 0.4) {
-      easyCount = 7; mediumCount = 3; hardCount = 0;
+      easyCount = 7;
+      mediumCount = 3;
+      hardCount = 0;
     } else if (ema > 0.8) {
-      easyCount = 1; mediumCount = 4; hardCount = 5;
+      easyCount = 1;
+      mediumCount = 4;
+      hardCount = 5;
     }
 
-    return this.generateDynamicQuestions(topic, easyCount, mediumCount, hardCount);
+    return this.generateDynamicQuestions(
+      topic,
+      easyCount,
+      mediumCount,
+      hardCount,
+    );
   }
 
-  private async generateDynamicQuestions(topic: string, easy: number, medium: number, hard: number): Promise<QuizQuestion[]> {
+  private async generateDynamicQuestions(
+    topic: string,
+    easy: number,
+    medium: number,
+    hard: number,
+  ): Promise<QuizQuestion[]> {
     const googleApiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
 
     if (!googleApiKey) {
@@ -54,50 +70,66 @@ export class AiQuizService {
     }
 
     const total = easy + medium + hard;
-    
+
     // Mapping for syllabus injection
-    const QUIZ_SCOPES: Record<string, { title: string, scope: string, exclusion: string }> = {
+    const QUIZ_SCOPES: Record<
+      string,
+      { title: string; scope: string; exclusion: string }
+    > = {
       'number-systems': {
         title: 'Introduction to Number Systems',
-        scope: '- Definition of base-2, base-8, base-10, base-16\n- Positional values\n- Digit representation in different bases',
-        exclusion: '- Conversion between bases\n- Binary arithmetic\n- Complements'
+        scope:
+          '- Definition of base-2, base-8, base-10, base-16\n- Positional values\n- Digit representation in different bases',
+        exclusion:
+          '- Conversion between bases\n- Binary arithmetic\n- Complements',
       },
       'binary-arithmetic': {
         title: 'Binary Arithmetic',
-        scope: '- Binary addition rules and carry\n- Binary subtraction and borrow\n- Binary multiplication (shift and add)\n- Binary division',
-        exclusion: '- 1\'s and 2\'s complements\n- Signed vs unsigned numbers\n- Floating point'
+        scope:
+          '- Binary addition rules and carry\n- Binary subtraction and borrow\n- Binary multiplication (shift and add)\n- Binary division',
+        exclusion:
+          "- 1's and 2's complements\n- Signed vs unsigned numbers\n- Floating point",
       },
-      'complements': {
+      complements: {
         title: 'Complements',
-        scope: '- 1\'s complement (bit inversion)\n- 2\'s complement (invert and add 1)\n- Cascading carry in 2\'s complement',
-        exclusion: '- Signed number interpretation (MSB)\n- Overflow conditions\n- BCD'
+        scope:
+          "- 1's complement (bit inversion)\n- 2's complement (invert and add 1)\n- Cascading carry in 2's complement",
+        exclusion:
+          '- Signed number interpretation (MSB)\n- Overflow conditions\n- BCD',
       },
       'boolean-algebra': {
         title: 'Intro to Boolean Algebra',
-        scope: '- True/False and 1/0 values\n- Basic boolean logic concepts\n- Applications in circuit design',
-        exclusion: '- Specific logic gates (AND, OR, NOT)\n- Truth tables\n- Karnaugh Maps'
+        scope:
+          '- True/False and 1/0 values\n- Basic boolean logic concepts\n- Applications in circuit design',
+        exclusion:
+          '- Specific logic gates (AND, OR, NOT)\n- Truth tables\n- Karnaugh Maps',
       },
       'logic-gates': {
         title: 'Logic Gates',
-        scope: '- AND, OR, NOT gates\n- NAND, NOR universal gates\n- XOR, XNOR gates',
-        exclusion: '- Truth tables for complex expressions\n- Boolean algebra simplification\n- K-Maps'
+        scope:
+          '- AND, OR, NOT gates\n- NAND, NOR universal gates\n- XOR, XNOR gates',
+        exclusion:
+          '- Truth tables for complex expressions\n- Boolean algebra simplification\n- K-Maps',
       },
       'truth-tables': {
         title: 'Truth Tables',
-        scope: '- Constructing truth tables for basic gates\n- Reading input/output combinations\n- Evaluating simple boolean expressions',
-        exclusion: '- Karnaugh maps\n- Boolean laws (De Morgan\'s)\n- Advanced circuit design'
+        scope:
+          '- Constructing truth tables for basic gates\n- Reading input/output combinations\n- Evaluating simple boolean expressions',
+        exclusion:
+          "- Karnaugh maps\n- Boolean laws (De Morgan's)\n- Advanced circuit design",
       },
       'karnaugh-maps': {
         title: 'Simplification and K-Maps',
-        scope: '- Boolean laws (Commutative, Associative, Distributive)\n- Karnaugh Maps structure and grouping\n- Simplifying expressions',
-        exclusion: '- Sequential logic\n- Flip-flops\n- Number systems'
-      }
+        scope:
+          '- Boolean laws (Commutative, Associative, Distributive)\n- Karnaugh Maps structure and grouping\n- Simplifying expressions',
+        exclusion: '- Sequential logic\n- Flip-flops\n- Number systems',
+      },
     };
 
     const syllabus = QUIZ_SCOPES[topic] || {
       title: topic,
       scope: `- Core concepts of ${topic}`,
-      exclusion: '- Topics outside the current lesson scope'
+      exclusion: '- Topics outside the current lesson scope',
     };
 
     const systemPrompt = `You are a strict, precision-focused educational assessor. Your task is to generate multiple-choice questions that are 100% EXCLUSIVE to the provided lesson syllabus. 
@@ -169,7 +201,9 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
         });
         text = result.text;
       } catch (primaryError: any) {
-        this.logger.error(`gemini-3.6-flash failed: ${primaryError.message}. No fallback configured.`);
+        this.logger.error(
+          `gemini-3.6-flash failed: ${primaryError.message}. No fallback configured.`,
+        );
         throw primaryError;
       }
 
@@ -178,7 +212,9 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
       // Extract JSON array from response (handles any surrounding text)
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
-        this.logger.error(`No JSON array found in Google AI response. Response: ${text.substring(0, 500)}`);
+        this.logger.error(
+          `No JSON array found in Google AI response. Response: ${text.substring(0, 500)}`,
+        );
         return this.generateFallbackQuestions(topic, easy, medium, hard);
       }
 
@@ -195,9 +231,12 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
       }
 
       const questions: QuizQuestion[] = parsed.map((q, i) => {
-        const idx = typeof q.correctOptionIndex === 'number' && q.correctOptionIndex >= 0 && q.correctOptionIndex <= 3
-          ? q.correctOptionIndex
-          : 0;
+        const idx =
+          typeof q.correctOptionIndex === 'number' &&
+          q.correctOptionIndex >= 0 &&
+          q.correctOptionIndex <= 3
+            ? q.correctOptionIndex
+            : 0;
         return {
           id: `q-${Date.now()}-${i}`,
           topic,
@@ -208,16 +247,24 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
         };
       });
 
-      this.logger.log(`Successfully generated ${questions.length} AI questions for topic "${topic}"`);
+      this.logger.log(
+        `Successfully generated ${questions.length} AI questions for topic "${topic}"`,
+      );
       return questions;
-
     } catch (error: any) {
-      this.logger.error(`Google AI API failed for topic "${topic}": ${error.message}`);
+      this.logger.error(
+        `Google AI API failed for topic "${topic}": ${error.message}`,
+      );
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
   }
 
-  private generateFallbackQuestions(topic: string, easy: number, medium: number, hard: number): QuizQuestion[] {
+  private generateFallbackQuestions(
+    topic: string,
+    easy: number,
+    medium: number,
+    hard: number,
+  ): QuizQuestion[] {
     const questions: QuizQuestion[] = [];
     const total = easy + medium + hard;
 
@@ -293,14 +340,19 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
     };
   }
 
-  async submitQuiz(userId: string, topic: string, score: number, answersJson: any) {
+  async submitQuiz(
+    userId: string,
+    topic: string,
+    score: number,
+    answersJson: any,
+  ) {
     await this.prisma.quiz_results.create({
       data: {
         user_id: userId,
         topic,
         score,
         answersJson,
-      }
+      },
     });
   }
 }

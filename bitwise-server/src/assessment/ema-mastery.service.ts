@@ -4,7 +4,7 @@ import { PrismaService } from 'prisma/prisma.service';
 @Injectable()
 export class EmaMasteryService {
   private readonly ALPHA = 0.3; // Weight of the new score
-  private readonly BETA = 0.7;  // Weight of the historical EMA
+  private readonly BETA = 0.7; // Weight of the historical EMA
 
   constructor(private prisma: PrismaService) {}
 
@@ -23,9 +23,9 @@ export class EmaMasteryService {
       where: {
         user_id_topic: {
           user_id: userId,
-          topic: topic
-        }
-      }
+          topic: topic,
+        },
+      },
     });
 
     let updatedEMA = 0.0;
@@ -37,16 +37,17 @@ export class EmaMasteryService {
         data: {
           user_id: userId,
           topic: topic,
-          currentEMA: updatedEMA
-        }
+          currentEMA: updatedEMA,
+        },
       });
     } else {
       // EMA formula: (Alpha * newScore) + ((1 - Alpha) * oldEMA)
-      updatedEMA = (this.ALPHA * normalizedScore) + (this.BETA * existingMastery.currentEMA);
-      
+      updatedEMA =
+        this.ALPHA * normalizedScore + this.BETA * existingMastery.currentEMA;
+
       await this.prisma.ema_mastery.update({
         where: { id: existingMastery.id },
-        data: { currentEMA: updatedEMA }
+        data: { currentEMA: updatedEMA },
       });
     }
 
@@ -57,20 +58,22 @@ export class EmaMasteryService {
       topic,
       previousEMA: existingMastery ? existingMastery.currentEMA : 0.0,
       newEMA: updatedEMA,
-      score: normalizedScore
+      score: normalizedScore,
     };
   }
 
   private async updateStreak(userId: string, isPerfect: boolean) {
-    let streak = await this.prisma.user_streaks.findUnique({ where: { user_id: userId } });
-    
+    let streak = await this.prisma.user_streaks.findUnique({
+      where: { user_id: userId },
+    });
+
     if (!streak) {
       streak = await this.prisma.user_streaks.create({
         data: {
           user_id: userId,
           currentStreak: isPerfect ? 1 : 0,
-          bestStreak: isPerfect ? 1 : 0
-        }
+          bestStreak: isPerfect ? 1 : 0,
+        },
       });
       return;
     }
@@ -82,8 +85,8 @@ export class EmaMasteryService {
       where: { id: streak.id },
       data: {
         currentStreak: newCurrent,
-        bestStreak: newBest
-      }
+        bestStreak: newBest,
+      },
     });
   }
 
@@ -92,7 +95,7 @@ export class EmaMasteryService {
    */
   async getUserMastery(userId: string) {
     return this.prisma.ema_mastery.findMany({
-      where: { user_id: userId }
+      where: { user_id: userId },
     });
   }
 }

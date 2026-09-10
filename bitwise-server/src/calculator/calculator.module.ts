@@ -11,7 +11,21 @@ import { PrismaModule } from 'prisma/prisma.module';
 @Module({
   imports: [PrismaModule],
   controllers: [CalculatorController],
-  providers: [CalculatorService, CalculatorConverterService, BinaryCodesService, CalculatorArithmeticService, CalculatorComplementService, CalculatorSignedService],
-  exports: [CalculatorService, CalculatorConverterService, BinaryCodesService, CalculatorArithmeticService, CalculatorComplementService, CalculatorSignedService],
+  providers: [
+    CalculatorService,
+    CalculatorConverterService,
+    BinaryCodesService,
+    CalculatorArithmeticService,
+    CalculatorComplementService,
+    CalculatorSignedService,
+  ],
+  exports: [
+    CalculatorService,
+    CalculatorConverterService,
+    BinaryCodesService,
+    CalculatorArithmeticService,
+    CalculatorComplementService,
+    CalculatorSignedService,
+  ],
 })
 export class CalculatorModule {}

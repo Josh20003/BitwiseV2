@@ -15,9 +15,13 @@ export class LessonsConverterService {
    * Generates successive division/multiplication steps or positional weight
    * expansion for rendering an interactive math tree.
    */
-  generateConversionSteps(value: string, fromBase: number, toBase: number): { steps: MathTreeStep[] } {
+  generateConversionSteps(
+    value: string,
+    fromBase: number,
+    toBase: number,
+  ): { steps: MathTreeStep[] } {
     const steps: MathTreeStep[] = [];
-    
+
     // For simplicity, we implement two main modes:
     // 1. Any base to Decimal (Positional Weight expansion)
     // 2. Decimal to Any base (Successive Division for integers)
@@ -34,16 +38,21 @@ export class LessonsConverterService {
         steps.push({
           id: `step-${i}`,
           operation: `${digits[i]} × ${fromBase}^${power}`,
-          result: result.toString()
+          result: result.toString(),
         });
       }
     } else if (fromBase === 10 && toBase !== 10) {
       // Decimal to Any: Successive Division
       let currentVal = parseInt(value, 10);
       let stepCount = 0;
-      
+
       if (currentVal === 0) {
-        steps.push({ id: 'step-0', operation: `0 ÷ ${toBase}`, quotient: '0', remainder: '0' });
+        steps.push({
+          id: 'step-0',
+          operation: `0 ÷ ${toBase}`,
+          quotient: '0',
+          remainder: '0',
+        });
       }
 
       while (currentVal > 0) {
@@ -53,7 +62,7 @@ export class LessonsConverterService {
           id: `step-${stepCount++}`,
           operation: `${currentVal} ÷ ${toBase}`,
           quotient: quotient.toString(),
-          remainder: remainder.toString(toBase).toUpperCase()
+          remainder: remainder.toString(toBase).toUpperCase(),
         });
         currentVal = quotient;
       }
@@ -70,7 +79,7 @@ export class LessonsConverterService {
       steps.push({
         id: `step-info-1`,
         operation: `Convert ${value} (base ${fromBase}) to Decimal:`,
-        result: decValue.toString()
+        result: decValue.toString(),
       });
 
       // Then 10 to Any
@@ -83,7 +92,7 @@ export class LessonsConverterService {
           id: `step-div-${stepCount++}`,
           operation: `${currentVal} ÷ ${toBase}`,
           quotient: quotient.toString(),
-          remainder: remainder.toString(toBase).toUpperCase()
+          remainder: remainder.toString(toBase).toUpperCase(),
         });
         currentVal = quotient;
       }

@@ -11,7 +11,7 @@ export class UserProgressController {
   @Post('topic/:topicId/viewed')
   async markTopicViewed(
     @CurrentUser('id') userId: string,
-    @Param('topicId') topicId: string
+    @Param('topicId') topicId: string,
   ) {
     return this.userProgressService.markTopicViewed(userId, parseInt(topicId));
   }
@@ -19,17 +19,23 @@ export class UserProgressController {
   @Post('topic/:topicId/completed')
   async markTopicCompleted(
     @CurrentUser('id') userId: string,
-    @Param('topicId') topicId: string
+    @Param('topicId') topicId: string,
   ) {
-    return this.userProgressService.markTopicCompleted(userId, parseInt(topicId));
+    return this.userProgressService.markTopicCompleted(
+      userId,
+      parseInt(topicId),
+    );
   }
 
   @Get('lesson/:lessonId')
   async getLessonProgress(
     @CurrentUser('id') userId: string,
-    @Param('lessonId') lessonId: string
+    @Param('lessonId') lessonId: string,
   ) {
-    return this.userProgressService.getUserLessonProgress(userId, parseInt(lessonId));
+    return this.userProgressService.getUserLessonProgress(
+      userId,
+      parseInt(lessonId),
+    );
   }
 
   @Get('all')
@@ -40,9 +46,12 @@ export class UserProgressController {
   @Get('topics/lesson/:lessonId')
   async getTopicsForLesson(
     @CurrentUser('id') userId: string,
-    @Param('lessonId') lessonId: string
+    @Param('lessonId') lessonId: string,
   ) {
-    return this.userProgressService.getUserTopicsForLesson(userId, parseInt(lessonId));
+    return this.userProgressService.getUserTopicsForLesson(
+      userId,
+      parseInt(lessonId),
+    );
   }
 
   @Get('statistics')

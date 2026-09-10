@@ -12,7 +12,6 @@ export interface SignedInterpretationResult {
 
 @Injectable()
 export class CalculatorSignedService {
-  
   public interpret(binary: string): SignedInterpretationResult {
     // Basic validation
     if (!/^[01]+$/.test(binary)) {
@@ -39,9 +38,9 @@ export class CalculatorSignedService {
       }
       onesComplementValue = -(parseInt(inverted, 2) || 0);
       if (onesComplementValue === 0 && isNegative) {
-          // Negative zero in 1's complement
-          // Handled as -0 but represented as 0 in number type, 
-          // we'll just keep it as 0
+        // Negative zero in 1's complement
+        // Handled as -0 but represented as 0 in number type,
+        // we'll just keep it as 0
       }
     } else {
       onesComplementValue = parseInt(binary, 2);
@@ -67,7 +66,7 @@ export class CalculatorSignedService {
       signedMagnitudeValue,
       onesComplementValue,
       twosComplementValue,
-      isNegative
+      isNegative,
     };
   }
 }

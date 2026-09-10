@@ -35,7 +35,9 @@ export class ExamplesController {
    */
   @Get('random')
   async findRandom(@Query() filters: Partial<FilterExamplesDto>) {
-    this.logger.debug(`GET /examples/random with filters: ${JSON.stringify(filters)}`);
+    this.logger.debug(
+      `GET /examples/random with filters: ${JSON.stringify(filters)}`,
+    );
     return this.examplesService.findRandom(filters);
   }
 
@@ -59,8 +61,6 @@ export class ExamplesController {
     this.logger.log(`POST /examples - Creating: ${createExampleDto.title}`);
     return this.examplesService.create(createExampleDto);
   }
-
-
 
   /**
    * POST /examples/clear-cache
