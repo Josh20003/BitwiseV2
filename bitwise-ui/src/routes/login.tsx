@@ -19,7 +19,7 @@ function RouteComponent() {
         draggable="false"
         src={RightLanding001}
         alt="My Icon"
-        className="pointer-events-none select-none flex absolute h-100 md:h-full bottom-0 md:bottom-auto right-0 z-0"
+        className="pointer-events-none select-none hidden md:flex absolute h-full bottom-0 md:bottom-auto right-0 z-0"
       />
       <img
         style={{
@@ -30,7 +30,7 @@ function RouteComponent() {
         draggable="false"
         src={LeftLanding001}
         alt="My Icon"
-        className="pointer-events-none select-none flex absolute h-100 md:h-full left-0 z-0"
+        className="pointer-events-none select-none hidden md:flex absolute h-full left-0 z-0"
       />
       <div className="relative z-10 w-full max-w-sm">
         <LoginForm />
