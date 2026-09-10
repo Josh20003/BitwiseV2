@@ -37,7 +37,7 @@ function useTheme(): 'light' | 'dark' {
 import NavLogo from '@/assets/icons/std-logo-black.svg'
 import NavLogoDark from '@/assets/icons/nav-bar-logo.svg'
 import { useScrollDirection } from '@/hooks/useScrollDirection'
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, Menu } from 'lucide-react'
 import { useAuthContext } from '@/contexts/AuthContext'
@@ -121,7 +121,13 @@ const HomeHeader = () => {
   const theme = useTheme()
   const isVisible = useScrollDirection()
   const location = useLocation()
+  const navigate = useNavigate()
   const { isAuthenticated, signOut, user } = useAuthContext()
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate({ to: '/' })
+  }
   const { data: backendProfile } = useBackendProfile()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const md = backendProfile?.metadata ?? {}
@@ -213,12 +219,10 @@ const HomeHeader = () => {
         </div>
 
         {/* Desktop Right Side - Hidden on small screens */}
-        <div className="hidden md:flex">
+        <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           {isAuthenticated ? (
             <NavigationMenu>
-              <div className="hover:bg-muted rounded-full">
-                <ThemeToggle />
-              </div>
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent h-12">
@@ -261,7 +265,7 @@ const HomeHeader = () => {
                         variant="ghost"
                         size="sm"
                         className="w-full justify-start px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 font-normal"
-                        onClick={signOut}
+                        onClick={handleSignOut}
                       >
                         Sign Out
                       </Button>
@@ -272,12 +276,9 @@ const HomeHeader = () => {
             </NavigationMenu>
           ) : (
             <div className="flex items-center gap-2">
-              <div className="hover:bg-muted rounded-full">
-                <ThemeToggle />
-              </div>
               <Link to="/login">
                 <Button
-                  variant={'outlinez'}
+                  variant={'outlinez' as any}
                   className="hover:bg-transparent text-foreground"
                 >
                   Learn for free <span aria-hidden="true">&rarr;</span>
@@ -297,7 +298,7 @@ const HomeHeader = () => {
                 <span className="sr-only">Open menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
               <SheetHeader>
                 <SheetTitle>
                   <img
@@ -325,11 +326,11 @@ const HomeHeader = () => {
                           </AvatarFallback>
                         )}
                       </Avatar>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="font-medium text-sm truncate">
                           {displayName}
                         </span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground truncate">
                           {user?.email}
                         </span>
                       </div>
@@ -342,7 +343,7 @@ const HomeHeader = () => {
                 <div className="w-full">
                   <Link
                     to="/roadmap"
-                    className="flex items-center justify-between rounded-lg px-3 py-2 text-base font-semibold hover:bg-accent/30 transition-colors"
+                    className="flex items-center justify-between rounded-lg px-2 py-2 text-base font-semibold hover:bg-accent/30 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Learn
@@ -350,16 +351,16 @@ const HomeHeader = () => {
                 </div>
 
                 {/* Tools (mobile) */}
-                <div className="w-full px-2">
-                  <div className="px-1 text-base font-semibold pb-2">Tools</div>
-                  <div className="flex flex-col space-y-2">
+                <div className="w-full">
+                  <div className="px-2 text-base font-semibold pb-2">Tools</div>
+                  <div className="flex flex-col space-y-1">
                     {toolItems.map((item) => {
                       const Icon = item.icon
                       return (
                         <Link
                           key={item.key}
                           to={item.to}
-                          className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-accent/30 transition-colors"
+                          className="flex items-start gap-3 rounded-lg px-2 py-2 hover:bg-accent/30 transition-colors"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <Icon className="h-5 w-5 mt-0.5" />
@@ -381,19 +382,28 @@ const HomeHeader = () => {
 
                 {/* Auth Actions */}
                 {isAuthenticated ? (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => {
-                      signOut()
-                      setMobileMenuOpen(false)
-                    }}
-                  >
-                    Sign Out
-                  </Button>
+                  <>
+                    <Link
+                      to="/profile"
+                      className="flex items-center justify-between rounded-lg px-3 py-3 text-base font-medium hover:bg-accent/30 transition-colors min-h-[44px]"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <Button
+                      variant="destructive"
+                      className="w-full min-h-[44px]"
+                      onClick={() => {
+                        handleSignOut()
+                        setMobileMenuOpen(false)
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </>
                 ) : (
                   <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="default" className="w-full">
+                    <Button variant="default" className="w-full min-h-[44px]">
                       Learn for free <span aria-hidden="true">&rarr;</span>
                     </Button>
                   </Link>

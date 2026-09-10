@@ -42,8 +42,8 @@ function RouteComponent() {
         )}
 
         {/* Title Section */}
-        <div className="mb-6 mt-30">
-          <p className="font-semibold text-center text-3xl">
+        <div className="mb-6 mt-20 md:mt-30">
+          <p className="font-semibold text-center text-xl sm:text-2xl md:text-3xl">
             Karnaugh Map Solver
           </p>
         </div>

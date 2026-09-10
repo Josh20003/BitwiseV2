@@ -57,6 +57,11 @@ export function NumberSystemConverter() {
               value={sourceValue}
               onChange={(e) => setSourceValue(e.target.value.toUpperCase())}
               className="font-mono"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              inputMode="text"
             />
           </div>
 

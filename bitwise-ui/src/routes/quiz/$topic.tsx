@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate, Link, useSearch } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Link, useSearch, redirect } from '@tanstack/react-router'
+import { supabase } from '@/utils/supabase'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { QuizSessionManager } from '@/components/assessment/QuizSessionManager'
 import { useEffect } from 'react'
@@ -10,6 +11,14 @@ const searchSchema = z.object({
 })
 
 export const Route = createFileRoute('/quiz/$topic')({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw redirect({
+        to: '/login',
+      })
+    }
+  },
   component: RouteComponent,
   validateSearch: searchSchema,
 })

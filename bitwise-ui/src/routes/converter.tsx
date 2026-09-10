@@ -3,7 +3,7 @@ import { NumberSystemConverter } from '@/components/NumberSystemConverter'
 
 export const Route = createFileRoute('/converter')({
   component: () => (
-    <div className="mt-30 flex flex-col w-full min-h-[80vh] md:gap-0">
+    <div className="mt-20 md:mt-30 flex flex-col w-full min-h-[80vh] md:gap-0 overflow-x-hidden">
       <div className="text-center px-4 mb-4">
         <p className="font-semibold text-2xl sm:text-3xl md:text-3xl">
           Number Converter

@@ -11,22 +11,25 @@ export const Route = createFileRoute('/calculator')({
 
 type CalculatorMode = 'boolean' | 'arithmetic' | 'complements'
 
-const MODES: { key: CalculatorMode; label: string; icon: React.ElementType; description: string }[] = [
+const MODES: { key: CalculatorMode; label: string; shortLabel: string; icon: React.ElementType; description: string }[] = [
   {
     key: 'boolean',
     label: 'Boolean Algebra',
+    shortLabel: 'Boolean',
     icon: Calculator,
     description: 'Simplify expressions step-by-step with visual animations',
   },
   {
     key: 'arithmetic',
     label: 'Binary Arithmetic',
+    shortLabel: 'Arithmetic',
     icon: Plus,
     description: 'Trace step-by-step binary addition and subtraction',
   },
   {
     key: 'complements',
     label: "1's & 2's Complements",
+    shortLabel: 'Complements',
     icon: Baseline,
     description: "Visualize bit inversions and cascade carries",
   },
@@ -38,9 +41,9 @@ function RouteComponent() {
   const currentMode = MODES.find((m) => m.key === activeMode)!
 
   return (
-    <div className="mt-30 flex flex-col w-full min-h-[80vh] md:gap-0">
+    <div className="mt-20 md:mt-30 flex flex-col w-full min-h-[80vh] md:gap-0 overflow-x-hidden">
       {/* Header */}
-      <div className="text-center px-4">
+      <div className="text-center px-4 pt-4">
         <p className="font-semibold text-2xl sm:text-3xl md:text-3xl">
           {currentMode.label}
         </p>
@@ -51,7 +54,7 @@ function RouteComponent() {
 
       {/* Mode Toggle Bar */}
       <div className="flex justify-center px-4 pt-4 pb-2">
-        <div className="inline-flex items-center rounded-lg border border-border bg-muted/30 p-1 gap-1">
+        <div className="inline-flex items-center rounded-lg border border-border bg-muted/30 p-1 gap-1 w-full max-w-md overflow-x-auto">
           {MODES.map((mode) => {
             const Icon = mode.icon
             const isActive = activeMode === mode.key
@@ -59,9 +62,10 @@ function RouteComponent() {
               <button
                 key={mode.key}
                 onClick={() => setActiveMode(mode.key)}
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                 className={`
-                  inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium
-                  transition-all duration-200 cursor-pointer
+                  flex-1 inline-flex items-center justify-center gap-1.5 rounded-md px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-medium
+                  transition-all duration-200 cursor-pointer min-h-[44px] whitespace-nowrap
                   ${
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'
@@ -69,7 +73,8 @@ function RouteComponent() {
                   }
                 `}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="sm:hidden">{mode.shortLabel}</span>
                 <span className="hidden sm:inline">{mode.label}</span>
               </button>
             )

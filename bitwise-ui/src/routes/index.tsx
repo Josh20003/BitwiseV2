@@ -31,16 +31,18 @@ export const Route = createFileRoute('/')({
 function RouteComponent() {
   return (
     <>
-      <div className="bg-[var(--color-offwhite)] min-h-screen pt-20">
+    <div className="bg-[var(--color-offwhite)] min-h-screen pt-20 overflow-x-hidden">
         <img
           style={{
             userSelect: 'none',
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
+            pointerEvents: 'none',
           }}
           draggable="false"
           src={RightLanding001}
-          alt="My Icon"
+          alt=""
+          aria-hidden="true"
           className="hidden md:flex absolute h-full bottom-0 right-0 z-0"
         />
         <img
@@ -48,10 +50,12 @@ function RouteComponent() {
             userSelect: 'none',
             WebkitUserSelect: 'none',
             MozUserSelect: 'none',
+            pointerEvents: 'none',
           }}
           draggable="false"
           src={LeftLanding001}
-          alt="My Icon"
+          alt=""
+          aria-hidden="true"
           className="hidden md:flex absolute h-full left-0 z-0"
         />
         <div>
@@ -63,22 +67,26 @@ function RouteComponent() {
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     MozUserSelect: 'none',
+                    pointerEvents: 'none',
                   }}
                   draggable="false"
                   src={FeatureBox}
-                  alt="My Icon"
-                  className="absolute top-4 md:top-0 left-1/5 md:left-1/5 w-2/6 z-0 md:w-2/6 dark:opacity-10"
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute top-4 md:top-0 left-[20%] md:left-[20%] w-2/6 z-0 md:w-2/6 dark:opacity-10"
                 />
                 <img
                   style={{
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     MozUserSelect: 'none',
+                    pointerEvents: 'none',
                   }}
                   draggable="false"
                   src={shapesforlogic}
-                  alt="My Icon"
-                  className="absolute bottom-0 right-1/6 md:right-1/5 w-10 md:w-max"
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute bottom-0 right-[16.67%] md:right-[20%] w-10 md:w-max"
                 />
                 <h1 className="addgrotesk text-3xl sm:text-4xl md:text-7xl font-black text-center w-full md:w-2/3 z-10 relative pt-6 text-secondary-foreground px-4">
                   Interact, Learn. Master logic
@@ -422,7 +430,7 @@ function RouteComponent() {
           </div>
         </div>
 
-        <button className="w-auto m-10 mt-8 px-6 py-2.5 text-sm tracking-wider text-background transition-colors duration-300 transform focus:outline-none border border-background hover:bg-background hover:text-black focus:ring focus:ring-gray-300 focus:ring-opacity-80">
+        <button className="w-full sm:w-auto mx-auto flex justify-center m-10 mt-8 px-6 py-2.5 text-sm tracking-wider text-background transition-colors duration-300 transform focus:outline-none border border-background hover:bg-background hover:text-black focus:ring focus:ring-gray-300 focus:ring-opacity-80">
           View all
         </button>
       </div>

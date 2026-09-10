@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router'
+import { supabase } from '@/utils/supabase'
 import { useState, useEffect, useRef } from 'react'
 import LessonHeader from '@/components/LessonHeader'
 import { useGetLesson } from '@/hooks/useLesson'
@@ -71,6 +72,14 @@ export interface Lesson {
 }
 
 export const Route = createFileRoute('/lesson/$lessonId')({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw redirect({
+        to: '/login',
+      })
+    }
+  },
   validateSearch: (search) => {
     const topicParam = search.topicId
     const parsed =
