@@ -10,6 +10,14 @@
     "@ai-sdk/provider" "2.0.0"
     "@ai-sdk/provider-utils" "3.0.5"
 
+"@ai-sdk/google@^2.0.30":
+  version "2.0.30"
+  resolved "https://registry.npmjs.org/@ai-sdk/google/-/google-2.0.30.tgz"
+  integrity sha512-ipwFgP7NLpGhq/qUrmnb+rZzG5VftU4tDzZq+vLp4L8xtgMeQlG3CLF7BBU8ioV6I9EL84CbSEbzWkLQ/6TxuQ==
+  dependencies:
+    "@ai-sdk/provider" "2.0.0"
+    "@ai-sdk/provider-utils" "3.0.16"
+
 "@ai-sdk/groq@^2.0.14":
   version "2.0.14"
   resolved "https://registry.npmjs.org/@ai-sdk/groq/-/groq-2.0.14.tgz"
@@ -17,6 +25,15 @@
   dependencies:
     "@ai-sdk/provider" "2.0.0"
     "@ai-sdk/provider-utils" "3.0.5"
+
+"@ai-sdk/provider-utils@3.0.16":
+  version "3.0.16"
+  resolved "https://registry.npmjs.org/@ai-sdk/provider-utils/-/provider-utils-3.0.16.tgz"
+  integrity sha512-lsWQY9aDXHitw7C1QRYIbVGmgwyT98TF3MfM8alNIXKpdJdi+W782Rzd9f1RyOfgRmZ08gJ2EYNDhWNK7RqpEA==
+  dependencies:
+    "@ai-sdk/provider" "2.0.0"
+    "@standard-schema/spec" "^1.0.0"
+    eventsource-parser "^3.0.6"
 
 "@ai-sdk/provider-utils@3.0.5":
   version "3.0.5"
@@ -1298,9 +1315,9 @@
     "@sinonjs/commons" "^3.0.0"
 
 "@standard-schema/spec@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/@standard-schema/spec/-/spec-1.0.0.tgz"
-  integrity sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/@standard-schema/spec/-/spec-1.1.0.tgz"
+  integrity sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==
 
 "@supabase/auth-js@2.71.1":
   version "2.71.1"
@@ -3217,10 +3234,10 @@ events@^3.2.0:
   resolved "https://registry.npmjs.org/events/-/events-3.3.0.tgz"
   integrity sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==
 
-eventsource-parser@^3.0.3:
-  version "3.0.5"
-  resolved "https://registry.npmjs.org/eventsource-parser/-/eventsource-parser-3.0.5.tgz"
-  integrity sha512-bSRG85ZrMdmWtm7qkF9He9TNRzc/Bm99gEJMaQoHJ9E6Kv9QBbsldh2oMj7iXmYNEAVvNgvv5vPorG6W+XtBhQ==
+eventsource-parser@^3.0.3, eventsource-parser@^3.0.6:
+  version "3.1.1"
+  resolved "https://registry.npmjs.org/eventsource-parser/-/eventsource-parser-3.1.1.tgz"
+  integrity sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==
 
 execa@^5.0.0, execa@^5.1.1:
   version "5.1.1"
@@ -6637,7 +6654,7 @@ zod-to-json-schema@^3.24.1:
   resolved "https://registry.npmjs.org/zod-to-json-schema/-/zod-to-json-schema-3.24.6.tgz"
   integrity sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==
 
-zod@^3.24.1, "zod@^3.25.0 || ^4.0.0", zod@^3.25.76, "zod@^3.25.76 || ^4":
+zod@^3.24.1, "zod@^3.25.0 || ^4.0.0", zod@^3.25.76, "zod@^3.25.76 || ^4", "zod@^3.25.76 || ^4.1.8":
   version "3.25.76"
   resolved "https://registry.npmjs.org/zod/-/zod-3.25.76.tgz"
   integrity sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==

@@ -1,14 +1,14 @@
-import { createGroq } from '@ai-sdk/groq';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
 export const AI_CONFIG = {
-  apiKey: process.env.GROQ_API_KEY || "",
-  modelName: "llama-3.3-70b-versatile",
+  apiKey: process.env.GOOGLE_AI_API_KEY || "",
+  modelName: "gemini-3.6-flash",
   temperature: 0.3,
   topP: 0.9,
   maxRetries: 2,
 };
 
-// Initialize Groq client
-export const groq = createGroq({
+// Initialize Google Generative AI client
+export const google = createGoogleGenerativeAI({
   apiKey: AI_CONFIG.apiKey,
 });

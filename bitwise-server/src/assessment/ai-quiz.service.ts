@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { createGroq } from '@ai-sdk/groq';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 
 export interface QuizQuestion {
@@ -46,10 +46,10 @@ export class AiQuizService {
   }
 
   private async generateDynamicQuestions(topic: string, easy: number, medium: number, hard: number): Promise<QuizQuestion[]> {
-    const groqApiKey = this.configService.get<string>('GROQ_API_KEY');
+    const googleApiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
 
-    if (!groqApiKey) {
-      this.logger.warn('No GROQ_API_KEY found, using fallback questions.');
+    if (!googleApiKey) {
+      this.logger.warn('No GOOGLE_AI_API_KEY found, using fallback questions.');
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
 
@@ -155,13 +155,13 @@ ${syllabus.exclusion}
 Ensure the questions strictly honor these boundaries and return the exact JSON array format requested in the system prompt.`;
 
     try {
-      const groq = createGroq({ apiKey: groqApiKey });
+      const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
       let text = '';
 
       try {
-        this.logger.log(`Attempting to generate quiz with llama-3.3-70b-versatile...`);
+        this.logger.log(`Attempting to generate quiz with gemini-3.6-flash...`);
         const result = await (generateText as any)({
-          model: groq('llama-3.3-70b-versatile'),
+          model: google('gemini-3.6-flash'),
           system: systemPrompt,
           prompt: userPrompt,
           maxTokens: 4096,
@@ -169,16 +169,16 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
         });
         text = result.text;
       } catch (primaryError: any) {
-        this.logger.error(`llama-3.3-70b-versatile failed: ${primaryError.message}. No fallback configured.`);
+        this.logger.error(`gemini-3.6-flash failed: ${primaryError.message}. No fallback configured.`);
         throw primaryError;
       }
 
-      this.logger.log(`Groq response received, parsing JSON...`);
+      this.logger.log(`Google AI response received, parsing JSON...`);
 
       // Extract JSON array from response (handles any surrounding text)
       const jsonMatch = text.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
-        this.logger.error(`No JSON array found in Groq response. Response: ${text.substring(0, 500)}`);
+        this.logger.error(`No JSON array found in Google AI response. Response: ${text.substring(0, 500)}`);
         return this.generateFallbackQuestions(topic, easy, medium, hard);
       }
 
@@ -212,7 +212,7 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
       return questions;
 
     } catch (error: any) {
-      this.logger.error(`Groq API failed for topic "${topic}": ${error.message}`);
+      this.logger.error(`Google AI API failed for topic "${topic}": ${error.message}`);
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
   }
