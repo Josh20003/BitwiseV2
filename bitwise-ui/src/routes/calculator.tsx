@@ -54,7 +54,7 @@ function RouteComponent() {
 
       {/* Mode Toggle Bar */}
       <div className="flex justify-center px-4 pt-4 pb-2">
-        <div className="inline-flex items-center rounded-lg border border-border bg-muted/30 p-1 gap-1 w-full max-w-md overflow-x-auto">
+        <div className="inline-flex items-center rounded-lg border border-border bg-muted/30 p-1 gap-1 w-full max-w-fit overflow-x-auto hide-scrollbar">
           {MODES.map((mode) => {
             const Icon = mode.icon
             const isActive = activeMode === mode.key
@@ -65,7 +65,7 @@ function RouteComponent() {
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
                 className={`
                   flex-1 inline-flex items-center justify-center gap-1.5 rounded-md px-2 sm:px-3 py-2.5 text-xs sm:text-sm font-medium
-                  transition-all duration-200 cursor-pointer min-h-[44px] whitespace-nowrap
+                  transition-all duration-200 cursor-pointer min-h-11 whitespace-nowrap
                   ${
                     isActive
                       ? 'bg-primary text-primary-foreground shadow-sm'

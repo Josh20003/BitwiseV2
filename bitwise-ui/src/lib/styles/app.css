@@ -137,7 +137,7 @@ body {
 /* Base layer styles */
 @layer base {
   body {
-    @apply bg-[var(--background)] text-[var(--foreground)];
+    @apply bg-background text-foreground;
   }
 }
 

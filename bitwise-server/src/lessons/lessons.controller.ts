@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { LessonsService } from './lessons.service';
 import { LessonsConverterService } from './lessons-converter.service';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
@@ -9,7 +17,7 @@ import { CreateTopicDto, CreateTopicsDto } from './dto/create-topic.dto';
 export class LessonsController {
   constructor(
     private readonly lessonsService: LessonsService,
-    private readonly lessonsConverterService: LessonsConverterService
+    private readonly lessonsConverterService: LessonsConverterService,
   ) {}
 
   @Post()
@@ -17,10 +25,10 @@ export class LessonsController {
     schema: {
       type: 'object',
       properties: {
-        title: { type: 'string', example: 'Introduction to Boolean Algebra' }
+        title: { type: 'string', example: 'Introduction to Boolean Algebra' },
       },
-      required: ['title']
-    }
+      required: ['title'],
+    },
   })
   async createLesson(@Body('title') title: string) {
     return this.lessonsService.createLesson(title);
@@ -41,10 +49,10 @@ export class LessonsController {
     schema: {
       type: 'object',
       properties: {
-        title: { type: 'string', example: 'Updated Lesson Title' }
+        title: { type: 'string', example: 'Updated Lesson Title' },
       },
-      required: ['title']
-    }
+      required: ['title'],
+    },
   })
   async updateLesson(@Param('id') id: string, @Body('title') title: string) {
     return this.lessonsService.updateLesson(Number(id), title);
@@ -62,17 +70,22 @@ export class LessonsController {
   }
 
   @Post('topics/bulk')
-  @ApiBody({ schema: {
-    type: 'object',
-    properties: {
-      topics: { type: 'array', items: { $ref: '#/components/schemas/CreateTopicDto' } }
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        topics: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/CreateTopicDto' },
+        },
+      },
+      required: ['topics'],
     },
-    required: ['topics']
-  }})
+  })
   async createTopics(@Body() body: { topics: CreateTopicDto[] }) {
     return this.lessonsService.createTopics(body.topics);
   }
-  
+
   @Get(':id/topics')
   async getTopicsForLesson(@Param('id') lessonId: string) {
     return this.lessonsService.getTopicsForLesson(Number(lessonId));
@@ -92,14 +105,18 @@ export class LessonsController {
         fromBase: { type: 'number', example: 10 },
         toBase: { type: 'number', example: 2 },
       },
-      required: ['value', 'fromBase', 'toBase']
-    }
+      required: ['value', 'fromBase', 'toBase'],
+    },
   })
   async generateConversionSteps(
     @Body('value') value: string,
     @Body('fromBase') fromBase: number,
     @Body('toBase') toBase: number,
   ) {
-    return this.lessonsConverterService.generateConversionSteps(value, fromBase, toBase);
+    return this.lessonsConverterService.generateConversionSteps(
+      value,
+      fromBase,
+      toBase,
+    );
   }
 }

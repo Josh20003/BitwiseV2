@@ -1,4 +1,12 @@
-import { IsOptional, IsString, IsInt, IsArray, IsIn, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsArray,
+  IsIn,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class FilterExamplesDto {
@@ -22,4 +30,3 @@ export class FilterExamplesDto {
   @IsString({ each: true })
   tags?: string[];
 }
-

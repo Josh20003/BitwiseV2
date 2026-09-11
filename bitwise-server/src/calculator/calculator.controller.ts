@@ -32,7 +32,9 @@ export class CalculatorController {
   ) {}
 
   @Post('simplify')
-  async simplify(@Body() simplifyDto: SimplifyExpressionDto): Promise<CalculationResponse> {
+  async simplify(
+    @Body() simplifyDto: SimplifyExpressionDto,
+  ): Promise<CalculationResponse> {
     try {
       if (!simplifyDto.expression) {
         throw new HttpException(
@@ -40,8 +42,10 @@ export class CalculatorController {
           HttpStatus.BAD_REQUEST,
         );
       }
-      
-      const result = await this.calculatorService.simplifyExpression(simplifyDto.expression);
+
+      const result = await this.calculatorService.simplifyExpression(
+        simplifyDto.expression,
+      );
 
       if (!result.success) {
         throw new HttpException(
@@ -52,7 +56,6 @@ export class CalculatorController {
 
       return result;
     } catch (error) {
-      
       if (error instanceof HttpException) {
         throw error;
       }
@@ -66,7 +69,7 @@ export class CalculatorController {
 
   @Post('evaluate')
   async evaluate(
-    @Body() body: { expression: string; variables: Record<string, boolean> }
+    @Body() body: { expression: string; variables: Record<string, boolean> },
   ): Promise<CalculationResponse> {
     try {
       if (!body.expression) {
@@ -85,7 +88,7 @@ export class CalculatorController {
 
       const result = await this.calculatorService.evaluateExpression(
         body.expression,
-        body.variables
+        body.variables,
       );
 
       if (!result.success) {
@@ -111,7 +114,7 @@ export class CalculatorController {
 
   @Post('truth-table')
   async generateTruthTable(
-    @Body() body: { expression: string }
+    @Body() body: { expression: string },
   ): Promise<CalculationResponse> {
     try {
       if (!body.expression) {
@@ -121,7 +124,9 @@ export class CalculatorController {
         );
       }
 
-      const result = await this.calculatorService.generateTruthTable(body.expression);
+      const result = await this.calculatorService.generateTruthTable(
+        body.expression,
+      );
 
       if (!result.success) {
         throw new HttpException(
@@ -145,10 +150,15 @@ export class CalculatorController {
   }
 
   // ============= Binary Arithmetic Endpoints =============
-  
+
   @Post('arithmetic')
   async calculateArithmetic(
-    @Body() body: { operand1: string; operand2: string; operation: '+' | '-' | '*' | '/' }
+    @Body()
+    body: {
+      operand1: string;
+      operand2: string;
+      operation: '+' | '-' | '*' | '/';
+    },
   ) {
     try {
       if (!body.operand1 || !body.operand2 || !body.operation) {
@@ -157,7 +167,11 @@ export class CalculatorController {
           HttpStatus.BAD_REQUEST,
         );
       }
-      const result = this.arithmeticService.calculate(body.operand1, body.operand2, body.operation);
+      const result = this.arithmeticService.calculate(
+        body.operand1,
+        body.operand2,
+        body.operation,
+      );
       return { success: true, result };
     } catch (error: any) {
       throw new HttpException(
@@ -168,7 +182,7 @@ export class CalculatorController {
   }
 
   // ============= Complement Service Endpoints =============
-  
+
   @Get('complement/:value')
   async getComplements(@Param('value') value: string) {
     try {
@@ -189,7 +203,7 @@ export class CalculatorController {
   }
 
   // ============= Signed/Unsigned Endpoints =============
-  
+
   @Get('signed/:value')
   async interpretSignedValue(@Param('value') value: string) {
     try {
@@ -307,10 +321,7 @@ export class CalculatorController {
   async encodeBCD(@Body() body: { value: string }) {
     try {
       if (!body.value) {
-        throw new HttpException(
-          'Value is required',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new HttpException('Value is required', HttpStatus.BAD_REQUEST);
       }
 
       const result = this.binaryCodesService.encodeBCD(body.value);
@@ -328,10 +339,7 @@ export class CalculatorController {
   async decodeBCD(@Body() body: { value: string }) {
     try {
       if (!body.value) {
-        throw new HttpException(
-          'Value is required',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new HttpException('Value is required', HttpStatus.BAD_REQUEST);
       }
 
       const result = this.binaryCodesService.decodeBCD(body.value);
@@ -349,10 +357,7 @@ export class CalculatorController {
   async encodeGrayCode(@Body() body: { value: string }) {
     try {
       if (!body.value) {
-        throw new HttpException(
-          'Value is required',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new HttpException('Value is required', HttpStatus.BAD_REQUEST);
       }
 
       const result = this.binaryCodesService.encodeGrayCode(body.value);
@@ -370,10 +375,7 @@ export class CalculatorController {
   async decodeGrayCode(@Body() body: { value: string }) {
     try {
       if (!body.value) {
-        throw new HttpException(
-          'Value is required',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new HttpException('Value is required', HttpStatus.BAD_REQUEST);
       }
 
       const result = this.binaryCodesService.decodeGrayCode(body.value);
@@ -391,10 +393,7 @@ export class CalculatorController {
   async calculateHammingCode(@Body() body: { value: string }) {
     try {
       if (!body.value) {
-        throw new HttpException(
-          'Value is required',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new HttpException('Value is required', HttpStatus.BAD_REQUEST);
       }
 
       const result = this.binaryCodesService.calculateHammingCode(body.value);

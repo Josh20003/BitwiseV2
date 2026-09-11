@@ -8,6 +8,6 @@ import { AuthModule } from '../auth/auth.module';
   imports: [PrismaModule, AuthModule],
   controllers: [UserProgressController],
   providers: [UserProgressService],
-  exports: [UserProgressService]
+  exports: [UserProgressService],
 })
 export class UserProgressModule {}

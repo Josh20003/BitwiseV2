@@ -43,17 +43,25 @@ async function bootstrap() {
 
     app.enableCors({
       origin: (origin, callback) => {
-        if (!origin || allowLocalFallback(origin) || allowedOrigins.includes(origin)) {
+        if (
+          !origin ||
+          allowLocalFallback(origin) ||
+          allowedOrigins.includes(origin)
+        ) {
           return callback(null, true);
         }
-        return callback(new Error(`Cors not allowed for origin: ${origin}`), false);
+        return callback(
+          new Error(`Cors not allowed for origin: ${origin}`),
+          false,
+        );
       },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     });
 
     const enableSwagger =
-      process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true';
+      process.env.NODE_ENV !== 'production' ||
+      process.env.ENABLE_SWAGGER === 'true';
 
     if (enableSwagger) {
       const config = new DocumentBuilder()
@@ -76,9 +84,14 @@ async function bootstrap() {
     const host = process.env.HOST ?? '0.0.0.0';
 
     await app.listen({ port, host });
-    logger.log(`Listening on ${host}:${port} (env=${process.env.NODE_ENV || 'unknown'})`);
+    logger.log(
+      `Listening on ${host}:${port} (env=${process.env.NODE_ENV || 'unknown'})`,
+    );
   } catch (err) {
-    logger.error('Failed to bootstrap app', err instanceof Error ? err.stack : undefined);
+    logger.error(
+      'Failed to bootstrap app',
+      err instanceof Error ? err.stack : undefined,
+    );
     process.exit(1);
   }
 }

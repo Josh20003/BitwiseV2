@@ -1,6 +1,6 @@
 /**
  * Lesson-Specific Quiz Generation Prompt
- * 
+ *
  * This prompt generates a focused 10-question quiz for a single lesson.
  * Each topic gets questions with difficulty matching the user's mastery.
  */
@@ -11,19 +11,21 @@ export interface LessonQuizContext {
   topics: Array<{
     topicId: number;
     topicTitle: string;
-    mastery: number;           // 0.0 to 1.0
+    mastery: number; // 0.0 to 1.0
     difficulty: 'easy' | 'medium' | 'hard';
-    questionCount: number;     // 3 or 4 (weakest gets bonus)
+    questionCount: number; // 3 or 4 (weakest gets bonus)
     contentText: string;
     tags: string[];
   }>;
-  totalQuestions: number;      // Always 10
+  totalQuestions: number; // Always 10
 }
 
 /**
  * Determine difficulty based on mastery level
  */
-export function getDifficultyFromMastery(mastery: number): 'easy' | 'medium' | 'hard' {
+export function getDifficultyFromMastery(
+  mastery: number,
+): 'easy' | 'medium' | 'hard' {
   if (mastery < 0.4) return 'easy';
   if (mastery < 0.7) return 'medium';
   return 'hard';
@@ -133,33 +135,39 @@ function getLessonGuidelines(lessonId: number): string {
 - Use K-maps for visual questions, text for law application`,
   };
 
-  return guidelines[lessonId] || `**Lesson ${lessonId}**
+  return (
+    guidelines[lessonId] ||
+    `**Lesson ${lessonId}**
 - Focus: Core concepts relevant to this lesson
 - Question Types: Text-based conceptual and calculation questions
 - EASY: Basic definitions and simple single-step problems
 - MEDIUM: Multi-step reasoning and application
-- HARD: Complex scenarios combining multiple concepts`;
+- HARD: Complex scenarios combining multiple concepts`
+  );
 }
 
 /**
  * Build the lesson-specific quiz prompt
  */
 export function buildLessonQuizPrompt(context: LessonQuizContext): string {
-  const topicInstructions = context.topics.map(topic => {
-    const masteryPercent = Math.round(topic.mastery * 100);
-    const isWeakest = topic.questionCount > 3;
-    
-    return `
+  const topicInstructions = context.topics
+    .map((topic) => {
+      const masteryPercent = Math.round(topic.mastery * 100);
+      const isWeakest = topic.questionCount > 3;
+
+      return `
 📚 **${topic.topicTitle}** (Topic ID: ${topic.topicId})
    - User Mastery: ${masteryPercent}%
    - Difficulty: **${topic.difficulty.toUpperCase()}**
    - Questions: **${topic.questionCount}** ${isWeakest ? '🔥 (WEAKEST - BONUS QUESTION)' : ''}
    - Tags to use: ${topic.tags.join(', ')}
    - Content Summary: ${topic.contentText.substring(0, 300)}...`;
-  }).join('\n');
+    })
+    .join('\n');
   const isLogicVisualLesson = [9, 10, 11].includes(context.lessonId);
 
-  const difficultyGuidelines = isLogicVisualLesson ? `
+  const difficultyGuidelines = isLogicVisualLesson
+    ? `
 📊 DIFFICULTY GUIDELINES:
 
 **EASY Questions** (for mastery < 40%):
@@ -184,7 +192,8 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
 - 3-4 variable expressions → truth tables have 8-16 rows
 - **The expression MUST use all 3-4 variables!**
 - Optimization and edge cases
-- **solutionSteps**: 5-7 comprehensive steps with full mathematical derivations` : `
+- **solutionSteps**: 5-7 comprehensive steps with full mathematical derivations`
+    : `
 📊 DIFFICULTY GUIDELINES:
 
 **EASY Questions** (for mastery < 40%):
@@ -205,7 +214,8 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
 - Larger values or complex encoding/decoding sequences
 - **solutionSteps**: 5-7 comprehensive steps with detailed calculations and logic verified`;
 
-  const visualFormatsSection = isLogicVisualLesson ? `
+  const visualFormatsSection = isLogicVisualLesson
+    ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📐 VISUAL ELEMENT FORMATS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -295,7 +305,8 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
 
 **TYPE 4: TEXT-ONLY** (for Lessons 8, 10, 11 algebraic)
 Just use a string: "Simplify the expression: A + A·B"
-` : `
+`
+    : `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📐 VISUAL ELEMENT FORMATS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -361,7 +372,8 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
 ]
 `;
 
-  const criticalRequirementsSection = isLogicVisualLesson ? `
+  const criticalRequirementsSection = isLogicVisualLesson
+    ? `
 ⚠️ **CRITICAL REQUIREMENTS FOR solutionSteps AND rationale:**
 
 **For solutionSteps (Lessons 9, 10, 11 - PROBLEM SOLVING):**
@@ -390,7 +402,8 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   - Step 5: Verify by truth table or expansion
   - Example: "Group cells [1,3]: A'B' + A'B = A'(B'+B) = A'(1) = A'"
 
-- **LESSON 8**: Can use simpler steps (2-3 steps) for conceptual questions` : `
+- **LESSON 8**: Can use simpler steps (2-3 steps) for conceptual questions`
+    : `
 ⚠️ **CRITICAL REQUIREMENTS FOR solutionSteps AND rationale:**
 
 **For solutionSteps (Number Systems & Arithmetic):**
@@ -400,7 +413,8 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
 - Final Step: Conclude with the final result and relate it directly to the correct answer choice
 - ALWAYS write detailed, easy-to-follow explanations so students can learn from mistakes!`;
 
-  const logicVerificationSection = isLogicVisualLesson ? `
+  const logicVerificationSection = isLogicVisualLesson
+    ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ LOGIC VERIFICATION (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -423,7 +437,8 @@ You MUST verify answers in "_reasoning" field:
 - RIGHT: Expression "Y = A' + B' + C" with table columns [A, B, C] ✓
 - RIGHT: Expression "Y = A·B·C'" with table columns [A, B, C] ✓
 
-DO NOT HALLUCINATE. Verify before outputting.` : `
+DO NOT HALLUCINATE. Verify before outputting.`
+    : `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ MATHEMATICAL VERIFICATION (MANDATORY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -481,7 +496,7 @@ ${difficultyGuidelines}
 
 ⚠️ CRITICAL RULES:
 1. **MATCH DIFFICULTY TO TOPIC**: Each question's difficulty MUST match the topic's assigned difficulty
-2. **EXACT QUESTION COUNT**: Generate exactly ${context.topics.map(t => t.questionCount).join(' + ')} = ${context.totalQuestions} questions
+2. **EXACT QUESTION COUNT**: Generate exactly ${context.topics.map((t) => t.questionCount).join(' + ')} = ${context.totalQuestions} questions
 3. **CORRECT TOPIC IDs**: Each question must have the correct topicId from above
 4. **NO MEMORIZATION**: Use "Calculate", "Analyze", "Design", "Simplify" - NOT "Define" or "What is"
 5. **ONE CORRECT ANSWER**: Exactly one option must be correct with clear mathematical justification
@@ -501,7 +516,7 @@ ${logicVerificationSection}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Remember:
-${context.topics.map(t => `- ${t.topicTitle}: ${t.questionCount} ${t.difficulty.toUpperCase()} questions`).join('\n')}
+${context.topics.map((t) => `- ${t.topicTitle}: ${t.questionCount} ${t.difficulty.toUpperCase()} questions`).join('\n')}
 Total: ${context.totalQuestions} questions in valid JSON array format.
 `;
 }
@@ -512,14 +527,18 @@ Total: ${context.totalQuestions} questions in valid JSON array format.
  * lower-context models (like llama-3.1-8b-instant). It removes complex JSON properties
  * like reasoning, solutionSteps, and incorrect rationales.
  */
-export function buildFallbackLessonQuizPrompt(context: LessonQuizContext): string {
-  const topicInstructions = context.topics.map(topic => {
-    return `
+export function buildFallbackLessonQuizPrompt(
+  context: LessonQuizContext,
+): string {
+  const topicInstructions = context.topics
+    .map((topic) => {
+      return `
 📚 **${topic.topicTitle}** (Topic ID: ${topic.topicId})
    - Difficulty: **${topic.difficulty.toUpperCase()}**
    - Questions: **${topic.questionCount}**
    - Content Summary: ${topic.contentText.substring(0, 150)}...`;
-  }).join('\n');
+    })
+    .join('\n');
 
   const outputFormatSection = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

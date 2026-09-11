@@ -9,6 +9,13 @@ export interface ArithmeticTraceStep {
   carryIn: string;
   carryOut: string;
   resultBit: string;
+  partialProduct?: string;
+  shift?: number;
+  currentTotal?: string;
+  dividend?: string;
+  divisor?: string;
+  quotientBit?: string;
+  remainder?: string;
 }
 
 export interface ArithmeticResult {
@@ -21,8 +28,11 @@ export interface ArithmeticResult {
 
 @Injectable()
 export class CalculatorArithmeticService {
-  
-  public calculate(operand1: string, operand2: string, operation: '+' | '-' | '*' | '/'): ArithmeticResult {
+  public calculate(
+    operand1: string,
+    operand2: string,
+    operation: '+' | '-' | '*' | '/',
+  ): ArithmeticResult {
     const op1 = operand1 || '0';
     const op2 = operand2 || '0';
 
@@ -35,7 +45,9 @@ export class CalculatorArithmeticService {
     } else if (operation === '/') {
       return this.divideBinary(op1, op2);
     } else {
-      throw new Error(`Operation ${operation} trace not implemented yet.`);
+      throw new Error(
+        `Operation ${String(operation)} trace not implemented yet.`,
+      );
     }
   }
 
@@ -43,7 +55,7 @@ export class CalculatorArithmeticService {
     const maxLength = Math.max(a.length, b.length);
     const op1 = a.padStart(maxLength, '0');
     const op2 = b.padStart(maxLength, '0');
-    
+
     let carry = 0;
     let result = '';
     const traceSteps: ArithmeticTraceStep[] = [];
@@ -51,7 +63,7 @@ export class CalculatorArithmeticService {
     for (let i = maxLength - 1; i >= 0; i--) {
       const bit1 = parseInt(op1[i], 10);
       const bit2 = parseInt(op2[i], 10);
-      
+
       const sum = bit1 + bit2 + carry;
       const resultBit = sum % 2;
       const nextCarry = Math.floor(sum / 2);
@@ -64,7 +76,7 @@ export class CalculatorArithmeticService {
         bottomBit: bit2.toString(),
         carryIn: carry.toString(),
         carryOut: nextCarry.toString(),
-        resultBit: resultBit.toString()
+        resultBit: resultBit.toString(),
       });
 
       result = resultBit.toString() + result;
@@ -80,7 +92,7 @@ export class CalculatorArithmeticService {
         bottomBit: '0',
         carryIn: carry.toString(),
         carryOut: '0',
-        resultBit: carry.toString()
+        resultBit: carry.toString(),
       });
       result = carry.toString() + result;
     }
@@ -90,7 +102,7 @@ export class CalculatorArithmeticService {
       operand1: a,
       operand2: b,
       result,
-      traceSteps
+      traceSteps,
     };
   }
 
@@ -98,7 +110,7 @@ export class CalculatorArithmeticService {
     const maxLength = Math.max(a.length, b.length);
     const op1 = a.padStart(maxLength, '0');
     const op2 = b.padStart(maxLength, '0');
-    
+
     let borrow = 0;
     let result = '';
     const traceSteps: ArithmeticTraceStep[] = [];
@@ -107,7 +119,7 @@ export class CalculatorArithmeticService {
       let bit1 = parseInt(op1[i], 10);
       const bit2 = parseInt(op2[i], 10);
       const borrowIn = borrow;
-      
+
       bit1 = bit1 - borrow;
       if (bit1 < bit2) {
         bit1 += 2;
@@ -115,7 +127,7 @@ export class CalculatorArithmeticService {
       } else {
         borrow = 0;
       }
-      
+
       const resultBit = bit1 - bit2;
 
       traceSteps.push({
@@ -125,8 +137,8 @@ export class CalculatorArithmeticService {
         topBit: op1[i],
         bottomBit: bit2.toString(),
         carryIn: borrowIn.toString(), // We use carryIn for BorrowIn
-        carryOut: borrow.toString(),  // We use carryOut for BorrowOut
-        resultBit: resultBit.toString()
+        carryOut: borrow.toString(), // We use carryOut for BorrowOut
+        resultBit: resultBit.toString(),
       });
 
       result = resultBit.toString() + result;
@@ -140,28 +152,47 @@ export class CalculatorArithmeticService {
       operand1: a,
       operand2: b,
       result,
-      traceSteps
+      traceSteps,
     };
   }
 
   private multiplyBinary(a: string, b: string): ArithmeticResult {
-    const num1 = parseInt(a, 2);
-    const num2 = parseInt(b, 2);
-    const resNum = num1 * num2;
-    const result = resNum.toString(2);
-    
+    const multiplicand = a.replace(/^0+/, '') || '0';
+    const multiplier = b.replace(/^0+/, '') || '0';
+
     const traceSteps: ArithmeticTraceStep[] = [];
-    for (let i = 0; i < result.length; i++) {
-      const bit = result[result.length - 1 - i];
+    let runningTotal = '0';
+    const partialProducts: string[] = [];
+
+    // LSB to MSB of multiplier
+    for (let i = multiplier.length - 1, stepIdx = 0; i >= 0; i--, stepIdx++) {
+      const bit = multiplier[i];
+      const shift = multiplier.length - 1 - i;
+      let pp = '0';
+      if (bit === '1') {
+        pp = multiplicand + '0'.repeat(shift);
+      } else {
+        pp = '0'.repeat(multiplicand.length + shift);
+      }
+      partialProducts.push(pp);
+
+      runningTotal = this.addBinaryStrings(runningTotal, pp);
+
       traceSteps.push({
-        id: `mul-col-${i}`,
-        column: i,
-        description: `Multiplier output bit ${i}: ${bit}`,
+        id: `mul-step-${stepIdx}`,
+        column: stepIdx,
+        description:
+          bit === '1'
+            ? `The current bottom bit is 1. We take the top number (${multiplicand})${shift > 0 ? ` and add ${shift} zero(s) at the end` : ''} to get ${pp}. We then add this to our running total.`
+            : `The current bottom bit is 0. The result for this row is 0, so our running total doesn't change.`,
         topBit: '0',
-        bottomBit: '0',
+        bottomBit: bit,
         carryIn: '0',
         carryOut: '0',
-        resultBit: bit
+        resultBit: bit,
+        partialProduct: pp,
+        shift,
+        currentTotal: runningTotal,
       });
     }
 
@@ -169,44 +200,75 @@ export class CalculatorArithmeticService {
       operation: '*',
       operand1: a,
       operand2: b,
-      result,
-      traceSteps
+      result: runningTotal,
+      traceSteps,
     };
   }
 
+  private addBinaryStrings(a: string, b: string): string {
+    const num1 = BigInt('0b' + (a || '0'));
+    const num2 = BigInt('0b' + (b || '0'));
+    return (num1 + num2).toString(2);
+  }
+
   private divideBinary(a: string, b: string): ArithmeticResult {
-    const num1 = parseInt(a, 2);
-    const num2 = parseInt(b, 2);
-    
-    if (num2 === 0) {
-      // Return a basic error trace or throw
-      throw new Error("Division by zero");
+    const dividend = a.replace(/^0+/, '') || '0';
+    const divisor = b.replace(/^0+/, '') || '0';
+
+    if (divisor === '0') {
+      throw new Error('Division by zero');
     }
 
-    const resNum = Math.floor(num1 / num2);
-    const result = resNum.toString(2);
-    
     const traceSteps: ArithmeticTraceStep[] = [];
-    for (let i = 0; i < result.length; i++) {
-      const bit = result[result.length - 1 - i];
+    let currentDividend = '';
+    let quotient = '';
+
+    for (let i = 0; i < dividend.length; i++) {
+      currentDividend += dividend[i];
+      // remove leading zeros for comparison
+      const currentVal = BigInt('0b' + currentDividend);
+      const divVal = BigInt('0b' + divisor);
+
+      let qBit = '0';
+      let subResult = currentDividend;
+
+      if (currentVal >= divVal) {
+        qBit = '1';
+        subResult = (currentVal - divVal).toString(2);
+      }
+
+      quotient += qBit;
+
       traceSteps.push({
-        id: `div-col-${i}`,
+        id: `div-step-${i}`,
         column: i,
-        description: `Quotient output bit ${i}: ${bit}`,
+        description:
+          qBit === '1'
+            ? `Bring down '${dividend[i]}'. Current dividend is ${currentDividend} >= divisor (${divisor}). Subtract divisor from current dividend to get ${subResult}. Quotient bit is 1.`
+            : `Bring down '${dividend[i]}'. Current dividend is ${currentDividend} < divisor (${divisor}). Cannot subtract. Quotient bit is 0.`,
         topBit: '0',
         bottomBit: '0',
         carryIn: '0',
         carryOut: '0',
-        resultBit: bit
+        resultBit: qBit,
+        dividend: currentDividend,
+        divisor: divisor,
+        quotientBit: qBit,
+        remainder: subResult,
       });
+
+      currentDividend = subResult;
     }
+
+    // strip leading zeros from quotient
+    quotient = quotient.replace(/^0+/, '') || '0';
 
     return {
       operation: '/',
       operand1: a,
       operand2: b,
-      result,
-      traceSteps
+      result: quotient,
+      traceSteps,
     };
   }
 }

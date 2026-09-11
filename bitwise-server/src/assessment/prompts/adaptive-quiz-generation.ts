@@ -1,6 +1,6 @@
 /**
  * Adaptive Quiz Generation Prompt
- * 
+ *
  * This prompt is used by the AI to generate Boolean algebra assessment questions.
  * Edit this file to tune question quality, format, and constraints.
  */
@@ -39,7 +39,7 @@ USER MASTERY: ${context.userMasteryPercent}%
 FOCUS AREAS: ${context.focusTopics.join(', ')}
 
 🎯 ADAPTIVE FOCUS - User's Weakest Areas:
-${context.weakestTopics ? context.weakestTopics.map(wt => `- ${wt.topicTitle} (Current Mastery: ${Math.round(wt.mastery * 100)}%)`).join('\n') : 'No specific weak areas identified'}
+${context.weakestTopics ? context.weakestTopics.map((wt) => `- ${wt.topicTitle} (Current Mastery: ${Math.round(wt.mastery * 100)}%)`).join('\n') : 'No specific weak areas identified'}
 
 OBJECTIVE:
 Create questions that test DEEP UNDERSTANDING, PROBLEM-SOLVING, and APPLICATION.
@@ -64,15 +64,19 @@ QUESTION DISTRIBUTION (Total ${context.totalQuestions || 30}) - MUST BE STRICTLY
 - Lesson 3 (Truth Tables): ${context.questionDistribution.lesson3} questions
 - Lesson 4 (Simplification): ${context.questionDistribution.lesson4} questions
 
-${context.topicDistribution ? `
+${
+  context.topicDistribution
+    ? `
 🔥 DETAILED TOPIC BREAKDOWN - CRITICAL TO FOLLOW EXACTLY:
-${context.topicDistribution.map(td => `- ${td.topicTitle}: EXACTLY ${td.questionCount} questions ${td.questionCount > 2 ? '🔥 (WEAK AREA - EXTRA FOCUS)' : '📝'}`).join('\n')}
+${context.topicDistribution.map((td) => `- ${td.topicTitle}: EXACTLY ${td.questionCount} questions ${td.questionCount > 2 ? '🔥 (WEAK AREA - EXTRA FOCUS)' : '📝'}`).join('\n')}
 
 📊 ADAPTIVE ALGORITHM EXPLANATION:
-- Base: 2 questions per topic (${context.topicDistribution ? context.topicDistribution.filter(td => td.questionCount === 2).length * 2 : 24} questions)
+- Base: 2 questions per topic (${context.topicDistribution ? context.topicDistribution.filter((td) => td.questionCount === 2).length * 2 : 24} questions)
 - Extra: ${context.weakestTopics ? context.weakestTopics.length * 2 : 6} additional questions for weakest areas
 - Total: ${context.totalQuestions || 30} questions exactly
-` : ''}
+`
+    : ''
+}
 
 ⚠️ CRITICAL: QUESTION TYPE ENFORCEMENT BY LESSON ⚠️
 You MUST distribute question types according to the lesson content:
@@ -221,7 +225,7 @@ GENERATE EXACTLY ${context.totalQuestions || 30} HIGH-QUALITY QUESTIONS NOW.
 1. EXACTLY ${context.totalQuestions || 30} questions in your JSON array - count them!
 2. Each question MUST have the correct topicId matching the topic it's testing
 3. Follow the DETAILED TOPIC BREAKDOWN above - each topic gets its specified question count
-4. Focus extra questions on weak areas (${context.weakestTopics ? context.weakestTopics.map(wt => wt.topicTitle).join(', ') : 'identified above'}) 
+4. Focus extra questions on weak areas (${context.weakestTopics ? context.weakestTopics.map((wt) => wt.topicTitle).join(', ') : 'identified above'}) 
 5. Return a valid JSON array with ${context.totalQuestions || 30} question objects
 
 🔍 BEFORE SUBMITTING: Count your questions and ensure you have EXACTLY ${context.totalQuestions || 30}!
@@ -232,7 +236,9 @@ GENERATE EXACTLY ${context.totalQuestions || 30} HIGH-QUALITY QUESTIONS NOW.
  * Fallback prompt for the adaptive quiz targeting smaller models.
  * Strips reasoning, multiple rationales, and complex visuals.
  */
-export function buildFallbackAdaptiveQuizPrompt(context: PromptContext): string {
+export function buildFallbackAdaptiveQuizPrompt(
+  context: PromptContext,
+): string {
   return `
 You are a Digital Logic quiz generator. Generate EXACTLY ${context.totalQuestions || 30} multiple-choice questions.
 
@@ -271,9 +277,8 @@ OUTPUT FORMAT (JSON ARRAY):
 ]
 
 CONTEXTUAL CONTENT:
-${context.topicContents.map(c => c.substring(0, 200) + '...').join('\n\n')}
+${context.topicContents.map((c) => c.substring(0, 200) + '...').join('\n\n')}
 
 GENERATE EXACTLY ${context.totalQuestions || 30} HIGH-QUALITY QUESTIONS NOW IN JSON ARRAY FORMAT.
 `;
 }
-

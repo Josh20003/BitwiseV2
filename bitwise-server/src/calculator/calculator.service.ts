@@ -1521,13 +1521,24 @@ export class CalculatorService {
       (result.steps || []).forEach((s: any) => exprList.push(s.expression));
 
       // Tokenize each expression via the injected AST-based helpers in the VM
-      const tokenizedList: Array<Array<{ text: string; kind: string; id?: string }>> = exprList.map((expr) => {
+      const tokenizedList: Array<
+        Array<{ text: string; kind: string; id?: string }>
+      > = exprList.map((expr) => {
         try {
           const code = `(function(){ var p = this.parseExpression(${JSON.stringify(expr)}); this.annotateNodeUids(p); return this.tokenizeASTForUI(p); })()`;
-          return runInContext(code, this.jsContext) as any;
+          return runInContext(code, this.jsContext);
         } catch (e) {
           // fallback naive tokenizer
-          const fallback = (expr.match(/[A-Za-z]+'+|[A-Za-z]+|[∧∨⊕→↔¬()]/g) || []).map(m => ({ text: m, kind: (/^[A-Za-z]/.test(m) ? 'var' : (/^[() ]$/.test(m) ? 'paren' : 'op')) }));
+          const fallback = (
+            expr.match(/[A-Za-z]+'+|[A-Za-z]+|[∧∨⊕→↔¬()]/g) || []
+          ).map((m) => ({
+            text: m,
+            kind: /^[A-Za-z]/.test(m)
+              ? 'var'
+              : /^[() ]$/.test(m)
+                ? 'paren'
+                : 'op',
+          }));
           return fallback;
         }
       });
@@ -1536,7 +1547,10 @@ export class CalculatorService {
       const registry: Record<string, string[]> = {};
       const usedIndex: Record<string, number> = {};
       function sanitizeId(text: string) {
-        return text.replace(/[^a-zA-Z0-9]/g, (c) => '_' + c.charCodeAt(0).toString(16));
+        return text.replace(
+          /[^a-zA-Z0-9]/g,
+          (c) => '_' + c.charCodeAt(0).toString(16),
+        );
       }
       // assign ids for original tokens
       tokenizedList[0].forEach((t: any, i: number) => {
@@ -1568,11 +1582,15 @@ export class CalculatorService {
         const afterTokensRaw = tokenizedList[i + 1] || [];
 
         // build keys for before/after (use provided id if available, else text_index)
-        const beforeKeys: string[] = beforeTokensRaw.map((t: any, idx: number) => t.id || `${t.text}_${idx}`);
-        const afterKeys: string[] = afterTokensRaw.map((t: any, idx: number) => t.id || `${t.text}_${idx}`);
+        const beforeKeys: string[] = beforeTokensRaw.map(
+          (t: any, idx: number) => t.id || `${t.text}_${idx}`,
+        );
+        const afterKeys: string[] = afterTokensRaw.map(
+          (t: any, idx: number) => t.id || `${t.text}_${idx}`,
+        );
 
         // reset usedIndex each step so reuse favors earliest available ids in order
-        Object.keys(usedIndex).forEach(k => usedIndex[k] = 0);
+        Object.keys(usedIndex).forEach((k) => (usedIndex[k] = 0));
 
         // create mapped tokens with stable ids
         const beforeTokens = beforeTokensRaw.map((t: any, idx: number) => {
@@ -1591,8 +1609,12 @@ export class CalculatorService {
         // compute highlight tokens: tokens that were added or removed in this step
         const beforeSet = new Set(beforeKeys);
         const afterSet = new Set(afterKeys);
-        const added = new Set<string>(afterKeys.filter(k => !beforeSet.has(k)));
-        const removed = new Set<string>(beforeKeys.filter(k => !afterSet.has(k)));
+        const added = new Set<string>(
+          afterKeys.filter((k) => !beforeSet.has(k)),
+        );
+        const removed = new Set<string>(
+          beforeKeys.filter((k) => !afterSet.has(k)),
+        );
         const changedKeys = new Set<string>([...added, ...removed]);
 
         // mark highlights on before and after token arrays by matching their original keys
@@ -1600,19 +1622,20 @@ export class CalculatorService {
           // return the assigned id from registry (first occurrence)
           const arr = registry[key];
           return arr && arr.length ? arr[0] : undefined;
-        }
+        };
 
         const changedIds = new Set<string>();
-        changedKeys.forEach(k => {
+        changedKeys.forEach((k) => {
           const mapped = registry[k];
-          if (mapped && mapped.length) mapped.forEach((mid: string) => changedIds.add(mid));
+          if (mapped && mapped.length)
+            mapped.forEach((mid: string) => changedIds.add(mid));
         });
 
         // Apply highlight flag
-        beforeTokens.forEach(bt => {
+        beforeTokens.forEach((bt) => {
           bt.highlight = changedIds.has(bt.id);
         });
-        afterTokens.forEach(at => {
+        afterTokens.forEach((at) => {
           at.highlight = changedIds.has(at.id) || at.isNew;
         });
 
@@ -1649,7 +1672,7 @@ export class CalculatorService {
   ): Promise<CalculationResponse> {
     try {
       const sanitizedExpression = this.sanitizeExpression(expression);
-      
+
       const result = runInContext(
         `this.evaluateExpression("${sanitizedExpression}", ${JSON.stringify(assignments)})`,
         this.jsContext,
@@ -1675,7 +1698,7 @@ export class CalculatorService {
   async generateTruthTable(expression: string): Promise<CalculationResponse> {
     try {
       const sanitizedExpression = this.sanitizeExpression(expression);
-      
+
       const result = runInContext(
         `this.generateTruthTable("${sanitizedExpression}")`,
         this.jsContext,

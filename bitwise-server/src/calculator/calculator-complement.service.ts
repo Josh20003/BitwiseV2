@@ -21,13 +21,17 @@ export class CalculatorComplementService {
 
     // 2's complement: onesComplement + 1
     // We can use the arithmetic service to get the +1 cascade trace
-    const addResult = this.arithmeticService.calculate(onesComplement, '1', '+');
+    const addResult = this.arithmeticService.calculate(
+      onesComplement,
+      '1',
+      '+',
+    );
 
     return {
       originalValue: value,
       onesComplement,
       twosComplement: addResult.result,
-      cascadeSteps: addResult.traceSteps
+      cascadeSteps: addResult.traceSteps,
     };
   }
 }

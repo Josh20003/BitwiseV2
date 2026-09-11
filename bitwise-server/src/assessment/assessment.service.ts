@@ -3,8 +3,16 @@ import { generateText } from 'ai';
 import { PrismaService } from 'prisma/prisma.service';
 import { AdaptiveService } from '../adaptive/adaptive.service';
 import { EmaMasteryService } from './ema-mastery.service';
-import { buildAdaptiveQuizPrompt, buildFallbackAdaptiveQuizPrompt } from './prompts/adaptive-quiz-generation';
-import { buildLessonQuizPrompt, buildFallbackLessonQuizPrompt, getDifficultyFromMastery, LessonQuizContext } from './prompts/lesson-quiz-generation';
+import {
+  buildAdaptiveQuizPrompt,
+  buildFallbackAdaptiveQuizPrompt,
+} from './prompts/adaptive-quiz-generation';
+import {
+  buildLessonQuizPrompt,
+  buildFallbackLessonQuizPrompt,
+  getDifficultyFromMastery,
+  LessonQuizContext,
+} from './prompts/lesson-quiz-generation';
 import { jsonrepair } from 'jsonrepair';
 import { AI_CONFIG, google } from '../config/ai.config';
 import { LlmProviderService } from './llm-provider.service';
@@ -15,38 +23,40 @@ export class AssessmentService {
     private prisma: PrismaService,
     private adaptiveService: AdaptiveService,
     private emaMasteryService: EmaMasteryService,
-    private llmProvider: LlmProviderService
+    private llmProvider: LlmProviderService,
   ) {}
 
   // Only allow these tags
   private allowedTags = [
-    "intro",
-    "boolean-values",
-    "applications",
-    "and-gate",
-    "or-gate",
-    "not-gate",
-    "nand-gate",
-    "nor-gate",
-    "xor-gate",
-    "xnor-gate",
-    "truth-table-construction",
-    "truth-table-reading",
-    "truth-table-for-gates",
-    "identity-law",
-    "null-law",
-    "idempotent-law",
-    "inverse-law",
-    "commutative-law",
-    "absorption-law",
-    "distributive-law",
-    "simplification",
-    "karnaugh-maps"
+    'intro',
+    'boolean-values',
+    'applications',
+    'and-gate',
+    'or-gate',
+    'not-gate',
+    'nand-gate',
+    'nor-gate',
+    'xor-gate',
+    'xnor-gate',
+    'truth-table-construction',
+    'truth-table-reading',
+    'truth-table-for-gates',
+    'identity-law',
+    'null-law',
+    'idempotent-law',
+    'inverse-law',
+    'commutative-law',
+    'absorption-law',
+    'distributive-law',
+    'simplification',
+    'karnaugh-maps',
   ];
 
   async extractJsonArray(text: string): Promise<any> {
     // 1. Extract JSON content from Markdown code blocks or find array brackets
-    const jsonArrayMatch = text.match(/```json\s*([\s\S]*?)```/i) || text.match(/(\[\s*\{[\s\S]*\}\s*\])/);;
+    const jsonArrayMatch =
+      text.match(/```json\s*([\s\S]*?)```/i) ||
+      text.match(/(\[\s*\{[\s\S]*\}\s*\])/);
     let jsonString = '';
 
     if (jsonArrayMatch) {
@@ -60,7 +70,10 @@ export class AssessmentService {
     }
 
     if (!jsonString) {
-      console.error('No JSON array found in AI response:', text.substring(0, 500));
+      console.error(
+        'No JSON array found in AI response:',
+        text.substring(0, 500),
+      );
       throw new Error('AI response did not contain a valid JSON array');
     }
 
@@ -77,251 +90,305 @@ export class AssessmentService {
 
     try {
       const parsed = JSON.parse(jsonString);
-      
+
       // Ensure the parsed result is an array
       if (!Array.isArray(parsed)) {
         console.error('Parsed JSON is not an array:', typeof parsed);
         throw new Error('AI response parsed to non-array format');
       }
-      
+
       return parsed;
     } catch (err) {
-      console.error('JSON parse error:', err.message, '\nJSON string snippet:', jsonString.substring(0, 500));
+      console.error(
+        'JSON parse error:',
+        err.message,
+        '\nJSON string snippet:',
+        jsonString.substring(0, 500),
+      );
       throw new Error(`Failed to parse AI response as JSON: ${err.message}`);
     }
   }
 
+  /**
+   * Format tags for user-friendly display
+   */
+  private formatTagsForFeedback(tags: string[]): string {
+    const tagLabels: Record<string, string> = {
+      'karnaugh-maps': 'Karnaugh Maps',
+      'truth-table-construction': 'Truth Table Construction',
+      'truth-table-reading': 'Truth Table Reading',
+      'boolean-values': 'Boolean Values',
+      'and-gate': 'AND Gates',
+      'or-gate': 'OR Gates',
+      'not-gate': 'NOT Gates',
+      'nand-gate': 'NAND Gates',
+      'nor-gate': 'NOR Gates',
+      'xor-gate': 'XOR Gates',
+      'xnor-gate': 'XNOR Gates',
+      simplification: 'Boolean Simplification',
+      'distributive-law': 'Distributive Law',
+      applications: 'Real-world Applications',
+      // Add more tag mappings as needed
+    };
 
+    return tags
+      .map(
+        (tag) =>
+          tagLabels[tag] ||
+          tag.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+      )
+      .join(', ');
+  }
 
-/**
- * Format tags for user-friendly display
- */
-private formatTagsForFeedback(tags: string[]): string {
-  const tagLabels: Record<string, string> = {
-    'karnaugh-maps': 'Karnaugh Maps',
-    'truth-table-construction': 'Truth Table Construction',
-    'truth-table-reading': 'Truth Table Reading',
-    'boolean-values': 'Boolean Values',
-    'and-gate': 'AND Gates',
-    'or-gate': 'OR Gates',
-    'not-gate': 'NOT Gates',
-    'nand-gate': 'NAND Gates',
-    'nor-gate': 'NOR Gates',
-    'xor-gate': 'XOR Gates',
-    'xnor-gate': 'XNOR Gates',
-    'simplification': 'Boolean Simplification',
-    'distributive-law': 'Distributive Law',
-    'applications': 'Real-world Applications',
-    // Add more tag mappings as needed
-  };
+  /**
+   * Get specific recommendations based on weak tags
+   */
+  private getTagRecommendation(tag: string): string | null {
+    const recommendations: Record<string, string> = {
+      'karnaugh-maps':
+        'Practice more Karnaugh map simplification problems and review grouping techniques.',
+      'Karnaugh Maps':
+        'Practice more Karnaugh map simplification problems and review grouping techniques.',
+      'truth-table-construction':
+        'Focus on building truth tables step by step for different logic gates.',
+      'Truth Table Construction':
+        'Focus on building truth tables step by step for different logic gates.',
+      'truth-table-reading':
+        'Practice interpreting truth tables and understanding input-output relationships.',
+      'Truth Table Reading':
+        'Practice interpreting truth tables and understanding input-output relationships.',
+      'truth-table-for-gates':
+        'Practice creating truth tables for various logic gates.',
+      'Truth Tables for Gates':
+        'Practice creating truth tables for various logic gates.',
+      simplification:
+        'Review Boolean algebra laws and practice simplifying complex expressions.',
+      Simplification:
+        'Review Boolean algebra laws and practice simplifying complex expressions.',
+      'and-gate':
+        'Review AND gate behavior: output is 1 only when ALL inputs are 1.',
+      'AND Gate':
+        'Review AND gate behavior: output is 1 only when ALL inputs are 1.',
+      'or-gate': 'Review OR gate behavior: output is 1 when ANY input is 1.',
+      'OR Gate': 'Review OR gate behavior: output is 1 when ANY input is 1.',
+      'not-gate':
+        'Review NOT gate behavior: output is the inverse of the input.',
+      'NOT Gate':
+        'Review NOT gate behavior: output is the inverse of the input.',
+      'nand-gate':
+        'Remember NAND is NOT-AND: output is 0 only when ALL inputs are 1.',
+      'NAND Gate':
+        'Remember NAND is NOT-AND: output is 0 only when ALL inputs are 1.',
+      'nor-gate':
+        'Remember NOR is NOT-OR: output is 1 only when ALL inputs are 0.',
+      'NOR Gate':
+        'Remember NOR is NOT-OR: output is 1 only when ALL inputs are 0.',
+      'xor-gate': 'Practice XOR logic: output is 1 when inputs are different.',
+      'XOR Gate': 'Practice XOR logic: output is 1 when inputs are different.',
+      'xnor-gate': 'Practice XNOR logic: output is 1 when inputs are the same.',
+      'XNOR Gate': 'Practice XNOR logic: output is 1 when inputs are the same.',
+      'distributive-law':
+        'Review distributive law: A(B+C) = AB+AC and A+BC = (A+B)(A+C).',
+      'Boolean Laws': 'Review all Boolean algebra laws and their applications.',
+      'boolean-values':
+        'Review the fundamental concepts of Boolean values (0 and 1, true and false).',
+      'Boolean Values':
+        'Review the fundamental concepts of Boolean values (0 and 1, true and false).',
+      intro: 'Review the introduction to Boolean algebra and its applications.',
+      Introduction:
+        'Review the introduction to Boolean algebra and its applications.',
+      applications:
+        'Study real-world applications of Boolean algebra in digital circuits.',
+      Applications:
+        'Study real-world applications of Boolean algebra in digital circuits.',
+      // Add more recommendations
+    };
 
-  return tags
-    .map(tag => tagLabels[tag] || tag.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
-    .join(', ');
-}
+    return recommendations[tag] || null;
+  }
 
-/**
- * Get specific recommendations based on weak tags
- */
-private getTagRecommendation(tag: string): string | null {
-  const recommendations: Record<string, string> = {
-    'karnaugh-maps': 'Practice more Karnaugh map simplification problems and review grouping techniques.',
-    'Karnaugh Maps': 'Practice more Karnaugh map simplification problems and review grouping techniques.',
-    'truth-table-construction': 'Focus on building truth tables step by step for different logic gates.',
-    'Truth Table Construction': 'Focus on building truth tables step by step for different logic gates.',
-    'truth-table-reading': 'Practice interpreting truth tables and understanding input-output relationships.',
-    'Truth Table Reading': 'Practice interpreting truth tables and understanding input-output relationships.',
-    'truth-table-for-gates': 'Practice creating truth tables for various logic gates.',
-    'Truth Tables for Gates': 'Practice creating truth tables for various logic gates.',
-    'simplification': 'Review Boolean algebra laws and practice simplifying complex expressions.',
-    'Simplification': 'Review Boolean algebra laws and practice simplifying complex expressions.',
-    'and-gate': 'Review AND gate behavior: output is 1 only when ALL inputs are 1.',
-    'AND Gate': 'Review AND gate behavior: output is 1 only when ALL inputs are 1.',
-    'or-gate': 'Review OR gate behavior: output is 1 when ANY input is 1.',
-    'OR Gate': 'Review OR gate behavior: output is 1 when ANY input is 1.',
-    'not-gate': 'Review NOT gate behavior: output is the inverse of the input.',
-    'NOT Gate': 'Review NOT gate behavior: output is the inverse of the input.',
-    'nand-gate': 'Remember NAND is NOT-AND: output is 0 only when ALL inputs are 1.',
-    'NAND Gate': 'Remember NAND is NOT-AND: output is 0 only when ALL inputs are 1.',
-    'nor-gate': 'Remember NOR is NOT-OR: output is 1 only when ALL inputs are 0.',
-    'NOR Gate': 'Remember NOR is NOT-OR: output is 1 only when ALL inputs are 0.',
-    'xor-gate': 'Practice XOR logic: output is 1 when inputs are different.',
-    'XOR Gate': 'Practice XOR logic: output is 1 when inputs are different.',
-    'xnor-gate': 'Practice XNOR logic: output is 1 when inputs are the same.',
-    'XNOR Gate': 'Practice XNOR logic: output is 1 when inputs are the same.',
-    'distributive-law': 'Review distributive law: A(B+C) = AB+AC and A+BC = (A+B)(A+C).',
-    'Boolean Laws': 'Review all Boolean algebra laws and their applications.',
-    'boolean-values': 'Review the fundamental concepts of Boolean values (0 and 1, true and false).',
-    'Boolean Values': 'Review the fundamental concepts of Boolean values (0 and 1, true and false).',
-    'intro': 'Review the introduction to Boolean algebra and its applications.',
-    'Introduction': 'Review the introduction to Boolean algebra and its applications.',
-    'applications': 'Study real-world applications of Boolean algebra in digital circuits.',
-    'Applications': 'Study real-world applications of Boolean algebra in digital circuits.',
-    // Add more recommendations
-  };
+  /**
+   * Calculate difficulty progression based on user's attempt history
+   * Implements the revised difficulty progression rules
+   */
+  private async calculateDifficultyProgression(userId: string): Promise<{
+    currentDifficulty: string;
+    canProgressToMedium: boolean;
+    canProgressToHard: boolean;
+    progressionStatus: string;
+    attemptCount: number;
+    averageMastery: number;
+  }> {
+    // Get user's recent attempts
+    const attempts = await this.getUserAttempts(userId);
 
-  return recommendations[tag] || null;
-}
+    if (attempts.length === 0) {
+      return {
+        currentDifficulty: 'easy',
+        canProgressToMedium: false,
+        canProgressToHard: false,
+        progressionStatus: 'Start with easy difficulty',
+        attemptCount: 0,
+        averageMastery: 0,
+      };
+    }
 
-/**
- * Calculate difficulty progression based on user's attempt history
- * Implements the revised difficulty progression rules
- */
-private async calculateDifficultyProgression(userId: string): Promise<{
-  currentDifficulty: string;
-  canProgressToMedium: boolean;
-  canProgressToHard: boolean;
-  progressionStatus: string;
-  attemptCount: number;
-  averageMastery: number;
-}> {
-  // Get user's recent attempts
-  const attempts = await this.getUserAttempts(userId);
-  
-  if (attempts.length === 0) {
+    const attemptCount = attempts.length;
+    const recentAttempts = attempts.slice(0, Math.min(5, attempts.length)); // Last 5 attempts
+
+    // Calculate mastery percentages for each attempt
+    const masteryPercentages = recentAttempts.map((attempt) => {
+      const questions = attempt.questions as any[];
+      if (!questions || questions.length === 0) return 0;
+
+      const responses = attempt.responses || {};
+      let correctAnswers = 0;
+
+      questions.forEach((q, idx) => {
+        const answer = responses[q.id ?? idx];
+        const isCorrect = q.options?.find(
+          (o: any) => o.id === answer && o.isCorrect,
+        );
+        if (isCorrect) correctAnswers++;
+      });
+
+      return Math.round((correctAnswers / questions.length) * 100);
+    });
+
+    const averageMastery =
+      masteryPercentages.length > 0
+        ? Math.round(
+            masteryPercentages.reduce((sum, score) => sum + score, 0) /
+              masteryPercentages.length,
+          )
+        : 0;
+
+    const latestMastery = masteryPercentages[0] || 0;
+
+    console.log(`User ${userId} difficulty progression analysis:`);
+    console.log(`- Attempt count: ${attemptCount}`);
+    console.log(`- Recent mastery scores: ${masteryPercentages.join(', ')}%`);
+    console.log(`- Average mastery: ${averageMastery}%`);
+    console.log(`- Latest mastery: ${latestMastery}%`);
+
+    // Determine current difficulty and progression eligibility
+    let currentDifficulty = 'easy';
+    let canProgressToMedium = false;
+    let canProgressToHard = false;
+    let progressionStatus = '';
+
+    // Rules for Medium difficulty progression
+    if (attemptCount === 1) {
+      if (latestMastery >= 90) {
+        progressionStatus =
+          'Excellent first attempt (90%+)! Complete 2 more attempts maintaining 40%+ to unlock medium difficulty.';
+      } else if (latestMastery >= 70) {
+        progressionStatus =
+          'Good first attempt! Keep practicing to improve your mastery.';
+      } else {
+        progressionStatus =
+          'Keep practicing to improve your understanding of the concepts.';
+      }
+    } else if (attemptCount >= 2 && attemptCount < 5) {
+      // Check if user had 90%+ on first attempt and maintained 40%+ average
+      const firstAttemptMastery =
+        masteryPercentages[masteryPercentages.length - 1]; // First attempt (last in reversed array)
+
+      if (firstAttemptMastery >= 90 && averageMastery >= 40) {
+        canProgressToMedium = true;
+        currentDifficulty = 'medium';
+        progressionStatus = `Unlocked medium difficulty! (First attempt: ${firstAttemptMastery}%, Average: ${averageMastery}%)`;
+      } else if (firstAttemptMastery >= 90) {
+        progressionStatus = `Maintain average mastery above 40% to unlock medium. Current average: ${averageMastery}%`;
+      } else {
+        progressionStatus = 'Continue practicing to improve mastery.';
+      }
+    } else if (attemptCount >= 5) {
+      // Check progression to hard difficulty after 5th attempt
+      const firstAttemptMastery =
+        masteryPercentages[masteryPercentages.length - 1];
+
+      if (firstAttemptMastery >= 90 && averageMastery >= 40) {
+        canProgressToMedium = true;
+        currentDifficulty = 'medium';
+
+        if (averageMastery >= 70) {
+          canProgressToHard = true;
+          currentDifficulty = 'hard';
+          progressionStatus = `Unlocked hard difficulty! (Average mastery: ${averageMastery}%)`;
+        } else {
+          progressionStatus = `Medium difficulty unlocked. Achieve 70%+ average mastery to unlock hard difficulty. Current: ${averageMastery}%`;
+        }
+      } else if (firstAttemptMastery >= 90) {
+        progressionStatus = `Maintain average mastery above 40% to progress. Current average: ${averageMastery}%`;
+      } else {
+        progressionStatus =
+          'Continue practicing. Focus on achieving higher mastery scores.';
+      }
+    }
+
     return {
-      currentDifficulty: 'easy',
-      canProgressToMedium: false,
-      canProgressToHard: false,
-      progressionStatus: 'Start with easy difficulty',
-      attemptCount: 0,
-      averageMastery: 0
+      currentDifficulty,
+      canProgressToMedium,
+      canProgressToHard,
+      progressionStatus,
+      attemptCount,
+      averageMastery,
     };
   }
 
-  const attemptCount = attempts.length;
-  const recentAttempts = attempts.slice(0, Math.min(5, attempts.length)); // Last 5 attempts
-  
-  // Calculate mastery percentages for each attempt
-  const masteryPercentages = recentAttempts.map(attempt => {
-    const questions = attempt.questions as any[];
-    if (!questions || questions.length === 0) return 0;
-    
-    const responses = attempt.responses || {};
-    let correctAnswers = 0;
-    
-    questions.forEach((q, idx) => {
-      const answer = responses[q.id ?? idx];
-      const isCorrect = q.options?.find((o: any) => o.id === answer && o.isCorrect);
-      if (isCorrect) correctAnswers++;
-    });
-    
-    return Math.round((correctAnswers / questions.length) * 100);
-  });
-
-  const averageMastery = masteryPercentages.length > 0 ? 
-    Math.round(masteryPercentages.reduce((sum, score) => sum + score, 0) / masteryPercentages.length) : 0;
-  
-  const latestMastery = masteryPercentages[0] || 0;
-
-  console.log(`User ${userId} difficulty progression analysis:`);
-  console.log(`- Attempt count: ${attemptCount}`);
-  console.log(`- Recent mastery scores: ${masteryPercentages.join(', ')}%`);
-  console.log(`- Average mastery: ${averageMastery}%`);
-  console.log(`- Latest mastery: ${latestMastery}%`);
-
-  // Determine current difficulty and progression eligibility
-  let currentDifficulty = 'easy';
-  let canProgressToMedium = false;
-  let canProgressToHard = false;
-  let progressionStatus = '';
-
-  // Rules for Medium difficulty progression
-  if (attemptCount === 1) {
-    if (latestMastery >= 90) {
-      progressionStatus = 'Excellent first attempt (90%+)! Complete 2 more attempts maintaining 40%+ to unlock medium difficulty.';
-    } else if (latestMastery >= 70) {
-      progressionStatus = 'Good first attempt! Keep practicing to improve your mastery.';
-    } else {
-      progressionStatus = 'Keep practicing to improve your understanding of the concepts.';
-    }
-  } else if (attemptCount >= 2 && attemptCount < 5) {
-    // Check if user had 90%+ on first attempt and maintained 40%+ average
-    const firstAttemptMastery = masteryPercentages[masteryPercentages.length - 1]; // First attempt (last in reversed array)
-    
-    if (firstAttemptMastery >= 90 && averageMastery >= 40) {
-      canProgressToMedium = true;
-      currentDifficulty = 'medium';
-      progressionStatus = `Unlocked medium difficulty! (First attempt: ${firstAttemptMastery}%, Average: ${averageMastery}%)`;
-    } else if (firstAttemptMastery >= 90) {
-      progressionStatus = `Maintain average mastery above 40% to unlock medium. Current average: ${averageMastery}%`;
-    } else {
-      progressionStatus = 'Continue practicing to improve mastery.';
-    }
-  } else if (attemptCount >= 5) {
-    // Check progression to hard difficulty after 5th attempt
-    const firstAttemptMastery = masteryPercentages[masteryPercentages.length - 1];
-    
-    if (firstAttemptMastery >= 90 && averageMastery >= 40) {
-      canProgressToMedium = true;
-      currentDifficulty = 'medium';
-      
-      if (averageMastery >= 70) {
-        canProgressToHard = true;
-        currentDifficulty = 'hard';
-        progressionStatus = `Unlocked hard difficulty! (Average mastery: ${averageMastery}%)`;
-      } else {
-        progressionStatus = `Medium difficulty unlocked. Achieve 70%+ average mastery to unlock hard difficulty. Current: ${averageMastery}%`;
-      }
-    } else if (firstAttemptMastery >= 90) {
-      progressionStatus = `Maintain average mastery above 40% to progress. Current average: ${averageMastery}%`;
-    } else {
-      progressionStatus = 'Continue practicing. Focus on achieving higher mastery scores.';
-    }
-  }
-
-  return {
-    currentDifficulty,
-    canProgressToMedium,
-    canProgressToHard,
-    progressionStatus,
-    attemptCount,
-    averageMastery
-  };
-}
-
-
-
-    /**
+  /**
    * Generate adaptive practice assessment based on user's skill level
    */
   async generateAdaptivePracticeAssessment(userId: string) {
     // Calculate difficulty progression first
-    const difficultyProgression = await this.calculateDifficultyProgression(userId);
-    console.log(`User ${userId} difficulty progression:`, difficultyProgression);
-    
+    const difficultyProgression =
+      await this.calculateDifficultyProgression(userId);
+    console.log(
+      `User ${userId} difficulty progression:`,
+      difficultyProgression,
+    );
+
     // Get adaptive recommendations
-    const recommendations = await this.adaptiveService.getAdaptiveRecommendations(userId);
-    
+    const recommendations =
+      await this.adaptiveService.getAdaptiveRecommendations(userId);
+
     // Override recommended difficulty with progression-based difficulty
-    recommendations.recommendedDifficulty = difficultyProgression.currentDifficulty;
-    
+    recommendations.recommendedDifficulty =
+      difficultyProgression.currentDifficulty;
+
     // Get all lessons and their topics
     const lessons = await this.prisma.lesson.findMany({
-      include: { topics: true }
+      include: { topics: true },
     });
 
-    if (!lessons || lessons.length < 4) throw new Error('Not enough lessons found');
+    if (!lessons || lessons.length < 4)
+      throw new Error('Not enough lessons found');
 
     // Get all topics across all lessons
-    const allTopics = lessons.flatMap(lesson => lesson.topics);
-    console.log(`Found ${allTopics.length} total topics across ${lessons.length} lessons`);
+    const allTopics = lessons.flatMap((lesson) => lesson.topics);
+    console.log(
+      `Found ${allTopics.length} total topics across ${lessons.length} lessons`,
+    );
 
     if (allTopics.length === 0) throw new Error('No topics found');
 
     // Get user skills to identify weakest topics
     const userSkills = await this.adaptiveService.getUserSkills(userId);
-    const skillsByTopicId = userSkills.reduce((acc, skill) => {
-      acc[skill.topicId] = skill.mastery;
-      return acc;
-    }, {} as Record<number, number>);
+    const skillsByTopicId = userSkills.reduce(
+      (acc, skill) => {
+        acc[skill.topicId] = skill.mastery;
+        return acc;
+      },
+      {} as Record<number, number>,
+    );
 
     // Calculate mastery for each topic (default 0.5 if no data)
-    const topicMasteries = allTopics.map(topic => ({
+    const topicMasteries = allTopics.map((topic) => ({
       topicId: topic.id,
       lessonId: topic.lessonId,
       mastery: skillsByTopicId[topic.id] || 0.5,
-      topic
+      topic,
     }));
 
     // Find the 3 weakest topics
@@ -329,13 +396,18 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       .sort((a, b) => a.mastery - b.mastery)
       .slice(0, 3);
 
-    console.log('Weakest topics:', weakestTopics.map(t => `Topic ${t.topicId} (${t.topic.title}) - mastery: ${t.mastery}`));
+    console.log(
+      'Weakest topics:',
+      weakestTopics.map(
+        (t) => `Topic ${t.topicId} (${t.topic.title}) - mastery: ${t.mastery}`,
+      ),
+    );
 
     // Create distribution: 2 questions per topic (24 total) + 6 extra for weakest topics (2 each) = 30 total
     const topicDistribution = new Map<number, number>();
-    
+
     // Give each topic 2 base questions
-    allTopics.forEach(topic => {
+    allTopics.forEach((topic) => {
       topicDistribution.set(topic.id, 2);
     });
 
@@ -345,62 +417,80 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       topicDistribution.set(topicId, currentCount + 2);
     });
 
-    console.log('Topic distribution:', Array.from(topicDistribution.entries()).map(([topicId, count]) => {
-      const topic = allTopics.find(t => t.id === topicId);
-      return `Topic ${topicId} (${topic?.title}): ${count} questions`;
-    }));
+    console.log(
+      'Topic distribution:',
+      Array.from(topicDistribution.entries()).map(([topicId, count]) => {
+        const topic = allTopics.find((t) => t.id === topicId);
+        return `Topic ${topicId} (${topic?.title}): ${count} questions`;
+      }),
+    );
 
     // Convert to lesson distribution for prompt compatibility
     const distribution = { lesson1: 0, lesson2: 0, lesson3: 0, lesson4: 0 };
     topicDistribution.forEach((count, topicId) => {
-      const topic = allTopics.find(t => t.id === topicId);
+      const topic = allTopics.find((t) => t.id === topicId);
       if (topic) {
-        const lessonKey = `lesson${topic.lessonId}` as keyof typeof distribution;
+        const lessonKey =
+          `lesson${topic.lessonId}` as keyof typeof distribution;
         distribution[lessonKey] += count;
       }
     });
 
     console.log('Lesson distribution:', distribution);
-    const totalQuestions = Object.values(distribution).reduce((a, b) => a + b, 0);
+    const totalQuestions = Object.values(distribution).reduce(
+      (a, b) => a + b,
+      0,
+    );
     console.log(`Total questions planned: ${totalQuestions}`);
 
     // Select all topics with their question counts and priorities
-    const topicSelections = allTopics.map(topic => {
-      const questionCount = topicDistribution.get(topic.id) || 0;
-      const isWeak = weakestTopics.some(wt => wt.topicId === topic.id);
-      
-      return {
-        ...topic,
-        questionCount,
-        isWeak,
-        priority: isWeak ? 'HIGH (Weak Area)' : 'NORMAL'
-      };
-    }).filter(t => t.questionCount > 0);
+    const topicSelections = allTopics
+      .map((topic) => {
+        const questionCount = topicDistribution.get(topic.id) || 0;
+        const isWeak = weakestTopics.some((wt) => wt.topicId === topic.id);
 
-    console.log('Selected topics:', topicSelections.map(t => `${t.title}: ${t.questionCount} questions (${t.priority})`));
+        return {
+          ...topic,
+          questionCount,
+          isWeak,
+          priority: isWeak ? 'HIGH (Weak Area)' : 'NORMAL',
+        };
+      })
+      .filter((t) => t.questionCount > 0);
 
-    const promptParts = topicSelections.map(topic => `
+    console.log(
+      'Selected topics:',
+      topicSelections.map(
+        (t) => `${t.title}: ${t.questionCount} questions (${t.priority})`,
+      ),
+    );
+
+    const promptParts = topicSelections.map(
+      (topic) => `
       Topic: ${topic.title} (Lesson ${topic.lessonId}, Questions: ${topic.questionCount}, Priority: ${topic.priority})
       Content: ${topic.contentText}
-    `);
+    `,
+    );
 
     const promptContext = {
-      userMasteryPercent: parseFloat((recommendations.overallMastery * 100).toFixed(1)),
+      userMasteryPercent: parseFloat(
+        (recommendations.overallMastery * 100).toFixed(1),
+      ),
       recommendedDifficulty: recommendations.recommendedDifficulty,
-      focusTopics: recommendations.focusTopics.map(t => t.topicTitle),
+      focusTopics: recommendations.focusTopics.map((t) => t.topicTitle),
       topicContents: promptParts,
       questionDistribution: distribution,
       totalQuestions: 30,
-      topicDistribution: topicSelections.map(topic => ({
+      topicDistribution: topicSelections.map((topic) => ({
         topicId: topic.id,
         topicTitle: topic.title,
-        questionCount: topic.questionCount
+        questionCount: topic.questionCount,
       })),
-      weakestTopics: weakestTopics.map(wt => ({
+      weakestTopics: weakestTopics.map((wt) => ({
         topicId: wt.topicId,
         topicTitle: wt.topic.title,
-        mastery: wt.mastery
-      }))
+        mastery: wt.mastery,
+      })),
     };
 
     const prompt = buildAdaptiveQuizPrompt(promptContext);
@@ -419,25 +509,36 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
     // Ensure questions is always an array
     if (!Array.isArray(questions)) {
-      console.error('AI generated non-array response or failed parsing, retrying...');
+      console.error(
+        'AI generated non-array response or failed parsing, retrying...',
+      );
       questions = await requestQuestions();
       if (!Array.isArray(questions)) {
-        throw new Error('Failed to generate valid questions array from AI response (after retry)');
+        throw new Error(
+          'Failed to generate valid questions array from AI response (after retry)',
+        );
       }
     }
 
     const filteredQuestions = (questions || []).map((q: any, index: number) => {
-      const correctOptions = q.options?.filter((opt: any) => opt.isCorrect) || [];
+      const correctOptions =
+        q.options?.filter((opt: any) => opt.isCorrect) || [];
       if (correctOptions.length !== 1) {
-        console.warn(`Question ${index + 1} has ${correctOptions.length} correct answers, should have exactly 1`);
+        console.warn(
+          `Question ${index + 1} has ${correctOptions.length} correct answers, should have exactly 1`,
+        );
         q.options?.forEach((opt: any, idx: number) => {
-          opt.isCorrect = idx === 0 && correctOptions.length === 0 ? true : 
-                        opt.isCorrect && correctOptions.indexOf(opt) === 0;
+          opt.isCorrect =
+            idx === 0 && correctOptions.length === 0
+              ? true
+              : opt.isCorrect && correctOptions.indexOf(opt) === 0;
         });
       }
 
       if (q.options?.length < 3) {
-        console.warn(`Question ${index + 1} has only ${q.options?.length} options, minimum is 3`);
+        console.warn(
+          `Question ${index + 1} has only ${q.options?.length} options, minimum is 3`,
+        );
       }
 
       const correctOption = q.options?.find((opt: any) => opt.isCorrect);
@@ -447,18 +548,22 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
       // Ensure topicId is properly set based on lessonId if missing
       if (!q.topicId && q.lessonId) {
-        const lessonTopics = allTopics.filter(t => t.lessonId === q.lessonId);
+        const lessonTopics = allTopics.filter((t) => t.lessonId === q.lessonId);
         if (lessonTopics.length > 0) {
           // Prefer weak topics first, then any topic from the lesson
-          const weakTopic = lessonTopics.find(t => weakestTopics.some(wt => wt.topicId === t.id));
+          const weakTopic = lessonTopics.find((t) =>
+            weakestTopics.some((wt) => wt.topicId === t.id),
+          );
           q.topicId = weakTopic?.id || lessonTopics[0].id;
         }
       }
-      
+
       // Validate topicId exists in our topics list
-      if (!allTopics.some(t => t.id === q.topicId)) {
-        console.warn(`Question ${index + 1} has invalid topicId ${q.topicId}, fixing...`);
-        const lessonTopics = allTopics.filter(t => t.lessonId === q.lessonId);
+      if (!allTopics.some((t) => t.id === q.topicId)) {
+        console.warn(
+          `Question ${index + 1} has invalid topicId ${q.topicId}, fixing...`,
+        );
+        const lessonTopics = allTopics.filter((t) => t.lessonId === q.lessonId);
         if (lessonTopics.length > 0) {
           q.topicId = lessonTopics[0].id;
         }
@@ -468,10 +573,16 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         ...q,
         id: q.id || `q-${Date.now()}-${index}`,
         difficulty: recommendations.recommendedDifficulty,
-        tags: (q.tags || []).filter((tag: string) => this.allowedTags.includes(tag)),
+        tags: (q.tags || []).filter((tag: string) =>
+          this.allowedTags.includes(tag),
+        ),
         // Ensure required fields
         questionType: q.questionType || 'multiple-choice',
-        solutionSteps: q.solutionSteps || ['Analyze the problem', 'Apply relevant concepts', 'Verify the answer']
+        solutionSteps: q.solutionSteps || [
+          'Analyze the problem',
+          'Apply relevant concepts',
+          'Verify the answer',
+        ],
         // Removed sourcePassages - not needed and causes buggy display
       };
     });
@@ -481,50 +592,60 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       // Check for broken visuals (text implies visual but stem is string)
       if (typeof q.stem === 'string') {
         const lowerStem = q.stem.toLowerCase();
-        if (lowerStem.includes('table below') || 
-            lowerStem.includes('circuit below') || 
-            lowerStem.includes('map below') ||
-            lowerStem.includes('shown below') ||
-            lowerStem.includes('following truth table') ||
-            lowerStem.includes('following circuit')) {
-           console.warn(`Question rejected: Text implies visual but stem is string: "${q.stem.substring(0, 50)}..."`);
-           return false;
+        if (
+          lowerStem.includes('table below') ||
+          lowerStem.includes('circuit below') ||
+          lowerStem.includes('map below') ||
+          lowerStem.includes('shown below') ||
+          lowerStem.includes('following truth table') ||
+          lowerStem.includes('following circuit')
+        ) {
+          console.warn(
+            `Question rejected: Text implies visual but stem is string: "${q.stem.substring(0, 50)}..."`,
+          );
+          return false;
         }
       }
 
-      return q.stem && 
-            q.options && 
-            q.options.length >= 3 && 
-            q.options.length <= 4 &&
-            q.options.filter((opt: any) => opt.isCorrect).length === 1;
+      return (
+        q.stem &&
+        q.options &&
+        q.options.length >= 3 &&
+        q.options.length <= 4 &&
+        q.options.filter((opt: any) => opt.isCorrect).length === 1
+      );
     });
 
     if (validQuestions.length < 25) {
-      console.warn(`Only ${validQuestions.length} valid questions generated, expected 30`);
+      console.warn(
+        `Only ${validQuestions.length} valid questions generated, expected 30`,
+      );
     }
 
     console.log(`Generated ${validQuestions.length} valid questions`);
-    
+
     // Track actual distribution by topic
     const actualTopicDistribution = new Map<number, number>();
-    validQuestions.slice(0, 30).forEach(q => {
+    validQuestions.slice(0, 30).forEach((q) => {
       const count = actualTopicDistribution.get(q.topicId) || 0;
       actualTopicDistribution.set(q.topicId, count + 1);
     });
-    
-    console.log('Actual question distribution by topic:', Array.from(actualTopicDistribution.entries()).map(([topicId, count]) => {
-      const topic = allTopics.find(t => t.id === topicId);
-      return `Topic ${topicId} (${topic?.title}): ${count} questions`;
-    }));
 
-    return { 
+    console.log(
+      'Actual question distribution by topic:',
+      Array.from(actualTopicDistribution.entries()).map(([topicId, count]) => {
+        const topic = allTopics.find((t) => t.id === topicId);
+        return `Topic ${topicId} (${topic?.title}): ${count} questions`;
+      }),
+    );
+
+    return {
       questions: validQuestions.slice(0, 30), // Ensure we get exactly 30 questions
       adaptiveInfo: recommendations,
       plannedDistribution: topicDistribution,
-      actualDistribution: actualTopicDistribution
+      actualDistribution: actualTopicDistribution,
     };
   }
-
 
   /**
    * Enhanced practice attempt with adaptive features
@@ -536,7 +657,10 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
       // Ensure questions is an array before saving
       if (!Array.isArray(quiz.questions)) {
-        console.error('Generated quiz questions is not an array:', quiz.questions);
+        console.error(
+          'Generated quiz questions is not an array:',
+          quiz.questions,
+        );
         throw new Error('Invalid questions format generated');
       }
 
@@ -555,7 +679,8 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       });
 
       // Get difficulty progression info
-      const difficultyProgression = await this.calculateDifficultyProgression(userId);
+      const difficultyProgression =
+        await this.calculateDifficultyProgression(userId);
 
       return {
         attemptId: attempt.id,
@@ -575,12 +700,14 @@ private async calculateDifficultyProgression(userId: string): Promise<{
    */
   async startLessonPracticeAttempt(userId: string, lessonId: number) {
     try {
-      console.log(`Starting lesson practice for user ${userId}, lesson ${lessonId}`);
+      console.log(
+        `Starting lesson practice for user ${userId}, lesson ${lessonId}`,
+      );
 
       // Get the lesson with its topics
       const lesson = await this.prisma.lesson.findUnique({
         where: { id: lessonId },
-        include: { topics: true }
+        include: { topics: true },
       });
 
       if (!lesson) {
@@ -591,7 +718,9 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         throw new Error(`Lesson ${lessonId} has no topics`);
       }
 
-      console.log(`Found lesson "${lesson.title}" with ${lesson.topics.length} topics`);
+      console.log(
+        `Found lesson "${lesson.title}" with ${lesson.topics.length} topics`,
+      );
 
       // Initialize user skills if needed
       await this.adaptiveService.initializeUserSkills(userId);
@@ -600,39 +729,47 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       const userSkills = await this.prisma.userSkill.findMany({
         where: {
           userId,
-          topicId: { in: lesson.topics.map(t => t.id) }
-        }
+          topicId: { in: lesson.topics.map((t) => t.id) },
+        },
       });
 
       // Create a map of topicId -> mastery
-      const skillMap = userSkills.reduce((acc, skill) => {
-        acc[skill.topicId] = skill.mastery;
-        return acc;
-      }, {} as Record<number, number>);
+      const skillMap = userSkills.reduce(
+        (acc, skill) => {
+          acc[skill.topicId] = skill.mastery;
+          return acc;
+        },
+        {} as Record<number, number>,
+      );
 
       // Calculate mastery and difficulty for each topic
-      const topicsWithMastery = lesson.topics.map(topic => ({
+      const topicsWithMastery = lesson.topics.map((topic) => ({
         topicId: topic.id,
         topicTitle: topic.title,
         mastery: skillMap[topic.id] ?? 0.5, // Default 0.5 if no data
         contentText: topic.contentText,
-        tags: topic.tags || []
+        tags: topic.tags || [],
       }));
 
       // Sort by mastery to find weakest topic
-      const sortedByMastery = [...topicsWithMastery].sort((a, b) => a.mastery - b.mastery);
+      const sortedByMastery = [...topicsWithMastery].sort(
+        (a, b) => a.mastery - b.mastery,
+      );
       const weakestTopicId = sortedByMastery[0].topicId;
 
-      console.log('Topic masteries:', topicsWithMastery.map(t => 
-        `${t.topicTitle}: ${Math.round(t.mastery * 100)}%`
-      ));
+      console.log(
+        'Topic masteries:',
+        topicsWithMastery.map(
+          (t) => `${t.topicTitle}: ${Math.round(t.mastery * 100)}%`,
+        ),
+      );
       console.log(`Weakest topic: ${sortedByMastery[0].topicTitle}`);
 
       // Distribute exactly 10 questions: 2 per topic, weakest gets 2 bonus questions.
-      const topicsForPrompt = topicsWithMastery.map(topic => {
+      const topicsForPrompt = topicsWithMastery.map((topic) => {
         const isWeakest = topic.topicId === weakestTopicId;
         const difficulty = getDifficultyFromMastery(topic.mastery);
-        
+
         return {
           topicId: topic.topicId,
           topicTitle: topic.topicTitle,
@@ -640,12 +777,17 @@ private async calculateDifficultyProgression(userId: string): Promise<{
           difficulty,
           questionCount: isWeakest ? 4 : 2,
           contentText: topic.contentText,
-          tags: topic.tags
+          tags: topic.tags,
         };
       });
 
-      const totalQuestions = topicsForPrompt.reduce((sum, t) => sum + t.questionCount, 0);
-      console.log(`Question distribution: ${topicsForPrompt.map(t => `${t.topicTitle}: ${t.questionCount} (${t.difficulty})`).join(', ')}`);
+      const totalQuestions = topicsForPrompt.reduce(
+        (sum, t) => sum + t.questionCount,
+        0,
+      );
+      console.log(
+        `Question distribution: ${topicsForPrompt.map((t) => `${t.topicTitle}: ${t.questionCount} (${t.difficulty})`).join(', ')}`,
+      );
       console.log(`Total questions: ${totalQuestions}`);
 
       // Build the prompt context
@@ -653,21 +795,27 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         lessonId: lesson.id,
         lessonTitle: lesson.title,
         topics: topicsForPrompt,
-        totalQuestions
+        totalQuestions,
       };
 
       // Generate questions using AI
       const prompt = buildLessonQuizPrompt(promptContext);
-      
-      console.log(`Generating ${totalQuestions} questions using LlmProviderService...`);
+
+      console.log(
+        `Generating ${totalQuestions} questions using LlmProviderService...`,
+      );
 
       const requestQuestions = async (
         generationPrompt: string,
         attempt: number = 1,
       ): Promise<any[] | null> => {
         try {
-          console.log(`Generation attempt ${attempt} for lesson ${lessonId}...`);
-          const text = await this.llmProvider.generateStrict(generationPrompt, { maxOutputTokens: 16384 });
+          console.log(
+            `Generation attempt ${attempt} for lesson ${lessonId}...`,
+          );
+          const text = await this.llmProvider.generateStrict(generationPrompt, {
+            maxOutputTokens: 16384,
+          });
           return await this.extractJsonArray(text);
         } catch (err) {
           console.warn('Failed to generate or parse JSON:', err.message);
@@ -680,158 +828,217 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       // The full prompt asks for lengthy explanations and can exceed the model's
       // output budget. Retry with the compact schema before rejecting the attempt.
       if (Array.isArray(questions) && questions.length < totalQuestions) {
-        console.warn(`Only ${questions.length} questions returned, retrying with compact prompt...`);
-        questions = await requestQuestions(buildFallbackLessonQuizPrompt(promptContext), 2);
+        console.warn(
+          `Only ${questions.length} questions returned, retrying with compact prompt...`,
+        );
+        questions = await requestQuestions(
+          buildFallbackLessonQuizPrompt(promptContext),
+          2,
+        );
       }
 
       // Validate and clean questions
       if (!Array.isArray(questions)) {
-        console.error('AI generated non-array response or failed parsing, retrying...');
-        questions = await requestQuestions(buildFallbackLessonQuizPrompt(promptContext), 2);
-        
+        console.error(
+          'AI generated non-array response or failed parsing, retrying...',
+        );
+        questions = await requestQuestions(
+          buildFallbackLessonQuizPrompt(promptContext),
+          2,
+        );
+
         if (!Array.isArray(questions)) {
           throw new Error('Failed to generate valid questions array');
         }
       }
 
       // Process and validate each question
-      const validQuestions = questions.map((q: any, index: number) => {
-        // Ensure options exist and is an array
-        if (!Array.isArray(q.options) || q.options.length < 3) {
-          console.warn(`Question ${index + 1} has invalid options array`);
-          return null; // Mark for rejection
-        }
+      const validQuestions = questions
+        .map((q: any, index: number) => {
+          // Ensure options exist and is an array
+          if (!Array.isArray(q.options) || q.options.length < 3) {
+            console.warn(`Question ${index + 1} has invalid options array`);
+            return null; // Mark for rejection
+          }
 
-        // Count correct answers
-        const correctOptions = q.options.filter((opt: any) => opt.isCorrect === true);
-        
-        if (correctOptions.length === 0) {
-          // No correct answer - try to use answerId to find one
-          if (q.answerId) {
-            const answerOption = q.options.find((opt: any) => opt.id === q.answerId);
-            if (answerOption) {
-              console.warn(`Question ${index + 1} has no isCorrect=true, setting from answerId`);
-              answerOption.isCorrect = true;
+          // Count correct answers
+          const correctOptions = q.options.filter(
+            (opt: any) => opt.isCorrect === true,
+          );
+
+          if (correctOptions.length === 0) {
+            // No correct answer - try to use answerId to find one
+            if (q.answerId) {
+              const answerOption = q.options.find(
+                (opt: any) => opt.id === q.answerId,
+              );
+              if (answerOption) {
+                console.warn(
+                  `Question ${index + 1} has no isCorrect=true, setting from answerId`,
+                );
+                answerOption.isCorrect = true;
+              } else {
+                // Can't determine correct answer, mark first option as correct (fallback)
+                console.warn(
+                  `Question ${index + 1} has no correct answer and invalid answerId, marking first option`,
+                );
+                q.options[0].isCorrect = true;
+                q.answerId = q.options[0].id;
+              }
             } else {
-              // Can't determine correct answer, mark first option as correct (fallback)
-              console.warn(`Question ${index + 1} has no correct answer and invalid answerId, marking first option`);
-              q.options[0].isCorrect = true;
-              q.answerId = q.options[0].id;
+              // No answerId either - reject this question
+              console.warn(
+                `Question ${index + 1} has no correct answer and no answerId, rejecting`,
+              );
+              return null;
             }
+          } else if (correctOptions.length > 1) {
+            // Multiple correct answers - keep only the first one
+            console.warn(
+              `Question ${index + 1} has ${correctOptions.length} correct answers, keeping only first`,
+            );
+            let foundFirst = false;
+            q.options.forEach((opt: any) => {
+              if (opt.isCorrect === true) {
+                if (foundFirst) {
+                  opt.isCorrect = false;
+                } else {
+                  foundFirst = true;
+                }
+              }
+            });
+          }
+
+          // Ensure answerId matches the correct option
+          const finalCorrectOption = q.options.find(
+            (opt: any) => opt.isCorrect === true,
+          );
+          if (finalCorrectOption) {
+            q.answerId = finalCorrectOption.id;
           } else {
-            // No answerId either - reject this question
-            console.warn(`Question ${index + 1} has no correct answer and no answerId, rejecting`);
+            // This shouldn't happen after the fixes above, but safety check
+            console.warn(
+              `Question ${index + 1} still has no correct answer after fixes, rejecting`,
+            );
             return null;
           }
-        } else if (correctOptions.length > 1) {
-          // Multiple correct answers - keep only the first one
-          console.warn(`Question ${index + 1} has ${correctOptions.length} correct answers, keeping only first`);
-          let foundFirst = false;
-          q.options.forEach((opt: any) => {
-            if (opt.isCorrect === true) {
-              if (foundFirst) {
-                opt.isCorrect = false;
-              } else {
-                foundFirst = true;
-              }
+
+          // Validate topicId belongs to this lesson
+          const validTopicIds = lesson.topics.map((t) => t.id);
+          if (!validTopicIds.includes(q.topicId)) {
+            console.warn(
+              `Question ${index + 1} has invalid topicId ${q.topicId}, assigning to first topic`,
+            );
+            q.topicId = lesson.topics[0].id;
+          }
+
+          // Ensure lessonId is correct
+          q.lessonId = lessonId;
+
+          // Filter tags to allowed values
+          q.tags = (q.tags || []).filter((tag: string) =>
+            this.allowedTags.includes(tag),
+          );
+
+          return {
+            ...q,
+            id: q.id || `q-${Date.now()}-${index}`,
+            questionType: q.questionType || 'multiple-choice',
+            solutionSteps: q.solutionSteps || [
+              'Analyze the problem',
+              'Apply relevant concepts',
+              'Verify the answer',
+            ],
+          };
+        })
+        .filter((q: any) => {
+          // Filter out null values (questions marked for rejection in map)
+          if (q === null) {
+            return false;
+          }
+
+          // Validate question has required fields
+          if (!q.stem || !q.options || q.options.length < 3) {
+            console.warn('Rejecting question with missing stem or options');
+            return false;
+          }
+
+          // Verify exactly one correct answer exists
+          const correctCount = q.options.filter(
+            (opt: any) => opt.isCorrect === true,
+          ).length;
+          if (correctCount !== 1) {
+            console.warn(
+              `Rejecting question with ${correctCount} correct answers (must be exactly 1)`,
+            );
+            return false;
+          }
+
+          // Check for broken visuals
+          if (typeof q.stem === 'string') {
+            const lowerStem = q.stem.toLowerCase();
+            if (
+              lowerStem.includes('table below') ||
+              lowerStem.includes('circuit below') ||
+              lowerStem.includes('map below')
+            ) {
+              console.warn('Rejecting question with broken visual reference');
+              return false;
             }
-          });
-        }
-
-        // Ensure answerId matches the correct option
-        const finalCorrectOption = q.options.find((opt: any) => opt.isCorrect === true);
-        if (finalCorrectOption) {
-          q.answerId = finalCorrectOption.id;
-        } else {
-          // This shouldn't happen after the fixes above, but safety check
-          console.warn(`Question ${index + 1} still has no correct answer after fixes, rejecting`);
-          return null;
-        }
-
-        // Validate topicId belongs to this lesson
-        const validTopicIds = lesson.topics.map(t => t.id);
-        if (!validTopicIds.includes(q.topicId)) {
-          console.warn(`Question ${index + 1} has invalid topicId ${q.topicId}, assigning to first topic`);
-          q.topicId = lesson.topics[0].id;
-        }
-
-        // Ensure lessonId is correct
-        q.lessonId = lessonId;
-
-        // Filter tags to allowed values
-        q.tags = (q.tags || []).filter((tag: string) => this.allowedTags.includes(tag));
-
-        return {
-          ...q,
-          id: q.id || `q-${Date.now()}-${index}`,
-          questionType: q.questionType || 'multiple-choice',
-          solutionSteps: q.solutionSteps || ['Analyze the problem', 'Apply relevant concepts', 'Verify the answer']
-        };
-      }).filter((q: any) => {
-        // Filter out null values (questions marked for rejection in map)
-        if (q === null) {
-          return false;
-        }
-        
-        // Validate question has required fields
-        if (!q.stem || !q.options || q.options.length < 3) {
-          console.warn('Rejecting question with missing stem or options');
-          return false;
-        }
-        
-        // Verify exactly one correct answer exists
-        const correctCount = q.options.filter((opt: any) => opt.isCorrect === true).length;
-        if (correctCount !== 1) {
-          console.warn(`Rejecting question with ${correctCount} correct answers (must be exactly 1)`);
-          return false;
-        }
-        
-        // Check for broken visuals
-        if (typeof q.stem === 'string') {
-          const lowerStem = q.stem.toLowerCase();
-          if (lowerStem.includes('table below') || 
-              lowerStem.includes('circuit below') || 
-              lowerStem.includes('map below')) {
-            console.warn('Rejecting question with broken visual reference');
-            return false;
           }
-        }
-        
-        // Validate truth table variable count matches the number of input columns
-        if (typeof q.stem === 'object' && q.stem?.type === 'table' && q.stem?.table) {
-          const table = q.stem.table;
-          const headers = table.headers || [];
-          const inputColumns = headers.filter((h: string) => h.toUpperCase() !== 'Y' && h.toUpperCase() !== 'OUTPUT');
-          const rows = table.rows || [];
-          const expectedRows = Math.pow(2, inputColumns.length);
-          
-          // Check if row count matches expected (2^n for n input variables)
-          if (rows.length !== expectedRows) {
-            console.warn(`Rejecting truth table with ${rows.length} rows but ${inputColumns.length} inputs (expected ${expectedRows} rows)`);
-            return false;
-          }
-          
-          // Check for empty or invalid truth table
-          if (inputColumns.length < 1 || inputColumns.length > 4) {
-            console.warn(`Rejecting truth table with ${inputColumns.length} input columns (expected 1-4)`);
-            return false;
-          }
-        }
-        
-        return true;
-      });
 
-      console.log(`Generated ${validQuestions.length} valid questions out of ${questions.length}`);
+          // Validate truth table variable count matches the number of input columns
+          if (
+            typeof q.stem === 'object' &&
+            q.stem?.type === 'table' &&
+            q.stem?.table
+          ) {
+            const table = q.stem.table;
+            const headers = table.headers || [];
+            const inputColumns = headers.filter(
+              (h: string) =>
+                h.toUpperCase() !== 'Y' && h.toUpperCase() !== 'OUTPUT',
+            );
+            const rows = table.rows || [];
+            const expectedRows = Math.pow(2, inputColumns.length);
+
+            // Check if row count matches expected (2^n for n input variables)
+            if (rows.length !== expectedRows) {
+              console.warn(
+                `Rejecting truth table with ${rows.length} rows but ${inputColumns.length} inputs (expected ${expectedRows} rows)`,
+              );
+              return false;
+            }
+
+            // Check for empty or invalid truth table
+            if (inputColumns.length < 1 || inputColumns.length > 4) {
+              console.warn(
+                `Rejecting truth table with ${inputColumns.length} input columns (expected 1-4)`,
+              );
+              return false;
+            }
+          }
+
+          return true;
+        });
+
+      console.log(
+        `Generated ${validQuestions.length} valid questions out of ${questions.length}`,
+      );
 
       if (validQuestions.length < 8) {
-        throw new Error(`Only ${validQuestions.length} valid questions generated, minimum 8 required`);
+        throw new Error(
+          `Only ${validQuestions.length} valid questions generated, minimum 8 required`,
+        );
       }
 
       // Take exactly 10 questions (or all if less)
       const finalQuestions = validQuestions.slice(0, 10);
 
       // Calculate average mastery for the lesson
-      const averageMastery = topicsForPrompt.reduce((sum, t) => sum + t.mastery, 0) / topicsForPrompt.length;
+      const averageMastery =
+        topicsForPrompt.reduce((sum, t) => sum + t.mastery, 0) /
+        topicsForPrompt.length;
 
       // Save the attempt
       const attempt = await this.prisma.attempt.create({
@@ -843,18 +1050,20 @@ private async calculateDifficultyProgression(userId: string): Promise<{
             lessonTitle: lesson.title,
             overallMastery: averageMastery, // Add overall mastery for display
             recommendedDifficulty: getDifficultyFromMastery(averageMastery), // Add difficulty label
-            topicDistribution: topicsForPrompt.map(t => ({
+            topicDistribution: topicsForPrompt.map((t) => ({
               topicId: t.topicId,
               topicTitle: t.topicTitle,
               mastery: t.mastery,
               difficulty: t.difficulty,
-              questionCount: t.questionCount
-            }))
-          }
-        }
+              questionCount: t.questionCount,
+            })),
+          },
+        },
       });
 
-      console.log(`Created attempt ${attempt.id} with ${finalQuestions.length} questions`);
+      console.log(
+        `Created attempt ${attempt.id} with ${finalQuestions.length} questions`,
+      );
 
       return {
         attemptId: attempt.id,
@@ -862,14 +1071,14 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         lessonInfo: {
           lessonId: lesson.id,
           lessonTitle: lesson.title,
-          topicMasteries: topicsForPrompt.map(t => ({
+          topicMasteries: topicsForPrompt.map((t) => ({
             topicId: t.topicId,
             topicTitle: t.topicTitle,
             mastery: t.mastery,
             difficulty: t.difficulty,
-            questionCount: t.questionCount
-          }))
-        }
+            questionCount: t.questionCount,
+          })),
+        },
       };
     } catch (error) {
       console.error('Error in startLessonPracticeAttempt:', error);
@@ -881,22 +1090,33 @@ private async calculateDifficultyProgression(userId: string): Promise<{
    * Enhanced save with adaptive skill updates
    */
   async saveAdaptivePracticeAttempt(attemptId: number, responses: any) {
-    const attempt = await this.prisma.attempt.findUnique({ where: { id: attemptId } });
+    const attempt = await this.prisma.attempt.findUnique({
+      where: { id: attemptId },
+    });
     if (!attempt) throw new Error('Attempt not found');
 
     const questions = attempt.questions as any[];
-    
+
     // Calculate performance by topic FIRST
-    const topicPerformance: Record<number, { correct: number; total: number; difficulty: string }> = {};
-    
+    const topicPerformance: Record<
+      number,
+      { correct: number; total: number; difficulty: string }
+    > = {};
+
     questions.forEach((q, idx) => {
       const answer = responses[q.id ?? idx];
-      const correct = q.options.find((o: any) => o.id === answer && o.isCorrect);
-      
+      const correct = q.options.find(
+        (o: any) => o.id === answer && o.isCorrect,
+      );
+
       if (!topicPerformance[q.topicId]) {
-        topicPerformance[q.topicId] = { correct: 0, total: 0, difficulty: q.difficulty || 'medium' };
+        topicPerformance[q.topicId] = {
+          correct: 0,
+          total: 0,
+          difficulty: q.difficulty || 'medium',
+        };
       }
-      
+
       topicPerformance[q.topicId].total += 1;
       if (correct) {
         topicPerformance[q.topicId].correct += 1;
@@ -904,33 +1124,42 @@ private async calculateDifficultyProgression(userId: string): Promise<{
     });
 
     // Fetch topic titles from database for feedback
-    const topicIds = Object.keys(topicPerformance).map(id => parseInt(id));
+    const topicIds = Object.keys(topicPerformance).map((id) => parseInt(id));
     const topics = await this.prisma.topic.findMany({
       where: { id: { in: topicIds } },
-      select: { id: true, title: true }
+      select: { id: true, title: true },
     });
-    
-    const topicTitleMap = topics.reduce((acc, topic) => {
-      acc[topic.id] = topic.title;
-      return acc;
-    }, {} as Record<number, string>);
+
+    const topicTitleMap = topics.reduce(
+      (acc, topic) => {
+        acc[topic.id] = topic.title;
+        return acc;
+      },
+      {} as Record<number, string>,
+    );
 
     // Calculate percentages for each topic
-    const analysisResults = Object.entries(topicPerformance).map(([topicId, perf]) => ({
-      topicId: parseInt(topicId),
-      title: topicTitleMap[parseInt(topicId)] || `Topic ${topicId}`,
-      percentage: perf.total > 0 ? (perf.correct / perf.total) * 100 : 0,
-      correct: perf.correct,
-      total: perf.total
-    }));
+    const analysisResults = Object.entries(topicPerformance).map(
+      ([topicId, perf]) => ({
+        topicId: parseInt(topicId),
+        title: topicTitleMap[parseInt(topicId)] || `Topic ${topicId}`,
+        percentage: perf.total > 0 ? (perf.correct / perf.total) * 100 : 0,
+        correct: perf.correct,
+        total: perf.total,
+      }),
+    );
 
     // Calculate overall percentage
     const totalCorrect = analysisResults.reduce((sum, t) => sum + t.correct, 0);
-    const overallPercentage = Math.round((totalCorrect / questions.length) * 100);
+    const overallPercentage = Math.round(
+      (totalCorrect / questions.length) * 100,
+    );
 
     // Weak threshold: ≤50% - return topic IDs
     const weakestTopics = Object.entries(topicPerformance)
-      .filter(([_, perf]) => perf.total > 0 && (perf.correct / perf.total) * 100 < 66)
+      .filter(
+        ([_, perf]) => perf.total > 0 && (perf.correct / perf.total) * 100 < 66,
+      )
       .sort((a, b) => {
         const percentA = (a[1].correct / a[1].total) * 100;
         const percentB = (b[1].correct / b[1].total) * 100;
@@ -941,7 +1170,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
     // Strong threshold: 75%-100% - return topic IDs
     let strongestTopics: number[];
-    
+
     if (overallPercentage === 100) {
       // Perfect score - show all topics
       strongestTopics = Object.entries(topicPerformance)
@@ -950,7 +1179,10 @@ private async calculateDifficultyProgression(userId: string): Promise<{
     } else {
       // Include topics with 75%-100% performance
       strongestTopics = Object.entries(topicPerformance)
-        .filter(([_, perf]) => perf.total > 0 && (perf.correct / perf.total) * 100 >= 66)
+        .filter(
+          ([_, perf]) =>
+            perf.total > 0 && (perf.correct / perf.total) * 100 >= 66,
+        )
         .sort((a, b) => {
           const percentA = (a[1].correct / a[1].total) * 100;
           const percentB = (b[1].correct / b[1].total) * 100;
@@ -979,22 +1211,22 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
     // Generate recommendations
     const recommendations: string[] = [];
-    
+
     // Map topic IDs to titles for feedback
-    const weakTopicTitles = weakestTopics.map(topicId => 
-      topicTitleMap[topicId] || `Topic ${topicId}`
+    const weakTopicTitles = weakestTopics.map(
+      (topicId) => topicTitleMap[topicId] || `Topic ${topicId}`,
     );
-    const strongTopicTitles = strongestTopics.map(topicId => 
-      topicTitleMap[topicId] || `Topic ${topicId}`
+    const strongTopicTitles = strongestTopics.map(
+      (topicId) => topicTitleMap[topicId] || `Topic ${topicId}`,
     );
-    
+
     // Only show weak areas if there are any (not 100% score)
     if (weakestTopics.length > 0 && overallPercentage < 100) {
       const weakAreas = this.formatTagsForFeedback(weakTopicTitles);
       attemptFeedback += `Your weakest areas in this assessment were: ${weakAreas}. `;
-      
+
       // Add specific recommendations based on weak topics
-      weakTopicTitles.forEach(title => {
+      weakTopicTitles.forEach((title) => {
         const recommendation = this.getTagRecommendation(title);
         if (recommendation) {
           recommendations.push(recommendation);
@@ -1013,40 +1245,57 @@ private async calculateDifficultyProgression(userId: string): Promise<{
 
     // Add study recommendations
     if (recommendations.length === 0 && overallPercentage < 80) {
-      recommendations.push("Review the fundamental concepts before attempting another assessment.");
-      recommendations.push("Practice more problems in your weak areas.");
+      recommendations.push(
+        'Review the fundamental concepts before attempting another assessment.',
+      );
+      recommendations.push('Practice more problems in your weak areas.');
     }
 
     // For perfect scores, add congratulatory message
     if (overallPercentage === 100) {
-      recommendations.push("Outstanding work! You've demonstrated complete mastery of this assessment.");
-      recommendations.push("Consider trying a more challenging difficulty level or exploring advanced topics.");
+      recommendations.push(
+        "Outstanding work! You've demonstrated complete mastery of this assessment.",
+      );
+      recommendations.push(
+        'Consider trying a more challenging difficulty level or exploring advanced topics.',
+      );
     }
 
     // Convert to performance data format
-    const performanceData = Object.entries(topicPerformance).map(([topicId, perf]) => ({
-      topicId: parseInt(topicId),
-      correct: perf.correct,
-      total: perf.total,
-      difficulty: perf.difficulty
-    }));
+    const performanceData = Object.entries(topicPerformance).map(
+      ([topicId, perf]) => ({
+        topicId: parseInt(topicId),
+        correct: perf.correct,
+        total: perf.total,
+        difficulty: perf.difficulty,
+      }),
+    );
 
     // Update user skills using adaptive service
-    await this.adaptiveService.updateUserSkills(attempt.userId, performanceData);
+    await this.adaptiveService.updateUserSkills(
+      attempt.userId,
+      performanceData,
+    );
 
     // Generate adaptive feedback (long-term progress)
-    const adaptiveFeedback = await this.adaptiveService.generateAdaptiveFeedback(attempt.userId, performanceData);
+    const adaptiveFeedback =
+      await this.adaptiveService.generateAdaptiveFeedback(
+        attempt.userId,
+        performanceData,
+      );
 
     // Calculate total score
     const score = performanceData.reduce((sum, perf) => sum + perf.correct, 0);
 
     // Update lesson-level mastery for each lesson covered in assessment
     const lessonScores = new Map<number, { correct: number; total: number }>();
-    
+
     questions.forEach((q, idx) => {
       const answer = responses[q.id ?? idx];
-      const isCorrect = q.options.find((o: any) => o.id === answer && o.isCorrect);
-      
+      const isCorrect = q.options.find(
+        (o: any) => o.id === answer && o.isCorrect,
+      );
+
       if (q.lessonId) {
         if (!lessonScores.has(q.lessonId)) {
           lessonScores.set(q.lessonId, { correct: 0, total: 0 });
@@ -1080,7 +1329,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       await this.adaptiveService.updateLessonMasteryFromAssessment(
         attempt.userId,
         lessonId,
-        lessonScore
+        lessonScore,
       );
 
       // Process EMA and Streaks
@@ -1089,17 +1338,16 @@ private async calculateDifficultyProgression(userId: string): Promise<{
         const emaResult = await this.emaMasteryService.processScore(
           attempt.userId,
           topicSlug,
-          lessonScore
+          lessonScore,
         );
         finalEmaData = {
           topic: topicSlug,
           previousEMA: emaResult.previousEMA,
           newEMA: emaResult.newEMA,
-          score: emaResult.score
+          score: emaResult.score,
         };
       }
     }
-
 
     // Save responses, score, and BOTH feedbacks
     await this.prisma.attempt.update({
@@ -1115,23 +1363,25 @@ private async calculateDifficultyProgression(userId: string): Promise<{
             strongestTopics: strongestTopics, // Topic IDs
             attemptFeedback: attemptFeedback,
             recommendations: recommendations,
-            emaData: finalEmaData
-          }
+            emaData: finalEmaData,
+          },
         },
       },
     });
 
     // Get updated difficulty progression after this attempt
-    const updatedProgression = await this.calculateDifficultyProgression(attempt.userId);
-    
+    const updatedProgression = await this.calculateDifficultyProgression(
+      attempt.userId,
+    );
+
     // Add progression feedback to attempt feedback
     let enhancedFeedback = attemptFeedback;
     if (updatedProgression.progressionStatus) {
       enhancedFeedback += ` ${updatedProgression.progressionStatus}`;
     }
 
-    return { 
-      score, 
+    return {
+      score,
       feedback: adaptiveFeedback, // Long-term feedback
       attemptFeedback: enhancedFeedback, // Enhanced with progression feedback
       weakestAreas: weakestTopics,
@@ -1139,7 +1389,7 @@ private async calculateDifficultyProgression(userId: string): Promise<{
       recommendations: recommendations,
       topicPerformance: performanceData,
       difficultyProgression: updatedProgression, // Include progression status
-      emaData: finalEmaData // Direct return for unified front-end access!
+      emaData: finalEmaData, // Direct return for unified front-end access!
     };
   }
 
@@ -1160,17 +1410,19 @@ private async calculateDifficultyProgression(userId: string): Promise<{
     const attempt = await (this.prisma as any).attempt.findUnique({
       where: { id: attemptId },
     });
-    
+
     if (!attempt) {
       return null;
     }
-    
+
     // Ensure questions is always an array
     if (!Array.isArray(attempt.questions)) {
-      console.warn(`Attempt ${attemptId} has non-array questions, converting to array`);
+      console.warn(
+        `Attempt ${attemptId} has non-array questions, converting to array`,
+      );
       attempt.questions = [];
     }
-    
+
     return attempt;
   }
 
@@ -1180,42 +1432,45 @@ private async calculateDifficultyProgression(userId: string): Promise<{
   async getUserStatistics(userId: string) {
     const attempts = await this.getUserAttempts(userId);
     const userSkills = await this.adaptiveService.getUserSkills(userId);
-    
+
     if (attempts.length === 0) {
       return {
         totalAttempts: 0,
         averageScore: 0,
         bestScore: 0,
         overallMastery: 0.5,
-        skillBreakdown: userSkills.map(skill => ({
+        skillBreakdown: userSkills.map((skill) => ({
           topicTitle: skill.topic.title,
           lessonTitle: skill.topic.lesson.title,
           mastery: skill.mastery,
           level: skill.level,
           attempts: skill.attempts,
-          correct: skill.correct
-        }))
+          correct: skill.correct,
+        })),
       };
     }
 
-    const scores = attempts.map(a => a.score || 0);
-    const averageScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    const scores = attempts.map((a) => a.score || 0);
+    const averageScore =
+      scores.reduce((sum, score) => sum + score, 0) / scores.length;
     const bestScore = Math.max(...scores);
-    const overallMastery = userSkills.reduce((sum, skill) => sum + skill.mastery, 0) / userSkills.length;
+    const overallMastery =
+      userSkills.reduce((sum, skill) => sum + skill.mastery, 0) /
+      userSkills.length;
 
     return {
       totalAttempts: attempts.length,
       averageScore: Math.round(averageScore * 10) / 10,
       bestScore,
       overallMastery: Math.round(overallMastery * 100) / 100,
-      skillBreakdown: userSkills.map(skill => ({
+      skillBreakdown: userSkills.map((skill) => ({
         topicTitle: skill.topic.title,
         lessonTitle: skill.topic.lesson.title,
         mastery: Math.round(skill.mastery * 100) / 100,
         level: Math.round(skill.level * 100) / 100,
         attempts: skill.attempts,
-        correct: skill.correct
-      }))
+        correct: skill.correct,
+      })),
     };
   }
 }

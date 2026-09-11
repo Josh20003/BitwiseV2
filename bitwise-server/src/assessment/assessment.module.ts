@@ -10,7 +10,18 @@ import { PrismaService } from 'prisma/prisma.service';
 @Module({
   imports: [AdaptiveModule],
   controllers: [AssessmentController],
-  providers: [AssessmentService, PrismaService, AiQuizService, EmaMasteryService, LlmProviderService],
-  exports: [AssessmentService, AiQuizService, EmaMasteryService, LlmProviderService]
+  providers: [
+    AssessmentService,
+    PrismaService,
+    AiQuizService,
+    EmaMasteryService,
+    LlmProviderService,
+  ],
+  exports: [
+    AssessmentService,
+    AiQuizService,
+    EmaMasteryService,
+    LlmProviderService,
+  ],
 })
 export class AssessmentModule {}

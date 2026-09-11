@@ -31,14 +31,14 @@ export class CalculatorConverterService {
     toBase: number,
   ): Promise<ConversionResult> {
     const steps: ConversionStep[] = [];
-    
+
     // Validate input
     if (!/^[0-9a-fA-F]+$/.test(value)) {
       throw new Error('Invalid characters in input value');
     }
 
     // Step 1: Convert to decimal (base 10)
-    let decimalValue = this.toDecimal(value, fromBase);
+    const decimalValue = this.toDecimal(value, fromBase);
     steps.push({
       description: `Convert from base ${fromBase} to decimal`,
       operation: `${value} (base ${fromBase})`,
@@ -46,7 +46,7 @@ export class CalculatorConverterService {
     });
 
     // Step 2: Convert from decimal to target base
-    let targetValue = this.fromDecimal(decimalValue, toBase);
+    const targetValue = this.fromDecimal(decimalValue, toBase);
     steps.push({
       description: `Convert from decimal to base ${toBase}`,
       operation: `${decimalValue} (base 10)`,
@@ -59,7 +59,13 @@ export class CalculatorConverterService {
       targetBase: toBase,
       targetValue: targetValue,
       steps: steps,
-      explanation: this.generateExplanation(value, fromBase, decimalValue, targetValue, toBase),
+      explanation: this.generateExplanation(
+        value,
+        fromBase,
+        decimalValue,
+        targetValue,
+        toBase,
+      ),
     };
 
     return result;
@@ -227,7 +233,11 @@ Therefore, ${source} (base ${sourceBase}) = ${target} (base ${targetBase})
     let currentBase = fromBase;
 
     for (const nextBase of basePath) {
-      const result = await this.convertNumber(currentValue, currentBase, nextBase);
+      const result = await this.convertNumber(
+        currentValue,
+        currentBase,
+        nextBase,
+      );
       results.push(result);
       currentValue = result.targetValue;
       currentBase = nextBase;
@@ -244,10 +254,13 @@ Therefore, ${source} (base ${sourceBase}) = ${target} (base ${targetBase})
       return false;
     }
 
-    const validDigits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'.substring(0, base);
+    const validDigits = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'.substring(
+      0,
+      base,
+    );
     return value
       .toUpperCase()
       .split('')
-      .every(char => validDigits.includes(char));
+      .every((char) => validDigits.includes(char));
   }
 }

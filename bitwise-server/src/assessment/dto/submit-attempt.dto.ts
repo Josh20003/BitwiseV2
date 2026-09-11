@@ -7,9 +7,9 @@ export class SubmitAttemptDto {
   @ApiProperty({
     example: [
       { questionId: 1, chosenOption: 'opt_a', isCorrect: false },
-      { questionId: 2, chosenOption: 'opt_b', isCorrect: true }
+      { questionId: 2, chosenOption: 'opt_b', isCorrect: true },
     ],
-    description: 'Array of responses for the attempt'
+    description: 'Array of responses for the attempt',
   })
   responses: Array<{
     questionId: number;
