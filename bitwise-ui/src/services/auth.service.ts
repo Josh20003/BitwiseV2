@@ -27,7 +27,7 @@ export const authService = {
       password: credentials.password!,
       options: {
         data: { display_name: credentials.username },
-        emailRedirectTo: `${import.meta.env.VITE_PUBLIC_APP_URL}/`,
+        emailRedirectTo: window.location.origin + '/',
       },
     })
 
