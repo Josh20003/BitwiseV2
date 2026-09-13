@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useRoadmapData } from '@/hooks/useRoadmapData'
-import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp } from 'lucide-react'
+import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp, Lock } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ import signedUnsignedPhoto from '@/assets/photos/signed unsigned.png'
 import binaryCodesPhoto from '@/assets/photos/binary codes.png'
 import { LessonMasteryRadar } from '@/components/LessonMasteryRadar'
 import { toast } from 'sonner'
+import { RoadmapOnboardingTour } from '@/components/roadmap'
 
 // Define types for better TypeScript support
 interface RoadmapTopic {
@@ -526,7 +527,7 @@ function RouteComponent() {
       const randomQuote = csQuotes[Math.floor(Math.random() * csQuotes.length)]
       toast.custom(
         (t) => (
-          <div className="bg-white dark:bg-gray-800 rounded-md shadow-md p-4 flex items-start gap-4 max-w-md pointer-events-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-md shadow-md p-4 flex items-start gap-4 max-w-md pointer-events-auto mb-20 relative z-40">
             <img
               src={bitboCongrats}
               alt="BitBot"
@@ -605,6 +606,31 @@ function RouteComponent() {
     navigate({ to: '/quiz/$topic', params: { topic }, search: { lessonId } })
   }
 
+  // Show a popup when user clicks a locked lesson
+  const showLockedPopup = useCallback(() => {
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg p-4 flex items-start gap-4 max-w-sm pointer-events-auto border border-gray-200 dark:border-gray-700 animate-in slide-in-from-bottom-5">
+        <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-full shrink-0">
+          <Lock className="w-5 h-5 text-amber-600 dark:text-amber-500" />
+        </div>
+        <div className="flex-1">
+          <p className="font-bold text-gray-900 dark:text-gray-100 text-sm mb-1">
+            Lesson Locked
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            You must complete the previous lesson 100% before you can unlock this one!
+          </p>
+        </div>
+        <button
+          onClick={() => toast.dismiss(t)}
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+        >
+          ×
+        </button>
+      </div>
+    ), { duration: 4000 })
+  }, [])
+
   // Get topic mastery info for a specific lesson
   const getLessonTopicMastery = useCallback((lessonId: number) => {
     const lessonMasteryData = topicMastery[lessonId] as TopicMastery[] | undefined
@@ -648,6 +674,15 @@ function RouteComponent() {
           ? Math.round(progress.masteryScore * 100)
           : null
 
+      const previousLessonProgress =
+        lessonId > 1
+          ? lessonProgress.find((p: LessonProgress) => p.lessonId === lessonId - 1)
+          : null
+      const isPreviousLessonCompleted =
+        lessonId === 1 ||
+        previousLessonProgress?.status === 'completed' ||
+        (previousLessonProgress?.progress || 0) >= 1
+
       return {
         status: isCompleted
           ? 'completed'
@@ -658,8 +693,8 @@ function RouteComponent() {
           ? Math.round(progress.progress > 1 ? progress.progress : progress.progress * 100)
           : 0,
         masteryScore,
-        isLocked: false, // No locks - all lessons accessible
-      }
+        isLocked: !isPreviousLessonCompleted,
+      } as const
     },
     [lessonProgress, topicMastery]
   )
@@ -727,11 +762,12 @@ function RouteComponent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      <RoadmapOnboardingTour />
       <div className="max-w-7xl mx-auto space-y-8 mt-5">
         {/* Top Section: Adaptive & Analytics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Adaptive Practice Card */}
-          <div className="bg-linear-to-r from-blue-500 to-indigo-600 rounded-lg p-6 text-white relative overflow-hidden shadow-lg group">
+          <div id="adaptive-practice-card" className="bg-linear-to-r from-blue-500 to-indigo-600 rounded-lg p-6 text-white relative overflow-hidden shadow-lg group">
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -873,6 +909,7 @@ function RouteComponent() {
 
               {/* Right Side - 1/2: Radar Chart */}
               <div 
+                id="analytics-card"
                 className="w-3/5 cursor-pointer transition-transform hover:scale-105 relative group"
                 onClick={() => setShowAnalyticsModal(true)}
                 title="Click to view detailed analytics"
@@ -887,7 +924,7 @@ function RouteComponent() {
         </div>
 
         {/* All Materials Section */}
-        <div className="space-y-6">
+        <div id="lesson-list" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -900,7 +937,7 @@ function RouteComponent() {
           </div>
 
           {/* Controls: Filters and View Toggle */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div id="lessons-filter" className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             {/* Filter Pills */}
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
               {['All Status', 'Not Started', 'In Progress', 'Completed'].map(
@@ -949,12 +986,26 @@ function RouteComponent() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredLessons.map((lesson) => {
-                const { status, progress } = getLessonStatus(lesson.id)
+                const { status, progress, isLocked } = getLessonStatus(lesson.id)
                 return (
                   <div
                     key={lesson.id}
-                    className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col"
+                    id={`lesson-card-${lesson.id}`}
+                    className={`bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden transition-all duration-300 group flex flex-col relative ${
+                      isLocked ? 'opacity-75 grayscale-[0.5]' : 'hover:shadow-lg'
+                    }`}
                   >
+                    {/* Lock Overlay for interactions */}
+                    {isLocked && (
+                      <div 
+                        className="absolute inset-0 z-10 bg-gray-50/50 dark:bg-gray-900/50 cursor-pointer flex items-center justify-center"
+                        onClick={showLockedPopup}
+                      >
+                        <div className="bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg text-gray-500 transition-transform hover:scale-110">
+                          <Lock className="w-6 h-6" />
+                        </div>
+                      </div>
+                    )}
                     {/* Card Header / Image Placeholder */}
                     <div
                       className={`h-32 w-full relative overflow-hidden ${
@@ -1020,17 +1071,22 @@ function RouteComponent() {
                         <Progress value={progress} className="h-1.5" />
 
                         <Button
-                          onClick={() => setSelectedLesson(lesson)}
+                          onClick={() => {
+                            if (!isLocked) setSelectedLesson(lesson)
+                          }}
                           variant={
                             status === 'completed' ? 'outline' : 'default'
                           }
                           className="w-full mt-2"
+                          disabled={isLocked}
                         >
-                          {status === 'completed'
-                            ? 'Review'
-                            : status === 'in-progress'
-                              ? 'Continue'
-                              : 'Start'}
+                          {isLocked
+                            ? 'Locked'
+                            : status === 'completed'
+                              ? 'Review'
+                              : status === 'in-progress'
+                                ? 'Continue'
+                                : 'Start'}
                         </Button>
                       </div>
                     </div>
@@ -1041,12 +1097,21 @@ function RouteComponent() {
           ) : (
             <div className="space-y-2">
               {filteredLessons.map((lesson) => {
-                const { status, progress } = getLessonStatus(lesson.id)
+                const { status, progress, isLocked } = getLessonStatus(lesson.id)
                 return (
                   <div
                     key={lesson.id}
-                    className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:border-gray-300 dark:hover:border-gray-700 transition-colors group"
+                    id={`lesson-card-${lesson.id}`}
+                    className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md transition-colors group relative ${
+                      isLocked ? 'opacity-75 grayscale-[0.5]' : 'hover:border-gray-300 dark:hover:border-gray-700'
+                    }`}
                   >
+                    {isLocked && (
+                      <div 
+                        className="absolute inset-0 z-10 bg-gray-50/50 dark:bg-gray-900/50 cursor-pointer rounded-md" 
+                        onClick={showLockedPopup}
+                      />
+                    )}
                     <div className="p-4 flex items-center gap-4">
                       {/* Status Icon */}
                       <div className="shrink-0 relative">
@@ -1059,6 +1124,11 @@ function RouteComponent() {
                         </div>
                         {status === 'in-progress' && (
                           <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                        )}
+                        {isLocked && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gray-600 border-2 border-white dark:border-gray-900 flex items-center justify-center">
+                            <Lock className="w-2.5 h-2.5 text-white" />
+                          </div>
                         )}
                       </div>
 
@@ -1106,17 +1176,22 @@ function RouteComponent() {
                       {/* Action Button */}
                       <div className="shrink-0">
                         <Button
-                          onClick={() => setSelectedLesson(lesson)}
+                          onClick={() => {
+                            if (!isLocked) setSelectedLesson(lesson)
+                          }}
                           variant={
                             status === 'completed' ? 'outline' : 'default'
                           }
                           size="sm"
+                          disabled={isLocked}
                         >
-                          {status === 'completed'
-                            ? 'Review'
-                            : status === 'in-progress'
-                              ? 'Continue'
-                              : 'Start'}
+                          {isLocked
+                            ? 'Locked'
+                            : status === 'completed'
+                              ? 'Review'
+                              : status === 'in-progress'
+                                ? 'Continue'
+                                : 'Start'}
                         </Button>
                       </div>
                     </div>

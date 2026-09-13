@@ -54,7 +54,7 @@ export const HelpGuide: React.FC<HelpGuideProps> = ({ onStartTour }) => {
           intro: baseIntro('Adjust component settings and view information about selected components here.'),
         },
         {
-          title: '🚀 Ready to Start!',
+          title: 'Ready to Start!',
           intro: baseIntro('Try creating your first circuit:<br/>1. Select an input switch<br/>2. Add a logic gate<br/>3. Connect them with wires<br/>4. Add an LED output<br/><br/>Have fun learning!'),
         }
       ],
@@ -64,7 +64,7 @@ export const HelpGuide: React.FC<HelpGuideProps> = ({ onStartTour }) => {
       exitOnEsc: true,
       nextLabel: 'Next',
       prevLabel: 'Back',
-      doneLabel: 'Start Building! 🎉',
+      doneLabel: 'Start Building!',
       skipLabel: 'Skip',
     });
 

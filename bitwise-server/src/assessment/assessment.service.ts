@@ -14,7 +14,7 @@ import {
   LessonQuizContext,
 } from './prompts/lesson-quiz-generation';
 import { jsonrepair } from 'jsonrepair';
-import { AI_CONFIG, google } from '../config/ai.config';
+import { AI_CONFIG, createGoogleProvider } from '../config/ai.config';
 import { LlmProviderService } from './llm-provider.service';
 
 @Injectable()

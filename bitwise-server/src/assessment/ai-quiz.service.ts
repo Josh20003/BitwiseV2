@@ -3,6 +3,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
+import { AI_CONFIG, createGoogleProvider } from '../config/ai.config';
 
 export interface QuizQuestion {
   id: string;
@@ -62,10 +63,10 @@ export class AiQuizService {
     medium: number,
     hard: number,
   ): Promise<QuizQuestion[]> {
-    const googleApiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
+    const validKeys = AI_CONFIG.assessmentApiKeys.filter(key => key.startsWith('AIza'));
 
-    if (!googleApiKey) {
-      this.logger.warn('No GOOGLE_AI_API_KEY found, using fallback questions.');
+    if (validKeys.length === 0) {
+      this.logger.warn('Valid GOOGLE_AI_API_KEY for assessment not found, using fallback questions.');
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
 
@@ -186,77 +187,72 @@ ${syllabus.exclusion}
 
 Ensure the questions strictly honor these boundaries and return the exact JSON array format requested in the system prompt.`;
 
-    try {
-      const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
-      let text = '';
+    let parsed: any = null;
 
+    for (const apiKey of validKeys) {
       try {
-        this.logger.log(`Attempting to generate quiz with gemini-3.6-flash...`);
+        const google = createGoogleProvider(apiKey);
+        this.logger.log(`Attempting to generate quiz with ${AI_CONFIG.modelName}...`);
+        
         const result = await (generateText as any)({
-          model: google('gemini-3.6-flash'),
+          model: google(AI_CONFIG.modelName),
           system: systemPrompt,
           prompt: userPrompt,
           maxTokens: 4096,
           temperature: 0.7,
         });
-        text = result.text;
-      } catch (primaryError: any) {
-        this.logger.error(
-          `gemini-3.6-flash failed: ${primaryError.message}. No fallback configured.`,
-        );
-        throw primaryError;
+        
+        const text = result.text;
+        this.logger.log(`Google AI response received, parsing JSON...`);
+
+        // Extract JSON array from response (handles any surrounding text)
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) {
+          this.logger.error(`No JSON array found in response. Trying next key if available.`);
+          continue;
+        }
+
+        parsed = JSON.parse(jsonMatch[0]);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          this.logger.error('Parsed result is not a valid array. Trying next key if available.');
+          parsed = null;
+          continue;
+        }
+        
+        // Success!
+        break;
+      } catch (error: any) {
+        this.logger.warn(`API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${error.message}`);
+        continue;
       }
+    }
 
-      this.logger.log(`Google AI response received, parsing JSON...`);
-
-      // Extract JSON array from response (handles any surrounding text)
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        this.logger.error(
-          `No JSON array found in Google AI response. Response: ${text.substring(0, 500)}`,
-        );
-        return this.generateFallbackQuestions(topic, easy, medium, hard);
-      }
-
-      const parsed: Array<{
-        question: string;
-        options: string[];
-        correctOptionIndex: number;
-        stepByStepDerivation: string;
-      }> = JSON.parse(jsonMatch[0]);
-
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        this.logger.error('Parsed result is not a valid array');
-        return this.generateFallbackQuestions(topic, easy, medium, hard);
-      }
-
-      const questions: QuizQuestion[] = parsed.map((q, i) => {
-        const idx =
-          typeof q.correctOptionIndex === 'number' &&
-          q.correctOptionIndex >= 0 &&
-          q.correctOptionIndex <= 3
-            ? q.correctOptionIndex
-            : 0;
-        return {
-          id: `q-${Date.now()}-${i}`,
-          topic,
-          question: q.question,
-          options: q.options,
-          correctAnswer: q.options[idx],
-          explanation: q.stepByStepDerivation,
-        };
-      });
-
-      this.logger.log(
-        `Successfully generated ${questions.length} AI questions for topic "${topic}"`,
-      );
-      return questions;
-    } catch (error: any) {
-      this.logger.error(
-        `Google AI API failed for topic "${topic}": ${error.message}`,
-      );
+    if (!parsed) {
+      this.logger.error(`All API keys failed or returned invalid JSON for topic "${topic}". Using fallback questions.`);
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
+
+    const questions: QuizQuestion[] = parsed.map((q: any, i: number) => {
+      const idx =
+        typeof q.correctOptionIndex === 'number' &&
+        q.correctOptionIndex >= 0 &&
+        q.correctOptionIndex <= 3
+          ? q.correctOptionIndex
+          : 0;
+      return {
+        id: `q-${Date.now()}-${i}`,
+        topic,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.options[idx],
+        explanation: q.stepByStepDerivation,
+      };
+    });
+
+    this.logger.log(
+      `Successfully generated ${questions.length} AI questions for topic "${topic}"`,
+    );
+    return questions;
   }
 
   private generateFallbackQuestions(

@@ -366,3 +366,173 @@ h6 {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/40;
 }
+
+/* ======== Bitwise Onboarding Tour (intro.js) ======== */
+
+/* Base overlay — deeper for contrast */
+.introjs-overlay {
+  background: rgba(3, 25, 38, 0.85) !important;
+}
+
+/* Tooltip card — uses Bitwise navy theme */
+.introjs-tooltip.bitwise-onboarding-tooltip {
+  background: #29314d !important;
+  border-radius: 20px !important;
+  padding: 24px 28px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(110, 97, 255, 0.25) !important;
+  border: 1px solid rgba(110, 97, 255, 0.3) !important;
+  max-width: 380px !important;
+  min-width: 300px !important;
+  font-family: 'Inter', sans-serif !important;
+  color: #f1f6f1 !important;
+}
+
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-tooltip-header {
+  padding: 0 !important;
+}
+
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-tooltiptext {
+  padding: 0 0 16px 0 !important;
+  color: #f1f6f1 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-tooltiptext h3 {
+  color: #ffffff !important;
+}
+
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-tooltiptext p {
+  color: #c5cad3 !important;
+}
+
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-tooltiptext strong {
+  color: #dac3ff !important;
+}
+
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-skipbutton {
+  font-size: 20px !important;
+  color: #8b93a7 !important;
+  top: 8px !important;
+  right: 12px !important;
+}
+
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-skipbutton:hover {
+  color: #f1f6f1 !important;
+}
+
+/* Arrows match card bg */
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-arrow {
+  border-color: transparent !important;
+}
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-arrow.top {
+  border-bottom-color: #29314d !important;
+}
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-arrow.bottom {
+  border-top-color: #29314d !important;
+}
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-arrow.left {
+  border-right-color: #29314d !important;
+}
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-arrow.right {
+  border-left-color: #29314d !important;
+}
+
+/* Button bar */
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-tooltipbuttons {
+  border-top: 1px solid rgba(110, 97, 255, 0.2) !important;
+  padding-top: 14px !important;
+}
+
+/* All buttons */
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-button {
+  border-radius: 10px !important;
+  padding: 8px 20px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  text-shadow: none !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Back button */
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-prevbutton {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #c5cad3 !important;
+}
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-prevbutton:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+/* Next / Done buttons — Bitwise purple/blue gradient */
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-nextbutton,
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-donebutton {
+  background: linear-gradient(135deg, #6e61ff, #9b51e0) !important;
+  color: white !important;
+  box-shadow: 0 4px 14px rgba(110, 97, 255, 0.4) !important;
+}
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-nextbutton:hover,
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-donebutton:hover {
+  background: linear-gradient(135deg, #5b4eff, #8040d0) !important;
+  box-shadow: 0 6px 20px rgba(110, 97, 255, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Progress bar */
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-progressbar {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 999px !important;
+  height: 4px !important;
+}
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-progress {
+  background: linear-gradient(90deg, #6e61ff, #dac3ff) !important;
+  border-radius: 999px !important;
+}
+
+/* Highlighted element glow — purple ring */
+.introjs-helperLayer.bitwise-onboarding-highlight {
+  border-radius: 14px !important;
+  box-shadow: 0 0 0 4px rgba(110, 97, 255, 0.5), 0 0 30px rgba(155, 81, 224, 0.25) !important;
+}
+
+/* Step numbers badge */
+.introjs-tooltip.bitwise-onboarding-tooltip .introjs-helperNumberLayer {
+  background: linear-gradient(135deg, #6e61ff, #9b51e0) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  text-align: center !important;
+  font-size: 12px !important;
+}
+
+/* Light mode — same dark card style (consistent branding) */
+:root .introjs-tooltip.bitwise-onboarding-tooltip {
+  background: #29314d !important;
+  color: #f1f6f1 !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .introjs-tooltip.bitwise-onboarding-tooltip {
+    max-width: 90vw !important;
+    min-width: 280px !important;
+    padding: 20px 24px !important;
+  }
+  
+  .introjs-tooltip.bitwise-onboarding-tooltip .introjs-tooltipbuttons {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    justify-content: center !important;
+  }
+  
+  .introjs-tooltip.bitwise-onboarding-tooltip .introjs-button {
+    flex: 1 1 auto !important;
+    text-align: center !important;
+  }
+}

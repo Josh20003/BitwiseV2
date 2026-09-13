@@ -190,6 +190,7 @@ const HomeHeader = () => {
               return (
                 <Link
                   key={item.key}
+                  id={`nav-${item.key}`}
                   to={item.to}
                   className="group relative flex items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200"
                 >
@@ -205,6 +206,7 @@ const HomeHeader = () => {
               return (
                 <Link
                   key={item.key}
+                  id={`nav-${item.key}`}
                   to={item.to}
                   className="group relative flex items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200"
                 >

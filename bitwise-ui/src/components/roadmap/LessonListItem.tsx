@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { Lock } from 'lucide-react'
 import type { Lesson, LessonStatus } from './types'
 
 interface LessonListItemProps {
@@ -15,10 +16,18 @@ export function LessonListItem({
   lessonImage,
   onSelect,
 }: LessonListItemProps) {
-  const { status, progress } = lessonStatus
+  const { status, progress, isLocked } = lessonStatus
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md hover:border-gray-300 dark:hover:border-gray-700 transition-colors group">
+    <div 
+      className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md transition-colors group relative ${
+        isLocked ? 'opacity-75 grayscale-[0.5]' : 'hover:border-gray-300 dark:hover:border-gray-700'
+      }`}
+    >
+      {/* Lock Overlay for interactions */}
+      {isLocked && (
+        <div className="absolute inset-0 z-10 bg-gray-50/50 dark:bg-gray-900/50 cursor-not-allowed flex items-center justify-center rounded-md" />
+      )}
       <div className="p-4 flex items-center gap-4">
         {/* Status Icon */}
         <div className="shrink-0 relative">
@@ -72,17 +81,26 @@ export function LessonListItem({
         </div>
 
         {/* Action Button */}
-        <div className="shrink-0">
+        <div className="shrink-0 relative z-20">
           <Button
-            onClick={() => onSelect(lesson)}
+            onClick={() => {
+              if (!isLocked) onSelect(lesson)
+            }}
             variant={status === 'completed' ? 'outline' : 'default'}
             size="sm"
+            disabled={isLocked}
           >
-            {status === 'completed'
-              ? 'Review'
-              : status === 'in-progress'
-                ? 'Continue'
-                : 'Start'}
+            {isLocked ? (
+              <span className="flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Locked
+              </span>
+            ) : status === 'completed' ? (
+              'Review'
+            ) : status === 'in-progress' ? (
+              'Continue'
+            ) : (
+              'Start'
+            )}
           </Button>
         </div>
       </div>
