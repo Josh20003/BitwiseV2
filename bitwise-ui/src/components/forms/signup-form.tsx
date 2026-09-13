@@ -1,8 +1,9 @@
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import logoArrow from '@/assets/icons/outline-logo.svg'
 import { useSignInWithGoogle, useSignUp } from '@/hooks/useAuthQueries'
 import { FcGoogle } from 'react-icons/fc'
@@ -10,6 +11,7 @@ import * as z from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
+import { supabase } from '@/utils/supabase'
 
 const SignUpSchema = z
   .object({
@@ -29,6 +31,29 @@ export function SignUpForm({
 }: React.ComponentProps<'div'>) {
   const signUpMutation = useSignUp()
   const signInWithGoogleMutation = useSignInWithGoogle()
+  const navigate = useNavigate()
+
+  // State to hold credentials for polling cross-device confirmation
+  const [pollCredentials, setPollCredentials] = useState<{email: string, password: string} | null>(null)
+
+  useEffect(() => {
+    if (!pollCredentials) return
+
+    const intervalId = setInterval(async () => {
+      const { data, error } = await supabase.auth.signInWithPassword(pollCredentials)
+      
+      // If we got a session, they confirmed the email on another device!
+      if (data.session) {
+        setPollCredentials(null) // Stop polling
+        clearInterval(intervalId)
+        toast.success('Email confirmed! Logging you in...')
+        navigate({ to: '/' })
+      }
+      // If error (like "Email not confirmed"), just ignore and keep polling
+    }, 3000)
+
+    return () => clearInterval(intervalId)
+  }, [pollCredentials, navigate])
 
   const {
     register,
@@ -44,6 +69,11 @@ export function SignUpForm({
       email: data.email,
       username: data.username,
       password: data.password,
+    }, {
+      onSuccess: () => {
+        // Start polling immediately after successful signup API call
+        setPollCredentials({ email: data.email, password: data.password })
+      }
     })
   }
 
