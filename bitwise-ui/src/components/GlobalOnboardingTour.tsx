@@ -85,7 +85,7 @@ export function GlobalOnboardingTour() {
         },
         {
           title: 'Explore Lessons',
-          intro: makeStepHtml('Open the <strong>menu ☰</strong> at the top right to find <strong>Learn, Calculator, Converter, K-Maps</strong> and <strong>Digital Circuit</strong>.', true),
+          intro: makeStepHtml('Open the <strong>menu</strong> at the top right to find <strong>Learn, Calculator, Converter, K-Maps</strong> and <strong>Digital Circuit</strong>.', true),
         },
         {
           title: 'Start Learning',
@@ -116,23 +116,63 @@ export function GlobalOnboardingTour() {
         doneLabel: 'Got it!',
         skipLabel: 'Skip',
         keyboardNavigation: true,
-        scrollToElement: true,
+        scrollToElement: !isMobile,
         scrollPadding: 80,
         disableInteraction: false,
         overlayOpacity: 0.8,
         autoPosition: true,
         positionPrecedence: ['bottom', 'top', 'left', 'right'],
+        ...(isMobile && { tooltipPosition: 'floating' }),
       } as any)
+
+      // Hide the BitBot floating button while tour is active (prevents overlap on mobile)
+      const botTrigger = document.getElementById('global-ai-bot-trigger')
+      const botContainer = botTrigger?.closest('.fixed') as HTMLElement | null
+      if (botContainer) botContainer.style.display = 'none'
+
+      const restoreBotButton = () => {
+        if (botContainer) botContainer.style.display = ''
+      }
+
+      // Dynamically reposition BitBot to face the highlighted element
+      const updateBitbotPosition = () => {
+        requestAnimationFrame(() => {
+          const tooltip = document.querySelector('.introjs-tooltip') as HTMLElement
+          if (!tooltip) return
+
+          const arrow = tooltip.querySelector('.introjs-arrow') as HTMLElement
+          let pos = 'floating'
+
+          if (arrow) {
+            const arrowClasses = arrow.className
+            const arrowDisplay = window.getComputedStyle(arrow).display
+            if (arrowDisplay !== 'none') {
+              if (arrowClasses.includes('top')) pos = 'top'
+              else if (arrowClasses.includes('bottom')) pos = 'bottom'
+              else if (arrowClasses.includes('left')) pos = 'left'
+              else if (arrowClasses.includes('right')) pos = 'right'
+            }
+          }
+
+          tooltip.setAttribute('data-bitbot-pos', pos)
+        })
+      }
+
+      intro.onafterchange(updateBitbotPosition)
 
       intro.oncomplete(() => {
         localStorage.setItem(storageKey, 'true')
+        restoreBotButton()
       })
 
       intro.onexit(() => {
         localStorage.setItem(storageKey, 'true')
+        restoreBotButton()
       })
 
       intro.start()
+      // Set initial position for the first step
+      setTimeout(updateBitbotPosition, 150)
     }, 1000)
 
     return () => {

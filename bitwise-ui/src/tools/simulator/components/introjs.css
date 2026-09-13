@@ -220,19 +220,186 @@ body.dark .introjs-overlay,
   border-radius: inherit !important;
 }
 
-/* Bitbot SVG positioning on the left of tooltip content */
-.intro-bitbot-left {
-  position: absolute !important;
-  left: -150px !important;
-  bottom: -200px !important;
-  transform: translateY(-50%) !important;
-  z-index: 10000 !important;
-}
-
+/* ===== BITBOT MASCOT — dynamic position-aware placement ===== */
+/* Base style: sized, absolute, with smooth transition between positions */
+.intro-bitbot-left,
 .intro-bitbot-right {
   position: absolute !important;
-  right: -150px !important;
-  bottom: -200px !important;
-  transform: translateY(-50%) !important;
+  width: 80px !important;
+  height: 80px !important;
   z-index: 10000 !important;
+  pointer-events: none !important;
+  transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              right 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.3s ease !important;
+  /* Default fallback: left side, vertically centered */
+  left: -90px !important;
+  right: unset !important;
+  top: 50% !important;
+  bottom: unset !important;
+  transform: translateY(-50%) !important;
+}
+
+/* --- Arrow at TOP → tooltip is BELOW element → BitBot sits at top-left corner --- */
+.introjs-tooltip[data-bitbot-pos="top"] .intro-bitbot-left,
+.introjs-tooltip[data-bitbot-pos="top"] .intro-bitbot-right {
+  left: -60px !important;
+  right: unset !important;
+  top: -20px !important;
+  bottom: unset !important;
+  transform: none !important;
+}
+
+/* --- Arrow at BOTTOM → tooltip is ABOVE element → BitBot sits at bottom-left corner --- */
+.introjs-tooltip[data-bitbot-pos="bottom"] .intro-bitbot-left,
+.introjs-tooltip[data-bitbot-pos="bottom"] .intro-bitbot-right {
+  left: -60px !important;
+  right: unset !important;
+  top: unset !important;
+  bottom: -20px !important;
+  transform: none !important;
+}
+
+/* --- Arrow at LEFT → tooltip is RIGHT of element → BitBot on left side (pointing right) --- */
+.introjs-tooltip[data-bitbot-pos="left"] .intro-bitbot-left,
+.introjs-tooltip[data-bitbot-pos="left"] .intro-bitbot-right {
+  left: -90px !important;
+  right: unset !important;
+  top: 50% !important;
+  bottom: unset !important;
+  transform: translateY(-50%) !important;
+}
+
+/* --- Arrow at RIGHT → tooltip is LEFT of element → BitBot on right side (flipped to point left) --- */
+.introjs-tooltip[data-bitbot-pos="right"] .intro-bitbot-left,
+.introjs-tooltip[data-bitbot-pos="right"] .intro-bitbot-right {
+  left: unset !important;
+  right: -90px !important;
+  top: 50% !important;
+  bottom: unset !important;
+  transform: translateY(-50%) scaleX(-1) !important;
+}
+
+/* --- Floating (no element) → BitBot centered above content, inline --- */
+.introjs-tooltip[data-bitbot-pos="floating"] .intro-bitbot-left,
+.introjs-tooltip[data-bitbot-pos="floating"] .intro-bitbot-right {
+  position: relative !important;
+  left: unset !important;
+  right: unset !important;
+  top: unset !important;
+  bottom: unset !important;
+  display: block !important;
+  width: 64px !important;
+  height: 64px !important;
+  margin: 0 auto 8px auto !important;
+  transform: none !important;
+}
+
+/* ===== MOBILE RESPONSIVE OVERRIDES ===== */
+@media (max-width: 480px) {
+  /* Tooltip: fit within mobile viewport */
+  .introjs-tooltip {
+    min-width: unset !important;
+    max-width: 92vw !important;
+    width: calc(100vw - 32px) !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Force tooltip to center on screen for floating (no-element) steps */
+  .introjs-tooltip.introjs-floating {
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    position: fixed !important;
+  }
+
+  /* Header: slightly smaller */
+  .introjs-tooltip-header {
+    padding: 10px 10px 0 10px !important;
+  }
+
+  .introjs-tooltip .introjs-tooltip-title {
+    font-size: 15px !important;
+  }
+
+  /* Move BitBot mascot inside the tooltip on mobile */
+  .intro-bitbot-left,
+  .intro-bitbot-right {
+    position: relative !important;
+    left: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+    top: unset !important;
+    transform: none !important;
+    display: block !important;
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 auto 6px auto !important;
+  }
+
+  /* Skip button: tighter */
+  .introjs-skipbutton {
+    padding: 5px 5px !important;
+    font-size: 12px !important;
+  }
+
+  /* Buttons area: stack-friendly layout */
+  .introjs-tooltip .introjs-tooltipbuttons {
+    grid-template-columns: auto 1fr auto auto !important;
+    gap: 6px !important;
+    padding: 6px 4px 4px 4px !important;
+  }
+
+  .introjs-nextbutton,
+  .introjs-prevbutton {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    min-width: 36px !important;
+    height: auto !important;
+  }
+
+  /* Arrow: hide on mobile to prevent overflow glitches */
+  .introjs-arrow {
+    display: none !important;
+  }
+
+  /* Helper layer: tighter glow */
+  .introjs-helperLayer {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+/* Extra-small screens (320px and below) */
+@media (max-width: 360px) {
+  .introjs-tooltip {
+    width: calc(100vw - 20px) !important;
+    max-width: 95vw !important;
+    padding: 8px 8px !important;
+    font-size: 12px !important;
+  }
+
+  .intro-bitbot-left,
+  .intro-bitbot-right {
+    width: 36px !important;
+    height: 36px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .introjs-tooltip .introjs-tooltipbuttons {
+    grid-template-columns: auto 1fr auto !important;
+    grid-template-areas: 'back next skip' !important;
+  }
+
+  .introjs-bullets {
+    display: none !important;
+  }
 }
