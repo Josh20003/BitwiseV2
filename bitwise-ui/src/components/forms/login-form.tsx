@@ -10,6 +10,8 @@ import { FcGoogle } from 'react-icons/fc'
 import * as z from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { supabase } from '@/utils/supabase'
+import { toast } from 'sonner'
 
 const signInSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -37,6 +39,23 @@ export function LoginForm({
       navigate({ to: '/' })
     }
   }, [signInMutation.isSuccess, navigate])
+
+  useEffect(() => {
+    const hash = window.location.hash
+    const search = window.location.search
+    const params = new URLSearchParams(hash ? hash.replace('#', '?') : search)
+    const errorDescription = params.get('error_description')
+    const type = params.get('type')
+
+    if (errorDescription) {
+      toast.error(decodeURIComponent(errorDescription))
+      window.history.replaceState(null, '', window.location.pathname)
+    } else if (type === 'signup' || hash.includes('access_token')) {
+      toast.success('Email confirmed successfully! Please log in with your credentials.')
+      supabase.auth.signOut()
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [])
 
   const onSubmit = (data: z.infer<typeof signInSchema>) => {
     signInMutation.mutate({ email: data.email, password: data.password })
