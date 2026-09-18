@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { authService, type AuthCredentials } from '../services/auth.service'
 import { useAuthContext } from '../contexts/AuthContext'
 import { toast } from 'sonner'
@@ -9,10 +10,13 @@ export const AUTH_QUERY_KEYS = {
 } as const
 
 export function useSignUp() {
+  const navigate = useNavigate()
+
   return useMutation({
     mutationFn: (credentials: AuthCredentials) => authService.signUp(credentials),
     onSuccess: () => {
-      toast.success('Account created! Check your email for verification.')
+      toast.success('Account created! Check your email for verification link.')
+      navigate({ to: '/login' })
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Signup failed')
