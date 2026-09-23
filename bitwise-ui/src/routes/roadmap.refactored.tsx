@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router'
+import { supabase } from '@/utils/supabase'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useRoadmapData } from '@/hooks/useRoadmapData'
 import { apiService } from '@/services/api.service'
@@ -25,6 +26,14 @@ import {
 } from '@/components/roadmap'
 
 export const Route = createFileRoute('/roadmap/refactored')({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw redirect({
+        to: '/login',
+      })
+    }
+  },
   component: RouteComponent,
 })
 

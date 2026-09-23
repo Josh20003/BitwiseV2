@@ -75,6 +75,18 @@ export function useResetPassword() {
   })
 }
 
+export function useUpdatePassword() {
+  return useMutation({
+    mutationFn: (password: string) => authService.updatePassword(password),
+    onSuccess: () => {
+      toast.success('Password updated successfully!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update password')
+    },
+  })
+}
+
 export function useSignInWithGoogle() {
   return useMutation({
     mutationFn: async () => await authService.signInWithGoogle(),

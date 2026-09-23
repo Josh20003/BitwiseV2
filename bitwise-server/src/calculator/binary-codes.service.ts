@@ -30,6 +30,10 @@ export class BinaryCodesService {
    * Encode a decimal number using BCD (Binary Coded Decimal)
    */
   encodeBCD(decimalValue: string): BinaryCodeResult {
+    if (!/^\d+$/.test(decimalValue)) {
+      throw new Error('Invalid decimal input: only digits are allowed');
+    }
+
     const steps: DecodingStep[] = [];
     const digits = decimalValue.split('');
     const bcdResults: string[] = [];
@@ -80,6 +84,9 @@ export class BinaryCodesService {
         );
       }
       const decimal = parseInt(group, 2);
+      if (decimal > 9) {
+        throw new Error(`Invalid BCD group: ${group} evaluates to ${decimal} which is greater than 9`);
+      }
       decimalDigits.push(decimal.toString());
       steps.push({
         description: `Group ${group} → ${decimal}`,
@@ -243,7 +250,7 @@ export class BinaryCodesService {
     // Calculate parity bits
     const p1 = (data[0] ^ data[1] ^ data[3]).toString();
     const p2 = (data[0] ^ data[2] ^ data[3]).toString();
-    const p3 = (data[1] ^ data[2] ^ data[3]).toString();
+    const p4 = (data[1] ^ data[2] ^ data[3]).toString();
 
     steps.push({
       description: `Calculate parity bit P1 for positions 1,3,5,7`,
@@ -257,11 +264,11 @@ export class BinaryCodesService {
 
     steps.push({
       description: `Calculate parity bit P4 for positions 4,5,6,7`,
-      result: `P4 = D2 ⊕ D3 ⊕ D4 = ${data[1]} ⊕ ${data[2]} ⊕ ${data[3]} = ${p3}`,
+      result: `P4 = D2 ⊕ D3 ⊕ D4 = ${data[1]} ⊕ ${data[2]} ⊕ ${data[3]} = ${p4}`,
     });
 
-    // Hamming code: P1 D1 P2 D2 D3 D4 P4
-    const output = p1 + data[0] + p2 + data[1] + data[2] + data[3] + p3;
+    // Hamming code: P1 P2 D1 P4 D2 D3 D4
+    const output = p1 + p2 + data[0] + p4 + data[1] + data[2] + data[3];
 
     return {
       input: dataValue,

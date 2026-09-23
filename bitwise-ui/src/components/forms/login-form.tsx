@@ -91,6 +91,11 @@ export function LoginForm({
                   {errors.password.message}
                 </span>
               )}
+              <div className="flex justify-end">
+                <Link to="/forgot-password" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
             <Button
               variant={'bluez'}

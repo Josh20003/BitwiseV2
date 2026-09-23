@@ -5,14 +5,20 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  UseGuards,
+  Logger,
 } from '@nestjs/common';
 import { AssessmentService } from './assessment.service';
 import { AdaptiveService } from '../adaptive/adaptive.service';
 import { AiQuizService } from './ai-quiz.service';
 import { EmaMasteryService } from './ema-mastery.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('assessment')
+@UseGuards(JwtAuthGuard)
 export class AssessmentController {
+  private readonly logger = new Logger(AssessmentController.name);
+
   constructor(
     private assessmentService: AssessmentService,
     private adaptiveService: AdaptiveService,
@@ -33,7 +39,7 @@ export class AssessmentController {
 
       // Double-check that questions is an array before returning
       if (!result.questions || !Array.isArray(result.questions)) {
-        console.error('Result questions is not an array:', result.questions);
+        this.logger.error('Result questions is not an array:', result.questions);
         return {
           success: false,
           error:
@@ -46,7 +52,7 @@ export class AssessmentController {
         data: result,
       };
     } catch (error) {
-      console.error('Error in startAdaptivePractice controller:', error);
+      this.logger.error('Error in startAdaptivePractice controller:', error);
       return {
         success: false,
         error:
@@ -79,7 +85,7 @@ export class AssessmentController {
       );
 
       if (!result.questions || !Array.isArray(result.questions)) {
-        console.error('Result questions is not an array:', result.questions);
+        this.logger.error('Result questions is not an array:', result.questions);
         return {
           success: false,
           error:
@@ -92,7 +98,7 @@ export class AssessmentController {
         data: result,
       };
     } catch (error) {
-      console.error('Error in startLessonPractice controller:', error);
+      this.logger.error('Error in startLessonPractice controller:', error);
       return {
         success: false,
         error:

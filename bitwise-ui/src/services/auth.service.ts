@@ -81,6 +81,11 @@ export const authService = {
     if (error) throw new Error(error.message)
   },
 
+  async updatePassword(password: string): Promise<void> {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw new Error(error.message)
+  },
+
   async getProfile(): Promise<BackendUser> {
     try {
       return await apiService.get<BackendUser>('/auth/profile', true)

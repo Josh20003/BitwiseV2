@@ -7,10 +7,13 @@ function RootComponent() {
   const location = useLocation()
   const isLesson = location.pathname.startsWith('/lesson')
   const isAuth =
-    location.pathname === '/login' || location.pathname === '/signup'
+    location.pathname === '/login' || 
+    location.pathname === '/signup' || 
+    location.pathname === '/forgot-password' || 
+    location.pathname === '/reset-password'
   return (
     <>
-      {!isLesson && <HomeHeader />}
+      {!isLesson && !isAuth && <HomeHeader />}
       <main>
         <Outlet />
       </main>

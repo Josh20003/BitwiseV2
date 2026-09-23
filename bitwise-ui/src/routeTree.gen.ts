@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KarnaughMapsRouteImport } from './routes/karnaughMaps'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DigitalCircuitRouteImport } from './routes/digitalCircuit'
 import { Route as ConverterRouteImport } from './routes/converter'
 import { Route as CalculatorRouteImport } from './routes/calculator'
@@ -34,6 +36,11 @@ const RoadmapRoute = RoadmapRouteImport.update({
   path: '/roadmap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -47,6 +54,11 @@ const LoginRoute = LoginRouteImport.update({
 const KarnaughMapsRoute = KarnaughMapsRouteImport.update({
   id: '/karnaughMaps',
   path: '/karnaughMaps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DigitalCircuitRoute = DigitalCircuitRouteImport.update({
@@ -101,9 +113,11 @@ export interface FileRoutesByFullPath {
   '/calculator': typeof CalculatorRoute
   '/converter': typeof ConverterRoute
   '/digitalCircuit': typeof DigitalCircuitRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/karnaughMaps': typeof KarnaughMapsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/roadmap': typeof RoadmapRouteWithChildren
   '/signup': typeof SignupRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
@@ -117,9 +131,11 @@ export interface FileRoutesByTo {
   '/calculator': typeof CalculatorRoute
   '/converter': typeof ConverterRoute
   '/digitalCircuit': typeof DigitalCircuitRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/karnaughMaps': typeof KarnaughMapsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/roadmap': typeof RoadmapRouteWithChildren
   '/signup': typeof SignupRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
@@ -134,9 +150,11 @@ export interface FileRoutesById {
   '/calculator': typeof CalculatorRoute
   '/converter': typeof ConverterRoute
   '/digitalCircuit': typeof DigitalCircuitRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/karnaughMaps': typeof KarnaughMapsRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/roadmap': typeof RoadmapRouteWithChildren
   '/signup': typeof SignupRoute
   '/assessment/$assessmentId': typeof AssessmentAssessmentIdRoute
@@ -152,9 +170,11 @@ export interface FileRouteTypes {
     | '/calculator'
     | '/converter'
     | '/digitalCircuit'
+    | '/forgot-password'
     | '/karnaughMaps'
     | '/login'
     | '/profile'
+    | '/reset-password'
     | '/roadmap'
     | '/signup'
     | '/assessment/$assessmentId'
@@ -168,9 +188,11 @@ export interface FileRouteTypes {
     | '/calculator'
     | '/converter'
     | '/digitalCircuit'
+    | '/forgot-password'
     | '/karnaughMaps'
     | '/login'
     | '/profile'
+    | '/reset-password'
     | '/roadmap'
     | '/signup'
     | '/assessment/$assessmentId'
@@ -184,9 +206,11 @@ export interface FileRouteTypes {
     | '/calculator'
     | '/converter'
     | '/digitalCircuit'
+    | '/forgot-password'
     | '/karnaughMaps'
     | '/login'
     | '/profile'
+    | '/reset-password'
     | '/roadmap'
     | '/signup'
     | '/assessment/$assessmentId'
@@ -201,9 +225,11 @@ export interface RootRouteChildren {
   CalculatorRoute: typeof CalculatorRoute
   ConverterRoute: typeof ConverterRoute
   DigitalCircuitRoute: typeof DigitalCircuitRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   KarnaughMapsRoute: typeof KarnaughMapsRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   RoadmapRoute: typeof RoadmapRouteWithChildren
   SignupRoute: typeof SignupRoute
   AssessmentAssessmentIdRoute: typeof AssessmentAssessmentIdRoute
@@ -227,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoadmapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -246,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/karnaughMaps'
       fullPath: '/karnaughMaps'
       preLoaderRoute: typeof KarnaughMapsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/digitalCircuit': {
@@ -331,9 +371,11 @@ const rootRouteChildren: RootRouteChildren = {
   CalculatorRoute: CalculatorRoute,
   ConverterRoute: ConverterRoute,
   DigitalCircuitRoute: DigitalCircuitRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   KarnaughMapsRoute: KarnaughMapsRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   RoadmapRoute: RoadmapRouteWithChildren,
   SignupRoute: SignupRoute,
   AssessmentAssessmentIdRoute: AssessmentAssessmentIdRoute,

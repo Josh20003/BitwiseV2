@@ -40,7 +40,7 @@ export function SignUpForm({
     if (!pollCredentials) return
 
     const intervalId = setInterval(async () => {
-      const { data, error } = await supabase.auth.signInWithPassword(pollCredentials)
+      const { data } = await supabase.auth.signInWithPassword(pollCredentials)
       
       // If we got a session, they confirmed the email on another device!
       if (data.session) {
