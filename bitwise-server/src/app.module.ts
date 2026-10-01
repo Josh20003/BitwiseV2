@@ -33,10 +33,12 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     UserProgressModule,
     ExamplesModule,
     AiModule,
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [

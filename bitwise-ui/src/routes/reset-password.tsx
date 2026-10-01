@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,6 +69,8 @@ function ResetPasswordForm({ className, ...props }: React.ComponentProps<'div'>)
   const updatePasswordMutation = useUpdatePassword()
   const navigate = useNavigate()
   const [checkingSession, setCheckingSession] = useState(true)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -125,14 +128,24 @@ function ResetPasswordForm({ className, ...props }: React.ComponentProps<'div'>)
           <div className="flex flex-col gap-6">
             <div className="grid gap-3">
               <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="new-password"
-                {...register('password')}
-                disabled={updatePasswordMutation.isPending}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  {...register('password')}
+                  disabled={updatePasswordMutation.isPending}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {errors.password && (
                 <span className="text-red-500 text-sm">
                   {errors.password.message}
@@ -142,14 +155,24 @@ function ResetPasswordForm({ className, ...props }: React.ComponentProps<'div'>)
             
             <div className="grid gap-3">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="new-password"
-                {...register('confirmPassword')}
-                disabled={updatePasswordMutation.isPending}
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  {...register('confirmPassword')}
+                  disabled={updatePasswordMutation.isPending}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <span className="text-red-500 text-sm">
                   {errors.confirmPassword.message}

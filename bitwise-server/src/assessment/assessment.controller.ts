@@ -39,7 +39,10 @@ export class AssessmentController {
 
       // Double-check that questions is an array before returning
       if (!result.questions || !Array.isArray(result.questions)) {
-        this.logger.error('Result questions is not an array:', result.questions);
+        this.logger.error(
+          'Result questions is not an array:',
+          result.questions,
+        );
         return {
           success: false,
           error:
@@ -85,7 +88,10 @@ export class AssessmentController {
       );
 
       if (!result.questions || !Array.isArray(result.questions)) {
-        this.logger.error('Result questions is not an array:', result.questions);
+        this.logger.error(
+          'Result questions is not an array:',
+          result.questions,
+        );
         return {
           success: false,
           error:

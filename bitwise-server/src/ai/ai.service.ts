@@ -21,12 +21,14 @@ export class AiService {
 
   async getResponse(message: string): Promise<string> {
     this.logger.log('Processing chat message');
-      
+
     // Filter for valid keys
     const validKeys = AI_CONFIG.chatApiKeys;
-    
+
     if (validKeys.length === 0) {
-      this.logger.warn('Valid GOOGLE_AI_API_KEY not found. Using fallback mock response.');
+      this.logger.warn(
+        'Valid GOOGLE_AI_API_KEY not found. Using fallback mock response.',
+      );
       return this.getFallbackResponse(message);
     }
 
@@ -43,30 +45,34 @@ export class AiService {
         });
         return result.text;
       } catch (error: any) {
-        this.logger.warn(`API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${error.message}`);
+        this.logger.warn(
+          `API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${error.message}`,
+        );
         continue;
       }
     }
 
-    this.logger.error('All API keys failed or rate limited. Using fallback response.');
+    this.logger.error(
+      'All API keys failed or rate limited. Using fallback response.',
+    );
     return this.getFallbackResponse(message);
   }
 
   private getFallbackResponse(message: string): string {
     const lowerMsg = message.toLowerCase();
-    
+
     if (lowerMsg.includes('hi') || lowerMsg.includes('hello')) {
       return "Hello there! 👋 I'm running in offline/mock mode right now because my AI API key isn't set up yet, but I'm still here to help you navigate Bitwise!";
     }
-    
+
     if (lowerMsg.includes('boolean')) {
-      return "Boolean algebra is a branch of algebra in which the values of the variables are the truth values true and false, usually denoted 1 and 0! Check out the Learn section to start mastering it.";
+      return 'Boolean algebra is a branch of algebra in which the values of the variables are the truth values true and false, usually denoted 1 and 0! Check out the Learn section to start mastering it.';
     }
-    
+
     if (lowerMsg.includes('binary')) {
       return "Binary is a base-2 number system that uses only 0s and 1s. It's the fundamental language of computers. You can use our Number Converter to play around with binary values!";
     }
-    
+
     return "I'm currently running in a limited offline mode, so I can only answer basic greetings and questions about Boolean/Binary right now. To unlock my full AI brain, please add a valid Gemini API key to the server's .env file! 🧠";
   }
 }

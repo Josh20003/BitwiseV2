@@ -41,11 +41,13 @@ export class LlmProviderService {
         });
         return primaryResult.text;
       } catch (primaryError: any) {
-        this.logger.warn(`API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${primaryError.message}`);
+        this.logger.warn(
+          `API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${primaryError.message}`,
+        );
         continue;
       }
     }
-    
+
     this.logger.error('All API keys failed or rate limited.');
     throw new Error('All API keys failed or rate limited.');
   }

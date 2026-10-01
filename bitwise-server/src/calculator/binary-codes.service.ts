@@ -85,7 +85,9 @@ export class BinaryCodesService {
       }
       const decimal = parseInt(group, 2);
       if (decimal > 9) {
-        throw new Error(`Invalid BCD group: ${group} evaluates to ${decimal} which is greater than 9`);
+        throw new Error(
+          `Invalid BCD group: ${group} evaluates to ${decimal} which is greater than 9`,
+        );
       }
       decimalDigits.push(decimal.toString());
       steps.push({

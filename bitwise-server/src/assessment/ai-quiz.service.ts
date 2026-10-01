@@ -63,10 +63,14 @@ export class AiQuizService {
     medium: number,
     hard: number,
   ): Promise<QuizQuestion[]> {
-    const validKeys = AI_CONFIG.assessmentApiKeys.filter(key => key.startsWith('AIza'));
+    const validKeys = AI_CONFIG.assessmentApiKeys.filter((key) =>
+      key.startsWith('AIza'),
+    );
 
     if (validKeys.length === 0) {
-      this.logger.warn('Valid GOOGLE_AI_API_KEY for assessment not found, using fallback questions.');
+      this.logger.warn(
+        'Valid GOOGLE_AI_API_KEY for assessment not found, using fallback questions.',
+      );
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
 
@@ -192,8 +196,10 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
     for (const apiKey of validKeys) {
       try {
         const google = createGoogleProvider(apiKey);
-        this.logger.log(`Attempting to generate quiz with ${AI_CONFIG.modelName}...`);
-        
+        this.logger.log(
+          `Attempting to generate quiz with ${AI_CONFIG.modelName}...`,
+        );
+
         const result = await (generateText as any)({
           model: google(AI_CONFIG.modelName),
           system: systemPrompt,
@@ -201,34 +207,42 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
           maxTokens: 4096,
           temperature: 0.7,
         });
-        
+
         const text = result.text;
         this.logger.log(`Google AI response received, parsing JSON...`);
 
         // Extract JSON array from response (handles any surrounding text)
         const jsonMatch = text.match(/\[[\s\S]*\]/);
         if (!jsonMatch) {
-          this.logger.error(`No JSON array found in response. Trying next key if available.`);
+          this.logger.error(
+            `No JSON array found in response. Trying next key if available.`,
+          );
           continue;
         }
 
         parsed = JSON.parse(jsonMatch[0]);
         if (!Array.isArray(parsed) || parsed.length === 0) {
-          this.logger.error('Parsed result is not a valid array. Trying next key if available.');
+          this.logger.error(
+            'Parsed result is not a valid array. Trying next key if available.',
+          );
           parsed = null;
           continue;
         }
-        
+
         // Success!
         break;
       } catch (error: any) {
-        this.logger.warn(`API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${error.message}`);
+        this.logger.warn(
+          `API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${error.message}`,
+        );
         continue;
       }
     }
 
     if (!parsed) {
-      this.logger.error(`All API keys failed or returned invalid JSON for topic "${topic}". Using fallback questions.`);
+      this.logger.error(
+        `All API keys failed or returned invalid JSON for topic "${topic}". Using fallback questions.`,
+      );
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
 
