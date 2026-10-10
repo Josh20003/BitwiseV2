@@ -924,279 +924,96 @@ const BcdAsciiEncoder = ({ mode }: { mode: 'bcd' | 'ascii' }) => {
   )
 }
 
+}
+
 // ─────────────────────────────────────────────
-// 10. Boolean Scenario Builder  (Lesson 1)
-// Real-world condition toggles → live Boolean expression evaluation
+// 10. Boolean Values Playground  (Lesson 1)
+// Simple A / B toggles → live AND, OR, NOT results
 // ─────────────────────────────────────────────
 const BooleanScenarioBuilder = () => {
-  type Scenario = {
-    title: string
-    emoji: string
-    description: string
-    conditions: { id: string; label: string; emoji: string }[]
-    expression: {
-      label: string
-      fn: (vals: Record<string, boolean>) => boolean
-      formula: string
-    }
-    trueMsg: string
-    falseMsg: string
-  }
+  const [a, setA] = useState(false)
+  const [b, setB] = useState(false)
 
-  const scenarios: Scenario[] = [
-    {
-      title: 'Access Control System',
-      emoji: '🔐',
-      description: 'A security door grants access only when all conditions are met.',
-      conditions: [
-        { id: 'hasCard', label: 'Has Access Card', emoji: '💳' },
-        { id: 'isEmployee', label: 'Is an Employee', emoji: '🪪' },
-        { id: 'withinHours', label: 'Within Work Hours', emoji: '⏰' },
-      ],
-      expression: {
-        label: 'ACCESS GRANTED',
-        fn: (v) => v.hasCard && v.isEmployee && v.withinHours,
-        formula: 'hasCard AND isEmployee AND withinHours',
-      },
-      trueMsg: '✅ Door unlocked! All conditions satisfied.',
-      falseMsg: '🚫 Access denied. All three conditions must be TRUE.',
-    },
-    {
-      title: 'Smart Umbrella Alert',
-      emoji: '☂️',
-      description: 'Your smart home alerts you to grab an umbrella when needed.',
-      conditions: [
-        { id: 'isRaining', label: 'Rain Forecast', emoji: '🌧️' },
-        { id: 'goingOutside', label: 'Going Outside', emoji: '🚶' },
-      ],
-      expression: {
-        label: 'TAKE UMBRELLA',
-        fn: (v) => v.isRaining && v.goingOutside,
-        formula: 'isRaining AND goingOutside',
-      },
-      trueMsg: '☂️ Grab your umbrella! Both conditions are true.',
-      falseMsg: '😎 No umbrella needed right now.',
-    },
-    {
-      title: 'Movie Night Decider',
-      emoji: '🎬',
-      description: 'Watch a movie if it\'s the weekend OR you\'ve finished your work.',
-      conditions: [
-        { id: 'isWeekend', label: 'It\'s the Weekend', emoji: '🗓️' },
-        { id: 'workDone', label: 'Work is Finished', emoji: '✅' },
-      ],
-      expression: {
-        label: 'MOVIE NIGHT!',
-        fn: (v) => v.isWeekend || v.workDone,
-        formula: 'isWeekend OR workDone',
-      },
-      trueMsg: '🍿 Enjoy your movie night!',
-      falseMsg: '📚 Finish your work first (unless it\'s the weekend).',
-    },
-    {
-      title: 'Alarm System',
-      emoji: '🚨',
-      description: 'Alarm triggers if motion is detected AND the system is armed, but NOT during daytime.',
-      conditions: [
-        { id: 'motionDetected', label: 'Motion Detected', emoji: '👁️' },
-        { id: 'systemArmed', label: 'System Armed', emoji: '🔒' },
-        { id: 'isDaytime', label: 'It\'s Daytime', emoji: '☀️' },
-      ],
-      expression: {
-        label: 'ALARM TRIGGERS',
-        fn: (v) => v.motionDetected && v.systemArmed && !v.isDaytime,
-        formula: 'motionDetected AND systemArmed AND NOT isDaytime',
-      },
-      trueMsg: '🚨 ALERT! Alarm is going off!',
-      falseMsg: '🔕 No alarm. Check the conditions.',
-    },
-    {
-      title: 'Free Delivery Qualifier',
-      emoji: '📦',
-      description: 'Get free delivery if you\'re a member OR your order is over ₱500.',
-      conditions: [
-        { id: 'isMember', label: 'Premium Member', emoji: '⭐' },
-        { id: 'bigOrder', label: 'Order > ₱500', emoji: '💰' },
-      ],
-      expression: {
-        label: 'FREE DELIVERY',
-        fn: (v) => v.isMember || v.bigOrder,
-        formula: 'isMember OR bigOrder',
-      },
-      trueMsg: '🎁 Free delivery applied!',
-      falseMsg: '🚚 Delivery fee applies. Be a member or order more.',
-    },
+  const ops = [
+    { label: 'A AND B', symbol: 'A · B', value: a && b, color: 'indigo' },
+    { label: 'A OR B',  symbol: 'A + B', value: a || b,  color: 'green'  },
+    { label: 'NOT A',   symbol: "A'",    value: !a,       color: 'orange' },
+    { label: 'NOT B',   symbol: "B'",    value: !b,       color: 'pink'   },
   ]
 
-  const [scenarioIdx, setScenarioIdx] = useState(0)
-  const [vals, setVals] = useState<Record<string, boolean>>({})
-  const [revealed, setRevealed] = useState(false)
-
-  const scenario = scenarios[scenarioIdx]
-  const allVals = { ...Object.fromEntries(scenario.conditions.map(c => [c.id, false])), ...vals }
-  const result = scenario.expression.fn(allVals)
-
-  const toggle = (id: string) => {
-    setVals(prev => ({ ...prev, [id]: !prev[id] }))
-    setRevealed(true)
+  const colorMap: Record<string, { pill: string; true: string; false: string }> = {
+    indigo: { pill: 'bg-indigo-600 border-indigo-400', true: 'text-indigo-300', false: 'text-gray-600' },
+    green:  { pill: 'bg-green-600  border-green-400',  true: 'text-green-300',  false: 'text-gray-600' },
+    orange: { pill: 'bg-orange-600 border-orange-400', true: 'text-orange-300', false: 'text-gray-600' },
+    pink:   { pill: 'bg-pink-600   border-pink-400',   true: 'text-pink-300',   false: 'text-gray-600' },
   }
 
-  const nextScenario = () => {
-    setScenarioIdx(p => (p + 1) % scenarios.length)
-    setVals({})
-    setRevealed(false)
-  }
-
-  // Parse formula parts for visual display
-  const operatorColor = (op: string) => {
-    if (op === 'AND') return 'text-blue-400'
-    if (op === 'OR') return 'text-green-400'
-    if (op === 'NOT') return 'text-orange-400'
-    return 'text-gray-400'
-  }
+  const ToggleBtn = ({
+    label, value, onClick,
+  }: { label: string; value: boolean; onClick: () => void }) => (
+    <button
+      onClick={onClick}
+      className={`w-28 h-28 rounded-2xl text-4xl font-mono font-bold border-3 transition-all duration-150 select-none flex flex-col items-center justify-center gap-1 border-2 ${
+        value
+          ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/50'
+          : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+      }`}
+    >
+      <span>{label}</span>
+      <span className={`text-sm font-semibold ${value ? 'text-indigo-200' : 'text-gray-600'}`}>
+        {value ? 'TRUE' : 'FALSE'}
+      </span>
+    </button>
+  )
 
   return (
-    <ActivityShell title="Boolean Logic in the Real World" emoji="🌍">
-      <p className="text-gray-300 text-sm mb-5">
-        Toggle the real-world conditions below and watch the Boolean logic evaluate live.
-        This is exactly how computers make decisions using <span className="text-indigo-300 font-semibold">AND</span>,{' '}
-        <span className="text-green-300 font-semibold">OR</span>, and{' '}
-        <span className="text-orange-300 font-semibold">NOT</span>.
+    <ActivityShell title="Boolean Values Playground" emoji="🔀">
+      <p className="text-gray-400 text-sm mb-6">
+        Toggle <span className="font-mono font-bold text-white">A</span> and{' '}
+        <span className="font-mono font-bold text-white">B</span> to see how Boolean
+        operations work in real time.
       </p>
 
-      {/* Scenario selector */}
-      <div className="flex gap-2 flex-wrap mb-5">
-        {scenarios.map((s, i) => (
-          <button
-            key={i}
-            onClick={() => { setScenarioIdx(i); setVals({}); setRevealed(false) }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
-              scenarioIdx === i
-                ? 'bg-indigo-600 border-indigo-400 text-white'
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
-            }`}
-          >
-            {s.emoji} {s.title}
-          </button>
-        ))}
+      {/* A / B toggles */}
+      <div className="flex justify-center gap-6 mb-8">
+        <ToggleBtn label="A" value={a} onClick={() => setA(v => !v)} />
+        <ToggleBtn label="B" value={b} onClick={() => setB(v => !v)} />
       </div>
 
-      {/* Scenario card */}
-      <div className="rounded-xl border border-gray-700 bg-gray-900/60 p-4 mb-5">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-2xl">{scenario.emoji}</span>
-          <h4 className="font-bold text-white text-base">{scenario.title}</h4>
-        </div>
-        <p className="text-gray-400 text-sm mb-4">{scenario.description}</p>
-
-        {/* Condition toggles */}
-        <div className="flex flex-col gap-2 mb-5">
-          {scenario.conditions.map((cond) => {
-            const isOn = allVals[cond.id]
-            return (
-              <button
-                key={cond.id}
-                onClick={() => toggle(cond.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left group ${
-                  isOn
-                    ? 'bg-indigo-900/50 border-indigo-500 text-white'
-                    : 'bg-gray-800/60 border-gray-700 text-gray-400 hover:border-gray-500'
-                }`}
-              >
-                <span className="text-xl">{cond.emoji}</span>
-                <span className="flex-1 text-sm font-medium">{cond.label}</span>
-                {/* Toggle pill */}
-                <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${isOn ? 'bg-indigo-500' : 'bg-gray-600'}`}>
-                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${isOn ? 'left-5' : 'left-0.5'}`} />
-                </div>
-                <span className={`text-xs font-mono font-bold w-12 text-right ${isOn ? 'text-indigo-300' : 'text-gray-600'}`}>
-                  {isOn ? 'TRUE' : 'FALSE'}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Expression formula */}
-        <div className="bg-gray-800/80 rounded-xl px-4 py-3 mb-4 border border-gray-700">
-          <p className="text-xs text-gray-500 mb-1 uppercase tracking-widest font-semibold">Boolean Expression</p>
-          <p className="font-mono text-sm">
-            {scenario.expression.formula.split(' ').map((word, i) => (
-              <span key={i} className={['AND','OR','NOT'].includes(word) ? `${operatorColor(word)} font-bold` : 'text-white'}>
-                {word}{' '}
-              </span>
-            ))}
-          </p>
-        </div>
-
-        {/* Result */}
-        <div
-          className={`rounded-xl px-4 py-4 border-2 transition-all duration-300 text-center ${
-            !revealed
-              ? 'border-gray-700 bg-gray-800/40'
-              : result
-              ? 'border-emerald-500 bg-emerald-900/30'
-              : 'border-red-600 bg-red-900/30'
-          }`}
-        >
-          <div className={`text-2xl font-bold font-mono mb-1 transition-colors ${
-            !revealed ? 'text-gray-600' : result ? 'text-emerald-400' : 'text-red-400'
-          }`}>
-            {!revealed ? '?' : result ? 'TRUE' : 'FALSE'}
-          </div>
-          <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${
-            !revealed ? 'text-gray-600' : result ? 'text-emerald-500' : 'text-red-500'
-          }`}>
-            {scenario.expression.label}
-          </div>
-          {revealed && (
-            <p className="text-sm text-gray-300">{result ? scenario.trueMsg : scenario.falseMsg}</p>
-          )}
-          {!revealed && (
-            <p className="text-sm text-gray-600">Toggle conditions above to see the result</p>
-          )}
-        </div>
-      </div>
-
-      {/* Visual logic table — show current state of all combos */}
-      <div className="mb-4">
-        <p className="text-xs text-gray-500 mb-2 uppercase tracking-widest font-semibold">Condition States</p>
-        <div className="flex flex-wrap gap-2">
-          {scenario.conditions.map(cond => (
-            <div key={cond.id} className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
-              allVals[cond.id]
-                ? 'bg-indigo-900/50 border-indigo-600 text-indigo-300'
-                : 'bg-gray-800 border-gray-700 text-gray-500'
-            }`}>
-              <span>{cond.emoji}</span>
-              <span>{cond.id}</span>
-              <span className="font-bold">= {allVals[cond.id] ? '1' : '0'}</span>
+      {/* Results grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {ops.map(op => {
+          const c = colorMap[op.color]
+          return (
+            <div
+              key={op.label}
+              className={`rounded-xl border-2 p-3 text-center transition-all duration-200 ${
+                op.value
+                  ? `border-${op.color}-600 bg-${op.color}-900/20`
+                  : 'border-gray-700 bg-gray-800/40'
+              }`}
+            >
+              <div className="text-xs text-gray-500 font-semibold uppercase tracking-widest mb-1">
+                {op.label}
+              </div>
+              <div className="font-mono text-sm text-gray-400 mb-2">{op.symbol}</div>
+              <div className={`text-2xl font-bold font-mono ${op.value ? c.true : c.false}`}>
+                {op.value ? '1' : '0'}
+              </div>
+              <div className={`text-xs font-semibold mt-1 ${op.value ? c.true : 'text-gray-600'}`}>
+                {op.value ? 'TRUE' : 'FALSE'}
+              </div>
             </div>
-          ))}
-          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border font-bold ${
-            !revealed
-              ? 'bg-gray-800 border-gray-700 text-gray-500'
-              : result
-              ? 'bg-emerald-900/50 border-emerald-600 text-emerald-300'
-              : 'bg-red-900/50 border-red-700 text-red-300'
-          }`}>
-            <span>→</span>
-            <span>Output = {!revealed ? '?' : result ? '1 (TRUE)' : '0 (FALSE)'}</span>
-          </div>
-        </div>
+          )
+        })}
       </div>
 
-      <Button
-        size="sm"
-        onClick={nextScenario}
-        className="bg-indigo-600 hover:bg-indigo-700 gap-1"
-      >
-        Next Scenario <ChevronRight className="w-4 h-4" />
-      </Button>
+      <p className="text-center text-xs text-gray-600 mt-4">
+        Click the buttons above to toggle values
+      </p>
     </ActivityShell>
   )
 }
-
 
 
 // ─────────────────────────────────────────────
