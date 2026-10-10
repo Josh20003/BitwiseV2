@@ -17,6 +17,7 @@ import { Confetti, type ConfettiRef } from '@/components/magicui/confetti'
 import BitBotGuide from '@/components/BitBotGuide'
 import ToolSpotlight from '@/components/ToolSpotlight'
 import ContentDisplay from '@/components/ContentDisplay'
+import { LessonInteractiveActivity } from '@/components/lessons/LessonInteractiveActivity'
 
 // Local content types (keeps file self-contained)
 interface ContentBlock {
@@ -463,6 +464,13 @@ function RouteComponent() {
                 No content available
               </div>
             )}
+
+            {/* Topic-specific Interactive Activity */}
+            <LessonInteractiveActivity
+              lessonId={lesson.id}
+              topicTitle={topic.title}
+              topicTags={topic.tags}
+            />
 
             {toolToSpotlight && <ToolSpotlight tool={toolToSpotlight as any} />}
           </div>
