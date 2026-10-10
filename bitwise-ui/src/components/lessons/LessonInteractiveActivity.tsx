@@ -924,8 +924,6 @@ const BcdAsciiEncoder = ({ mode }: { mode: 'bcd' | 'ascii' }) => {
   )
 }
 
-}
-
 // ─────────────────────────────────────────────
 // 10. Boolean Values Playground  (Lesson 1)
 // Simple A / B toggles → live AND, OR, NOT results
