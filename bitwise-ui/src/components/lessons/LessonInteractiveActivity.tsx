@@ -925,81 +925,279 @@ const BcdAsciiEncoder = ({ mode }: { mode: 'bcd' | 'ascii' }) => {
 }
 
 // ─────────────────────────────────────────────
-// 10. Boolean Application Quiz  (Lesson 1)
+// 10. Boolean Scenario Builder  (Lesson 1)
+// Real-world condition toggles → live Boolean expression evaluation
 // ─────────────────────────────────────────────
-const BooleanConceptQuiz = () => {
-  const questions = [
-    { q: "What are the only two values in Boolean algebra?", opts: ["0 and 1", "0, 1, and 2", "True and Maybe", "-1 and 1"], ans: 0 },
-    { q: "Who introduced Boolean Algebra?", opts: ["Claude Shannon", "George Boole", "Alan Turing", "Charles Babbage"], ans: 1 },
-    { q: "Which operator corresponds to 'AND' in a database query?", opts: ["OR", "NOT", "AND", "XOR"], ans: 2 },
-    { q: "In programming, what evaluates to a Boolean?", opts: ["A string", "A for-loop", "An if-condition", "A number"], ans: 2 },
-    { q: "Boolean algebra was applied to circuits in what year?", opts: ["1854", "1901", "1937", "1945"], ans: 2 },
-  ]
-  const [qi, setQi] = useState(0)
-  const [selected, setSelected] = useState<number | null>(null)
-  const [checked, setChecked] = useState(false)
-  const q = questions[qi]
+const BooleanScenarioBuilder = () => {
+  type Scenario = {
+    title: string
+    emoji: string
+    description: string
+    conditions: { id: string; label: string; emoji: string }[]
+    expression: {
+      label: string
+      fn: (vals: Record<string, boolean>) => boolean
+      formula: string
+    }
+    trueMsg: string
+    falseMsg: string
+  }
 
-  const next = () => {
-    setQi((p) => (p + 1) % questions.length)
-    setSelected(null)
-    setChecked(false)
+  const scenarios: Scenario[] = [
+    {
+      title: 'Access Control System',
+      emoji: '🔐',
+      description: 'A security door grants access only when all conditions are met.',
+      conditions: [
+        { id: 'hasCard', label: 'Has Access Card', emoji: '💳' },
+        { id: 'isEmployee', label: 'Is an Employee', emoji: '🪪' },
+        { id: 'withinHours', label: 'Within Work Hours', emoji: '⏰' },
+      ],
+      expression: {
+        label: 'ACCESS GRANTED',
+        fn: (v) => v.hasCard && v.isEmployee && v.withinHours,
+        formula: 'hasCard AND isEmployee AND withinHours',
+      },
+      trueMsg: '✅ Door unlocked! All conditions satisfied.',
+      falseMsg: '🚫 Access denied. All three conditions must be TRUE.',
+    },
+    {
+      title: 'Smart Umbrella Alert',
+      emoji: '☂️',
+      description: 'Your smart home alerts you to grab an umbrella when needed.',
+      conditions: [
+        { id: 'isRaining', label: 'Rain Forecast', emoji: '🌧️' },
+        { id: 'goingOutside', label: 'Going Outside', emoji: '🚶' },
+      ],
+      expression: {
+        label: 'TAKE UMBRELLA',
+        fn: (v) => v.isRaining && v.goingOutside,
+        formula: 'isRaining AND goingOutside',
+      },
+      trueMsg: '☂️ Grab your umbrella! Both conditions are true.',
+      falseMsg: '😎 No umbrella needed right now.',
+    },
+    {
+      title: 'Movie Night Decider',
+      emoji: '🎬',
+      description: 'Watch a movie if it\'s the weekend OR you\'ve finished your work.',
+      conditions: [
+        { id: 'isWeekend', label: 'It\'s the Weekend', emoji: '🗓️' },
+        { id: 'workDone', label: 'Work is Finished', emoji: '✅' },
+      ],
+      expression: {
+        label: 'MOVIE NIGHT!',
+        fn: (v) => v.isWeekend || v.workDone,
+        formula: 'isWeekend OR workDone',
+      },
+      trueMsg: '🍿 Enjoy your movie night!',
+      falseMsg: '📚 Finish your work first (unless it\'s the weekend).',
+    },
+    {
+      title: 'Alarm System',
+      emoji: '🚨',
+      description: 'Alarm triggers if motion is detected AND the system is armed, but NOT during daytime.',
+      conditions: [
+        { id: 'motionDetected', label: 'Motion Detected', emoji: '👁️' },
+        { id: 'systemArmed', label: 'System Armed', emoji: '🔒' },
+        { id: 'isDaytime', label: 'It\'s Daytime', emoji: '☀️' },
+      ],
+      expression: {
+        label: 'ALARM TRIGGERS',
+        fn: (v) => v.motionDetected && v.systemArmed && !v.isDaytime,
+        formula: 'motionDetected AND systemArmed AND NOT isDaytime',
+      },
+      trueMsg: '🚨 ALERT! Alarm is going off!',
+      falseMsg: '🔕 No alarm. Check the conditions.',
+    },
+    {
+      title: 'Free Delivery Qualifier',
+      emoji: '📦',
+      description: 'Get free delivery if you\'re a member OR your order is over ₱500.',
+      conditions: [
+        { id: 'isMember', label: 'Premium Member', emoji: '⭐' },
+        { id: 'bigOrder', label: 'Order > ₱500', emoji: '💰' },
+      ],
+      expression: {
+        label: 'FREE DELIVERY',
+        fn: (v) => v.isMember || v.bigOrder,
+        formula: 'isMember OR bigOrder',
+      },
+      trueMsg: '🎁 Free delivery applied!',
+      falseMsg: '🚚 Delivery fee applies. Be a member or order more.',
+    },
+  ]
+
+  const [scenarioIdx, setScenarioIdx] = useState(0)
+  const [vals, setVals] = useState<Record<string, boolean>>({})
+  const [revealed, setRevealed] = useState(false)
+
+  const scenario = scenarios[scenarioIdx]
+  const allVals = { ...Object.fromEntries(scenario.conditions.map(c => [c.id, false])), ...vals }
+  const result = scenario.expression.fn(allVals)
+
+  const toggle = (id: string) => {
+    setVals(prev => ({ ...prev, [id]: !prev[id] }))
+    setRevealed(true)
+  }
+
+  const nextScenario = () => {
+    setScenarioIdx(p => (p + 1) % scenarios.length)
+    setVals({})
+    setRevealed(false)
+  }
+
+  // Parse formula parts for visual display
+  const operatorColor = (op: string) => {
+    if (op === 'AND') return 'text-blue-400'
+    if (op === 'OR') return 'text-green-400'
+    if (op === 'NOT') return 'text-orange-400'
+    return 'text-gray-400'
   }
 
   return (
-    <ActivityShell title="Boolean Algebra Quiz" emoji="🧠">
-      <div className="mb-1">
-        <span className="text-xs text-gray-500">{qi + 1}/{questions.length}</span>
-      </div>
-      <p className="text-white font-semibold text-base mb-4">{q.q}</p>
-      <div className="flex flex-col gap-2 mb-4">
-        {q.opts.map((opt, i) => {
-          const isSelected = selected === i
-          const isCorrect = i === q.ans
-          const showResult = checked && isSelected
-          return (
-            <button
-              key={i}
-              onClick={() => { setSelected(i); setChecked(false) }}
-              className={`text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                showResult
-                  ? isCorrect
-                    ? 'bg-emerald-900/50 border-emerald-500 text-emerald-200'
-                    : 'bg-red-900/50 border-red-500 text-red-200'
-                  : isSelected
-                  ? 'bg-indigo-800/50 border-indigo-500 text-white'
-                  : 'bg-gray-800/60 border-gray-700 text-gray-300 hover:border-gray-500'
-              }`}
-            >
-              {opt}
-            </button>
-          )
-        })}
-      </div>
-      {checked && !q.opts[selected ?? -1]?.startsWith(q.opts[q.ans]) && selected !== q.ans && (
-        <p className="text-sm text-yellow-300 mb-3">
-          Correct answer: <b>{q.opts[q.ans]}</b>
-        </p>
-      )}
-      <div className="flex gap-2">
-        {!checked ? (
-          <Button
-            size="sm"
-            disabled={selected === null}
-            onClick={() => setChecked(true)}
-            className="bg-indigo-600 hover:bg-indigo-700"
+    <ActivityShell title="Boolean Logic in the Real World" emoji="🌍">
+      <p className="text-gray-300 text-sm mb-5">
+        Toggle the real-world conditions below and watch the Boolean logic evaluate live.
+        This is exactly how computers make decisions using <span className="text-indigo-300 font-semibold">AND</span>,{' '}
+        <span className="text-green-300 font-semibold">OR</span>, and{' '}
+        <span className="text-orange-300 font-semibold">NOT</span>.
+      </p>
+
+      {/* Scenario selector */}
+      <div className="flex gap-2 flex-wrap mb-5">
+        {scenarios.map((s, i) => (
+          <button
+            key={i}
+            onClick={() => { setScenarioIdx(i); setVals({}); setRevealed(false) }}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
+              scenarioIdx === i
+                ? 'bg-indigo-600 border-indigo-400 text-white'
+                : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
+            }`}
           >
-            Check
-          </Button>
-        ) : (
-          <Button size="sm" onClick={next} className="bg-emerald-600 hover:bg-emerald-700 gap-1">
-            Next <ChevronRight className="w-4 h-4" />
-          </Button>
-        )}
+            {s.emoji} {s.title}
+          </button>
+        ))}
       </div>
+
+      {/* Scenario card */}
+      <div className="rounded-xl border border-gray-700 bg-gray-900/60 p-4 mb-5">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-2xl">{scenario.emoji}</span>
+          <h4 className="font-bold text-white text-base">{scenario.title}</h4>
+        </div>
+        <p className="text-gray-400 text-sm mb-4">{scenario.description}</p>
+
+        {/* Condition toggles */}
+        <div className="flex flex-col gap-2 mb-5">
+          {scenario.conditions.map((cond) => {
+            const isOn = allVals[cond.id]
+            return (
+              <button
+                key={cond.id}
+                onClick={() => toggle(cond.id)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left group ${
+                  isOn
+                    ? 'bg-indigo-900/50 border-indigo-500 text-white'
+                    : 'bg-gray-800/60 border-gray-700 text-gray-400 hover:border-gray-500'
+                }`}
+              >
+                <span className="text-xl">{cond.emoji}</span>
+                <span className="flex-1 text-sm font-medium">{cond.label}</span>
+                {/* Toggle pill */}
+                <div className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${isOn ? 'bg-indigo-500' : 'bg-gray-600'}`}>
+                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${isOn ? 'left-5' : 'left-0.5'}`} />
+                </div>
+                <span className={`text-xs font-mono font-bold w-12 text-right ${isOn ? 'text-indigo-300' : 'text-gray-600'}`}>
+                  {isOn ? 'TRUE' : 'FALSE'}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Expression formula */}
+        <div className="bg-gray-800/80 rounded-xl px-4 py-3 mb-4 border border-gray-700">
+          <p className="text-xs text-gray-500 mb-1 uppercase tracking-widest font-semibold">Boolean Expression</p>
+          <p className="font-mono text-sm">
+            {scenario.expression.formula.split(' ').map((word, i) => (
+              <span key={i} className={['AND','OR','NOT'].includes(word) ? `${operatorColor(word)} font-bold` : 'text-white'}>
+                {word}{' '}
+              </span>
+            ))}
+          </p>
+        </div>
+
+        {/* Result */}
+        <div
+          className={`rounded-xl px-4 py-4 border-2 transition-all duration-300 text-center ${
+            !revealed
+              ? 'border-gray-700 bg-gray-800/40'
+              : result
+              ? 'border-emerald-500 bg-emerald-900/30'
+              : 'border-red-600 bg-red-900/30'
+          }`}
+        >
+          <div className={`text-2xl font-bold font-mono mb-1 transition-colors ${
+            !revealed ? 'text-gray-600' : result ? 'text-emerald-400' : 'text-red-400'
+          }`}>
+            {!revealed ? '?' : result ? 'TRUE' : 'FALSE'}
+          </div>
+          <div className={`text-xs font-semibold uppercase tracking-widest mb-2 ${
+            !revealed ? 'text-gray-600' : result ? 'text-emerald-500' : 'text-red-500'
+          }`}>
+            {scenario.expression.label}
+          </div>
+          {revealed && (
+            <p className="text-sm text-gray-300">{result ? scenario.trueMsg : scenario.falseMsg}</p>
+          )}
+          {!revealed && (
+            <p className="text-sm text-gray-600">Toggle conditions above to see the result</p>
+          )}
+        </div>
+      </div>
+
+      {/* Visual logic table — show current state of all combos */}
+      <div className="mb-4">
+        <p className="text-xs text-gray-500 mb-2 uppercase tracking-widest font-semibold">Condition States</p>
+        <div className="flex flex-wrap gap-2">
+          {scenario.conditions.map(cond => (
+            <div key={cond.id} className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
+              allVals[cond.id]
+                ? 'bg-indigo-900/50 border-indigo-600 text-indigo-300'
+                : 'bg-gray-800 border-gray-700 text-gray-500'
+            }`}>
+              <span>{cond.emoji}</span>
+              <span>{cond.id}</span>
+              <span className="font-bold">= {allVals[cond.id] ? '1' : '0'}</span>
+            </div>
+          ))}
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border font-bold ${
+            !revealed
+              ? 'bg-gray-800 border-gray-700 text-gray-500'
+              : result
+              ? 'bg-emerald-900/50 border-emerald-600 text-emerald-300'
+              : 'bg-red-900/50 border-red-700 text-red-300'
+          }`}>
+            <span>→</span>
+            <span>Output = {!revealed ? '?' : result ? '1 (TRUE)' : '0 (FALSE)'}</span>
+          </div>
+        </div>
+      </div>
+
+      <Button
+        size="sm"
+        onClick={nextScenario}
+        className="bg-indigo-600 hover:bg-indigo-700 gap-1"
+      >
+        Next Scenario <ChevronRight className="w-4 h-4" />
+      </Button>
     </ActivityShell>
   )
 }
+
+
 
 // ─────────────────────────────────────────────
 // 11. K-Map Simplification visual  (Lesson 4)
@@ -1144,7 +1342,7 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
 
   // ── Lesson 1: Intro to Boolean Algebra ──
   if (lessonId === 1) {
-    return <BooleanConceptQuiz />
+    return <BooleanScenarioBuilder />
   }
 
   // ── Lesson 2: Logic Gates ──
