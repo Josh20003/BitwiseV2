@@ -37,6 +37,71 @@ body {
   height: 100%;
 }
 
+/* ======== Global Custom Scrollbar (theme-aware) ======== */
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(110, 97, 255, 0.25);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(110, 97, 255, 0.5);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: rgba(155, 81, 224, 0.6);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 97, 255, 0.25) transparent;
+}
+
+/* Dark mode scrollbar — richer purple tones */
+.dark *::-webkit-scrollbar-thumb {
+  background: rgba(110, 97, 255, 0.35);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgba(110, 97, 255, 0.55);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dark *::-webkit-scrollbar-thumb:active {
+  background: rgba(155, 81, 224, 0.7);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dark * {
+  scrollbar-color: rgba(110, 97, 255, 0.35) transparent;
+}
+
 /* Light mode tokens */
 :root {
   --background: oklch(1 0 0);
