@@ -42,6 +42,91 @@ const ActivityShell = ({
 )
 
 // ─────────────────────────────────────────────
+// 0. Binary Number Builder (Lesson 1 – rescued from old Lesson 5)
+// ─────────────────────────────────────────────
+const BinaryBuilderActivity = () => {
+  const targets = [5, 10, 22, 13, 29, 7]
+  const [targetIdx, setTargetIdx] = useState(0)
+  const target = targets[targetIdx]
+  const [bits, setBits] = useState<number[]>([0, 0, 0, 0, 0])
+  const value = bits.reduce((acc, b, i) => acc + b * Math.pow(2, 4 - i), 0)
+  const isCorrect = value === target
+
+  const toggle = (i: number) => {
+    const next = [...bits]
+    next[i] = next[i] === 1 ? 0 : 1
+    setBits(next)
+  }
+  const next = () => {
+    setTargetIdx((prev) => (prev + 1) % targets.length)
+    setBits([0, 0, 0, 0, 0])
+  }
+
+  return (
+    <ActivityShell title="Binary Bit Builder" emoji=" ">
+      <p className="text-gray-300 text-sm mb-4">
+        Toggle the bits below to represent the decimal number in binary.
+      </p>
+      <div className="flex items-center justify-center gap-2 mb-1">
+        <span className="text-4xl font-mono font-bold text-indigo-300 tabular-nums mr-3">
+          {target}
+        </span>
+        <span className="text-gray-500 text-sm">=</span>
+      </div>
+      {/* Bit buttons */}
+      <div className="flex justify-center gap-2 mt-4 mb-2">
+        {bits.map((b, i) => (
+          <button
+            key={i}
+            onClick={() => toggle(i)}
+            className={`w-14 h-14 rounded-xl text-2xl font-bold font-mono transition-all duration-150 select-none border-2 ${b === 1
+              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900'
+              : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+              }`}
+          >
+            {b}
+          </button>
+        ))}
+      </div>
+      {/* Position labels */}
+      <div className="flex justify-center gap-2 mb-4">
+        {[16, 8, 4, 2, 1].map((p) => (
+          <div key={p} className="w-14 text-center text-xs text-gray-500">
+            2<sup>{Math.log2(p)}</sup>={p}
+          </div>
+        ))}
+      </div>
+      {/* Running total */}
+      <p className="text-center text-gray-400 text-sm mb-4">
+        Current value:{' '}
+        <span className={`font-mono font-bold text-lg ${isCorrect ? 'text-emerald-400' : 'text-white'}`}>
+          {value}
+        </span>
+      </p>
+      <div className="flex items-center justify-center gap-4">
+        {isCorrect ? (
+          <>
+            <ResultBadge correct />
+            <Button size="sm" onClick={next} className="gap-1 bg-indigo-600 hover:bg-indigo-700">
+              Next <ChevronRight className="w-4 h-4" />
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setBits([0, 0, 0, 0, 0])}
+            className="gap-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+          >
+            <RotateCcw className="w-3 h-3" /> Reset
+          </Button>
+        )}
+      </div>
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
 // 1. Number System Complement Explorer (Lesson 5)
 //    Moved from Lesson 9, expanded with 1's & 2's complement tabs + walkthrough
 // ─────────────────────────────────────────────
@@ -200,7 +285,7 @@ const NumberSystemComplementExplorer = () => {
       {/* Walkthrough toggle */}
       <button
         onClick={() => setShowWalkthrough(!showWalkthrough)}
-        className="mt-3 text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline underline-offset-2"
+        className="mt-4 text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline underline-offset-2 block"
       >
         {showWalkthrough ? 'Hide' : 'Show'} step-by-step walkthrough
       </button>
@@ -761,6 +846,194 @@ const BinaryArithmeticTrainer = ({ op }: { op: ArithOp }) => {
           </Button>
         )}
       </div>
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
+// NEW: Boolean Algebra Explorer (Lesson 8 – Intro to Boolean Algebra)
+//      Interactive expression evaluator + law identifier
+// ─────────────────────────────────────────────
+interface BoolAlgProblem {
+  expression: string
+  description: string
+  evaluate: (a: boolean, b: boolean) => boolean
+  law: string
+}
+
+const BOOL_ALG_PROBLEMS: BoolAlgProblem[] = [
+  {
+    expression: 'A AND B',
+    description: 'Both inputs must be TRUE for the result to be TRUE.',
+    evaluate: (a, b) => a && b,
+    law: 'AND Operation',
+  },
+  {
+    expression: 'A OR B',
+    description: 'At least one input must be TRUE for the result to be TRUE.',
+    evaluate: (a, b) => a || b,
+    law: 'OR Operation',
+  },
+  {
+    expression: 'NOT A',
+    description: 'The result is the opposite of A.',
+    evaluate: (a) => !a,
+    law: 'NOT Operation',
+  },
+  {
+    expression: 'A AND (A OR B)',
+    description: 'By Absorption Law, this simplifies to just A.',
+    evaluate: (a, b) => a && (a || b),
+    law: 'Absorption Law',
+  },
+  {
+    expression: "A OR (NOT A)",
+    description: 'A variable ORed with its complement is always TRUE.',
+    evaluate: () => true,
+    law: 'Complement Law',
+  },
+  {
+    expression: "A AND (NOT A)",
+    description: 'A variable ANDed with its complement is always FALSE.',
+    evaluate: () => false,
+    law: 'Complement Law',
+  },
+]
+
+const BooleanAlgebraExplorer = () => {
+  const [problemIdx, setProblemIdx] = useState(0)
+  const [a, setA] = useState(false)
+  const [b, setB] = useState(false)
+  const [showLaw, setShowLaw] = useState(false)
+
+  const problem = BOOL_ALG_PROBLEMS[problemIdx % BOOL_ALG_PROBLEMS.length]
+  const result = problem.evaluate(a, b)
+
+  const nextProblem = () => {
+    setProblemIdx((p) => p + 1)
+    setA(false)
+    setB(false)
+    setShowLaw(false)
+  }
+
+  const isUnary = problem.expression.startsWith('NOT') && !problem.expression.includes('AND') && !problem.expression.includes('OR')
+
+  return (
+    <ActivityShell title="Boolean Algebra Explorer" emoji=" ">
+      <p className="text-gray-300 text-sm mb-5">
+        Toggle the inputs to see how Boolean expressions evaluate. Explore the fundamental laws of Boolean Algebra.
+      </p>
+
+      {/* Expression display */}
+      <div className="text-center mb-5">
+        <div className="inline-block bg-gray-800 rounded-xl px-6 py-3 text-xl font-mono font-bold text-yellow-300 border border-gray-700">
+          {problem.expression}
+        </div>
+        <p className="text-xs text-gray-500 mt-2">{problem.description}</p>
+      </div>
+
+      {/* Input toggles */}
+      <div className="flex justify-center gap-6 mb-6">
+        <button
+          onClick={() => setA((v) => !v)}
+          className={`w-24 h-24 rounded-2xl text-3xl font-mono font-bold border-2 transition-all flex flex-col items-center justify-center gap-1 ${a
+            ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/50'
+            : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+            }`}
+        >
+          <span>A</span>
+          <span className={`text-xs font-semibold ${a ? 'text-indigo-200' : 'text-gray-600'}`}>
+            {a ? 'TRUE' : 'FALSE'}
+          </span>
+        </button>
+        {!isUnary && (
+          <button
+            onClick={() => setB((v) => !v)}
+            className={`w-24 h-24 rounded-2xl text-3xl font-mono font-bold border-2 transition-all flex flex-col items-center justify-center gap-1 ${b
+              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/50'
+              : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+              }`}
+          >
+            <span>B</span>
+            <span className={`text-xs font-semibold ${b ? 'text-indigo-200' : 'text-gray-600'}`}>
+              {b ? 'TRUE' : 'FALSE'}
+            </span>
+          </button>
+        )}
+      </div>
+
+      {/* Result */}
+      <div className="text-center mb-5">
+        <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-2">Result</p>
+        <div className={`inline-block w-20 h-20 rounded-2xl text-3xl font-mono font-bold border-2 flex items-center justify-center transition-all ${result
+          ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-900/50'
+          : 'bg-gray-800 border-gray-600 text-gray-400'
+          }`}
+        >
+          {result ? '1' : '0'}
+        </div>
+        <p className={`text-sm font-semibold mt-2 ${result ? 'text-emerald-400' : 'text-gray-500'}`}>
+          {result ? 'TRUE' : 'FALSE'}
+        </p>
+      </div>
+
+      {/* Truth table */}
+      <div className="rounded-xl overflow-hidden border border-gray-700 mb-4">
+        <table className="w-full text-sm font-mono">
+          <thead>
+            <tr className="bg-gray-800">
+              <th className="px-4 py-2 text-gray-400 text-center">A</th>
+              {!isUnary && <th className="px-4 py-2 text-gray-400 text-center">B</th>}
+              <th className="px-4 py-2 text-indigo-400 text-center">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(isUnary
+              ? ([[false, false], [true, false]] as [boolean, boolean][])
+              : ([[false, false], [false, true], [true, false], [true, true]] as [boolean, boolean][])
+            ).map(([ra, rb], idx) => {
+              const out = problem.evaluate(ra, rb)
+              const isActive = isUnary ? ra === a : (ra === a && rb === b)
+              return (
+                <tr
+                  key={idx}
+                  className={`border-t border-gray-700 transition-colors ${isActive ? 'bg-indigo-900/40 font-bold' : 'bg-gray-900'}`}
+                >
+                  <td className="px-4 py-2 text-center text-white">{ra ? '1' : '0'}</td>
+                  {!isUnary && <td className="px-4 py-2 text-center text-white">{rb ? '1' : '0'}</td>}
+                  <td className={`px-4 py-2 text-center font-bold ${out ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {out ? '1' : '0'}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Law reveal */}
+      <button
+        onClick={() => setShowLaw(!showLaw)}
+        className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline underline-offset-2 block mb-3"
+      >
+        {showLaw ? 'Hide' : 'Reveal'} Boolean Law
+      </button>
+      {showLaw && (
+        <div className="rounded-lg bg-indigo-900/20 border border-indigo-700/40 px-4 py-3 text-sm text-indigo-300 mb-4">
+          <Info className="w-4 h-4 inline-block mr-1" />
+          <span className="font-semibold text-white">{problem.law}</span>: {problem.description}
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex gap-2">
+        <Button size="sm" onClick={nextProblem} className="bg-indigo-600 hover:bg-indigo-700 gap-1">
+          Next Expression <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+      <p className="text-center text-xs text-gray-600 mt-3">
+        {(problemIdx % BOOL_ALG_PROBLEMS.length) + 1} / {BOOL_ALG_PROBLEMS.length}
+      </p>
     </ActivityShell>
   )
 }
@@ -1534,9 +1807,12 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
   const title = topicTitle.toLowerCase()
   const tags = topicTags.map((t) => t.toLowerCase())
 
-  // ── Lesson 1: Intro to Boolean Algebra ──
+  // ── Lesson 1: Intro to Number Systems ──
   if (lessonId === 1) {
-    return <BooleanScenarioBuilder />
+    if (title.includes('boolean') || tags.includes('boolean')) {
+      return <BooleanScenarioBuilder />
+    }
+    return <BinaryBuilderActivity />
   }
 
   // ── Lesson 2: Logic Gates ──
@@ -1549,12 +1825,15 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
     return <TruthTableBuilder />
   }
 
-  // ── Lesson 4: Simplification ──
+  // ── Lesson 4: Binary Arithmetic (moved from original Lesson 8) ──
   if (lessonId === 4) {
-    if (title.includes('karnaugh') || title.includes('k-map') || tags.includes('kmap')) {
-      return <KMapActivity />
+    if (title.includes('addition') || tags.includes('addition')) {
+      return <BinaryArithmeticTrainer op="add" />
     }
-    return <BooleanLawMatcher />
+    if (title.includes('subtraction') || tags.includes('subtraction')) {
+      return <BinaryArithmeticTrainer op="subtract" />
+    }
+    return <BinaryArithmeticTrainer op="add" />
   }
 
   // ── Lesson 5: Intro to Number Systems (Complement Explorer) ──
@@ -1562,107 +1841,22 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
     return <NumberSystemComplementExplorer />
   }
 
-  // ── Lesson 6: Types of Number Systems ──
+  // ── Lesson 6: Signed and Unsigned (moved from original Lesson 10) ──
   if (lessonId === 6) {
-    if (title.includes('hex') || tags.includes('hexadecimal')) {
-      return (
-        <BaseConverterQuiz
-          fromBase={2}
-          toBase={16}
-          fromLabel="Binary"
-          toLabel="Hex"
-          questions={[
-            { from: '1010', to: 'A' },
-            { from: '1111', to: 'F' },
-            { from: '11001100', to: 'CC' },
-            { from: '10110111', to: 'B7' },
-            { from: '01000001', to: '41' },
-            { from: '11111111', to: 'FF' },
-          ]}
-        />
-      )
-    }
-    return (
-      <BaseConverterQuiz
-        fromBase={2}
-        toBase={10}
-        fromLabel="Binary"
-        toLabel="Decimal"
-        questions={[
-          { from: '1001', to: '9' },
-          { from: '10110', to: '22' },
-          { from: '1111111', to: '127' },
-          { from: '10000000', to: '128' },
-          { from: '101010', to: '42' },
-        ]}
-      />
-    )
+    return <SignedUnsignedInterpreter />
   }
 
-  // ── Lesson 7: Conversion of Number Systems ──
+  // ── Lesson 7: Binary Codes (moved from original Lesson 11) ──
   if (lessonId === 7) {
-    if (title.includes('decimal to binary') || (tags.includes('conversion') && tags.includes('decimal') && tags.includes('binary'))) {
-      return (
-        <BaseConverterQuiz
-          fromBase={10}
-          toBase={2}
-          fromLabel="Decimal"
-          toLabel="Binary"
-          questions={[
-            { from: '45', to: '101101' },
-            { from: '100', to: '1100100' },
-            { from: '25', to: '11001' },
-            { from: '200', to: '11001000' },
-            { from: '13', to: '1101' },
-            { from: '255', to: '11111111' },
-          ]}
-        />
-      )
+    if (title.includes('ascii') || tags.includes('ascii')) {
+      return <BcdAsciiEncoder mode="ascii" />
     }
-    if (title.includes('binary to decimal') || tags.includes('binary')) {
-      return (
-        <BaseConverterQuiz
-          fromBase={2}
-          toBase={10}
-          fromLabel="Binary"
-          toLabel="Decimal"
-          questions={[
-            { from: '101101', to: '45' },
-            { from: '11010110', to: '214' },
-            { from: '10110', to: '22' },
-            { from: '1111', to: '15' },
-            { from: '1000000', to: '64' },
-          ]}
-        />
-      )
-    }
-    return (
-      <BaseConverterQuiz
-        fromBase={16}
-        toBase={10}
-        fromLabel="Hexadecimal"
-        toLabel="Decimal"
-        questions={[
-          { from: '1F4', to: '500' },
-          { from: 'FF', to: '255' },
-          { from: 'A3', to: '163' },
-          { from: '2F', to: '47' },
-          { from: '64', to: '100' },
-        ]}
-      />
-    )
+    return <BcdAsciiEncoder mode="bcd" />
   }
 
-  // ── Lesson 8: Binary Arithmetic ──
+  // ── Lesson 8: Intro to Boolean Algebra (NEW) ──
   if (lessonId === 8) {
-    if (title.includes('addition') || tags.includes('addition')) {
-      return <BinaryArithmeticTrainer op="add" />
-    }
-    if (title.includes('subtraction') || tags.includes('subtraction')) {
-      return <BinaryArithmeticTrainer op="subtract" />
-    }
-    // Multiplication / Division: use addition trainer with a note
-    return <BinaryArithmeticTrainer op="add" />
+    return <BooleanAlgebraExplorer />
   }
 
   // ── Lesson 9: Logic Gates (Circuit Builder) ──
@@ -1670,17 +1864,17 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
     return <LogicGateCircuitBuilder />
   }
 
-  // ── Lesson 10: Signed and Unsigned ──
+  // ── Lesson 10: Truth Tables (moved from original Lesson 3) ──
   if (lessonId === 10) {
-    return <SignedUnsignedInterpreter />
+    return <TruthTableBuilder />
   }
 
-  // ── Lesson 11: Binary Codes ──
+  // ── Lesson 11: Simplification (moved from original Lesson 4) ──
   if (lessonId === 11) {
-    if (title.includes('ascii') || tags.includes('ascii')) {
-      return <BcdAsciiEncoder mode="ascii" />
+    if (title.includes('karnaugh') || title.includes('k-map') || tags.includes('kmap')) {
+      return <KMapActivity />
     }
-    return <BcdAsciiEncoder mode="bcd" />
+    return <BooleanLawMatcher />
   }
 
   return null
