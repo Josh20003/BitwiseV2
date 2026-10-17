@@ -1132,6 +1132,174 @@ const BinaryArithmeticTrainer = ({ op }: { op: ArithOp }) => {
 }
 
 // ─────────────────────────────────────────────
+// 6b. Binary Multiplication Practice (Lesson 4)
+// ─────────────────────────────────────────────
+const BinaryMultiplicationPractice = () => {
+  const genQ = useCallback(() => {
+    const a = Math.floor(Math.random() * 6) + 2 // 2-7
+    const b = Math.floor(Math.random() * 6) + 2 // 2-7
+    return { a, b, ans: a * b }
+  }, [])
+
+  const [q, setQ] = useState(genQ)
+  const [input, setInput] = useState('')
+  const [checked, setChecked] = useState(false)
+  const isCorrect = checked && parseInt(input, 2) === q.ans
+
+  const toBin = (n: number) => n.toString(2).padStart(5, '0')
+
+  const next = () => {
+    setQ(genQ())
+    setInput('')
+    setChecked(false)
+  }
+
+  return (
+    <ActivityShell
+      title="Binary Multiplication Practice"
+      emoji=""
+    >
+      <p className="text-gray-300 text-sm mb-4">
+        Solve the binary multiplication and enter the result in binary.
+      </p>
+      <div className="font-mono text-xl text-white mb-5 bg-gray-800 rounded-xl p-4 border border-gray-700 inline-block min-w-[200px]">
+        <div className="text-right space-y-1">
+          <div>{toBin(q.a)}<span className="text-gray-500 text-sm ml-2">(= {q.a})</span></div>
+          <div className="border-t border-gray-600 pt-1">
+            <span className="text-gray-400 mr-1">×</span>
+            {toBin(q.b)}<span className="text-gray-500 text-sm ml-2">(= {q.b})</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-gray-400 font-mono text-lg">=</span>
+        <input
+          value={input}
+          onChange={(e) => { setInput(e.target.value.replace(/[^01]/g, '')); setChecked(false) }}
+          onKeyDown={(e) => e.key === 'Enter' && input && !checked && setChecked(true)}
+          placeholder="Binary result"
+          className="w-44 rounded-xl px-4 py-2 font-mono text-lg bg-gray-800 border border-gray-600 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500"
+        />
+      </div>
+      {checked && (
+        <div className={`rounded-xl p-3 text-sm mb-3 ${isCorrect ? 'bg-emerald-900/30 border border-emerald-700' : 'bg-red-900/30 border border-red-700'}`}>
+          <ResultBadge correct={isCorrect} />
+          {!isCorrect && (
+            <p className="mt-1 text-gray-300">
+              Correct answer:{' '}
+              <span className="font-mono font-bold text-white">{q.ans.toString(2)}</span>
+              {' '}(= {q.ans})
+            </p>
+          )}
+        </div>
+      )}
+      <div className="flex gap-2">
+        {!checked ? (
+          <Button
+            size="sm"
+            disabled={!input}
+            onClick={() => setChecked(true)}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            Check
+          </Button>
+        ) : (
+          <Button size="sm" onClick={next} className="bg-emerald-600 hover:bg-emerald-700 gap-1">
+            New Problem <RefreshCw className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
+// 6c. Binary Division Practice (Lesson 4)
+//     Guarantees clean whole-number quotients (no remainders)
+// ─────────────────────────────────────────────
+const BinaryDivisionPractice = () => {
+  const genQ = useCallback(() => {
+    // Generate quotient and divisor first, then compute dividend = quotient × divisor
+    // This guarantees a clean division with no remainder
+    const quotient = Math.floor(Math.random() * 6) + 2 // 2-7
+    const divisor = Math.floor(Math.random() * 5) + 2  // 2-6
+    const dividend = quotient * divisor
+    return { a: dividend, b: divisor, ans: quotient }
+  }, [])
+
+  const [q, setQ] = useState(genQ)
+  const [input, setInput] = useState('')
+  const [checked, setChecked] = useState(false)
+  const isCorrect = checked && parseInt(input, 2) === q.ans
+
+  const toBin = (n: number) => n.toString(2).padStart(5, '0')
+
+  const next = () => {
+    setQ(genQ())
+    setInput('')
+    setChecked(false)
+  }
+
+  return (
+    <ActivityShell
+      title="Binary Division Practice"
+      emoji=""
+    >
+      <p className="text-gray-300 text-sm mb-4">
+        Solve the binary division and enter the result in binary.
+      </p>
+      <div className="font-mono text-xl text-white mb-5 bg-gray-800 rounded-xl p-4 border border-gray-700 inline-block min-w-[200px]">
+        <div className="text-right space-y-1">
+          <div>{toBin(q.a)}<span className="text-gray-500 text-sm ml-2">(= {q.a})</span></div>
+          <div className="border-t border-gray-600 pt-1">
+            <span className="text-gray-400 mr-1">÷</span>
+            {toBin(q.b)}<span className="text-gray-500 text-sm ml-2">(= {q.b})</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-gray-400 font-mono text-lg">=</span>
+        <input
+          value={input}
+          onChange={(e) => { setInput(e.target.value.replace(/[^01]/g, '')); setChecked(false) }}
+          onKeyDown={(e) => e.key === 'Enter' && input && !checked && setChecked(true)}
+          placeholder="Binary result"
+          className="w-44 rounded-xl px-4 py-2 font-mono text-lg bg-gray-800 border border-gray-600 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500"
+        />
+      </div>
+      {checked && (
+        <div className={`rounded-xl p-3 text-sm mb-3 ${isCorrect ? 'bg-emerald-900/30 border border-emerald-700' : 'bg-red-900/30 border border-red-700'}`}>
+          <ResultBadge correct={isCorrect} />
+          {!isCorrect && (
+            <p className="mt-1 text-gray-300">
+              Correct answer:{' '}
+              <span className="font-mono font-bold text-white">{q.ans.toString(2)}</span>
+              {' '}(= {q.ans})
+            </p>
+          )}
+        </div>
+      )}
+      <div className="flex gap-2">
+        {!checked ? (
+          <Button
+            size="sm"
+            disabled={!input}
+            onClick={() => setChecked(true)}
+            className="bg-indigo-600 hover:bg-indigo-700"
+          >
+            Check
+          </Button>
+        ) : (
+          <Button size="sm" onClick={next} className="bg-emerald-600 hover:bg-emerald-700 gap-1">
+            New Problem <RefreshCw className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
 // NEW: Boolean Algebra Explorer (Lesson 8 – Intro to Boolean Algebra)
 //      Interactive expression evaluator + law identifier
 // ─────────────────────────────────────────────
@@ -2123,6 +2291,12 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
     }
     if (title.includes('subtraction') || tags.includes('subtraction')) {
       return <BinaryArithmeticTrainer op="subtract" />
+    }
+    if (title.includes('multiplication') || tags.includes('multiplication')) {
+      return <BinaryMultiplicationPractice />
+    }
+    if (title.includes('division') || tags.includes('division')) {
+      return <BinaryDivisionPractice />
     }
     return <BinaryArithmeticTrainer op="add" />
   }
