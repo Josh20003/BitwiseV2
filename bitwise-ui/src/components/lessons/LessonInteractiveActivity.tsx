@@ -42,85 +42,366 @@ const ActivityShell = ({
 )
 
 // ─────────────────────────────────────────────
-// 0. Binary Number Builder (Lesson 1 – rescued from old Lesson 5)
+// 0. Number System Builders (Lesson 1)
+//    Four uniform components: Binary, Decimal, Octal, Hexadecimal
+//    Each features: stacked Position/Power/Value labels,
+//    a live dynamic equation, and consistent dark-theme styling.
 // ─────────────────────────────────────────────
-const BinaryBuilderActivity = () => {
-  const targets = [5, 10, 22, 13, 29, 7]
-  const [targetIdx, setTargetIdx] = useState(0)
-  const target = targets[targetIdx]
-  const [bits, setBits] = useState<number[]>([0, 0, 0, 0, 0])
-  const value = bits.reduce((acc, b, i) => acc + b * Math.pow(2, 4 - i), 0)
-  const isCorrect = value === target
+
+const SUPERSCRIPTS: Record<number, string> = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' }
+const sup = (n: number): string => String(n).split('').map(c => SUPERSCRIPTS[Number(c)] ?? c).join('')
+
+// ── Binary Builder ──────────────────────────
+const BinaryBuilder = () => {
+  const NUM_BOXES = 8
+  const [bits, setBits] = useState<number[]>(Array(NUM_BOXES).fill(0))
 
   const toggle = (i: number) => {
     const next = [...bits]
     next[i] = next[i] === 1 ? 0 : 1
     setBits(next)
   }
-  const next = () => {
-    setTargetIdx((prev) => (prev + 1) % targets.length)
-    setBits([0, 0, 0, 0, 0])
-  }
+
+  const positions = Array.from({ length: NUM_BOXES }, (_, i) => NUM_BOXES - 1 - i)
+  const powers = positions.map(p => Math.pow(2, p))
+  const total = bits.reduce((acc, b, i) => acc + b * powers[i], 0)
+
+  // Build equation: "1×128 + 0×64 + …"
+  const eqParts = bits.map((b, i) => `${b}×${powers[i]}`)
+  const eqStr = eqParts.join(' + ')
 
   return (
-    <ActivityShell title="Binary Bit Builder" emoji=" ">
-      <p className="text-gray-300 text-sm mb-4">
-        Toggle the bits below to represent the decimal number in binary.
+    <ActivityShell title="Binary Builder" emoji=" ">
+      <p className="text-gray-300 text-sm mb-5">
+        Toggle each bit to build a binary number. The equation below shows how each bit contributes to the <span className="font-semibold text-indigo-300">decimal</span> value.
       </p>
-      <div className="flex items-center justify-center gap-2 mb-1">
-        <span className="text-4xl font-mono font-bold text-indigo-300 tabular-nums mr-3">
-          {target}
-        </span>
-        <span className="text-gray-500 text-sm">=</span>
-      </div>
-      {/* Bit buttons */}
-      <div className="flex justify-center gap-2 mt-4 mb-2">
+
+      {/* Bit toggle boxes */}
+      <div className="flex justify-center gap-2 mb-1">
         {bits.map((b, i) => (
           <button
             key={i}
             onClick={() => toggle(i)}
-            className={`w-14 h-14 rounded-xl text-2xl font-bold font-mono transition-all duration-150 select-none border-2 ${b === 1
-              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900'
-              : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
-              }`}
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold font-mono transition-all duration-150 select-none border-2 ${
+              b === 1
+                ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-600/30'
+                : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+            }`}
           >
             {b}
           </button>
         ))}
       </div>
-      {/* Position labels */}
-      <div className="flex justify-center gap-2 mb-4">
-        {[16, 8, 4, 2, 1].map((p) => (
-          <div key={p} className="w-14 text-center text-xs text-gray-500">
-            2<sup>{Math.log2(p)}</sup>={p}
+
+      {/* Stacked labels: Position / Power / Value */}
+      <div className="flex justify-center gap-2 mb-5">
+        {positions.map((pos, i) => (
+          <div key={i} className="w-12 sm:w-14 flex flex-col items-center text-[10px] leading-tight">
+            <span className="text-gray-500">Pos {pos}</span>
+            <span className="text-indigo-400 font-mono">2{sup(pos)}</span>
+            <span className="text-gray-400 font-mono">{powers[i]}</span>
           </div>
         ))}
       </div>
-      {/* Running total */}
+
+      {/* Dynamic equation */}
+      <div className="bg-white/5 rounded-xl border border-white/10 px-4 py-3 mb-4 overflow-x-auto">
+        <p className="text-center text-xs sm:text-sm font-mono text-gray-300 whitespace-nowrap">
+          {eqStr} = <span className="font-bold text-indigo-300">{total}</span>
+          <span className="text-gray-500 ml-1">(decimal)</span>
+        </p>
+      </div>
+
+      {/* Current value */}
       <p className="text-center text-gray-400 text-sm mb-4">
         Current value:{' '}
-        <span className={`font-mono font-bold text-lg ${isCorrect ? 'text-emerald-400' : 'text-white'}`}>
-          {value}
-        </span>
+        <span className="font-mono font-bold text-lg text-white">{total}</span>
       </p>
-      <div className="flex items-center justify-center gap-4">
-        {isCorrect ? (
-          <>
-            <ResultBadge correct />
-            <Button size="sm" onClick={next} className="gap-1 bg-indigo-600 hover:bg-indigo-700">
-              Next <ChevronRight className="w-4 h-4" />
-            </Button>
-          </>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setBits([0, 0, 0, 0, 0])}
-            className="gap-1 border-gray-600 text-gray-300 hover:bg-gray-800"
-          >
-            <RotateCcw className="w-3 h-3" /> Reset
-          </Button>
-        )}
+
+      <div className="flex items-center justify-center">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setBits(Array(NUM_BOXES).fill(0))}
+          className="gap-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+        >
+          <RotateCcw className="w-3 h-3" /> Reset
+        </Button>
+      </div>
+    </ActivityShell>
+  )
+}
+
+// ── Decimal Builder ─────────────────────────
+const DecimalBuilder = () => {
+  const NUM_BOXES = 4
+  const [digits, setDigits] = useState<number[]>(Array(NUM_BOXES).fill(0))
+
+  const handleChange = (i: number, raw: string) => {
+    const ch = raw.slice(-1)
+    if (ch === '' || /^[0-9]$/.test(ch)) {
+      const next = [...digits]
+      next[i] = ch === '' ? 0 : Number(ch)
+      setDigits(next)
+    }
+  }
+
+  const positions = Array.from({ length: NUM_BOXES }, (_, i) => NUM_BOXES - 1 - i)
+  const powers = positions.map(p => Math.pow(10, p))
+  const total = digits.reduce((acc, d, i) => acc + d * powers[i], 0)
+
+  // Equation: "4×1000 + 7×100 + 3×10 + 9×1 = 4739"
+  const eqParts = digits.map((d, i) => `${d}×${powers[i]}`)
+  const eqStr = eqParts.join(' + ')
+
+  return (
+    <ActivityShell title="Decimal Builder" emoji=" ">
+      <p className="text-gray-300 text-sm mb-5">
+        Enter digits (0–9) into each position and see how <span className="font-semibold text-amber-300">base-10 place values</span> combine to form the number.
+      </p>
+
+      {/* Digit input boxes */}
+      <div className="flex justify-center gap-2 mb-1">
+        {digits.map((d, i) => (
+          <input
+            key={i}
+            type="text"
+            inputMode="numeric"
+            value={d}
+            onChange={e => handleChange(i, e.target.value)}
+            onFocus={e => e.target.select()}
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold font-mono text-center transition-all duration-150 select-none border-2 outline-none ${
+              d > 0
+                ? 'bg-amber-600 border-amber-400 text-white shadow-lg shadow-amber-600/30'
+                : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400 focus:border-amber-400'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Stacked labels */}
+      <div className="flex justify-center gap-2 mb-5">
+        {positions.map((pos, i) => (
+          <div key={i} className="w-12 sm:w-14 flex flex-col items-center text-[10px] leading-tight">
+            <span className="text-gray-500">Pos {pos}</span>
+            <span className="text-amber-400 font-mono">10{sup(pos)}</span>
+            <span className="text-gray-400 font-mono">{powers[i]}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Dynamic equation */}
+      <div className="bg-white/5 rounded-xl border border-white/10 px-4 py-3 mb-4 overflow-x-auto">
+        <p className="text-center text-xs sm:text-sm font-mono text-gray-300 whitespace-nowrap">
+          {eqStr} = <span className="font-bold text-amber-300">{total}</span>
+        </p>
+      </div>
+
+      {/* Current value */}
+      <p className="text-center text-gray-400 text-sm mb-4">
+        Current value:{' '}
+        <span className="font-mono font-bold text-lg text-white">{total}</span>
+      </p>
+
+      <div className="flex items-center justify-center">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setDigits(Array(NUM_BOXES).fill(0))}
+          className="gap-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+        >
+          <RotateCcw className="w-3 h-3" /> Reset
+        </Button>
+      </div>
+    </ActivityShell>
+  )
+}
+
+// ── Octal Builder ───────────────────────────
+const OctalBuilder = () => {
+  const NUM_BOXES = 3
+  const [digits, setDigits] = useState<number[]>(Array(NUM_BOXES).fill(0))
+
+  const handleChange = (i: number, raw: string) => {
+    const ch = raw.slice(-1)
+    if (ch === '' || /^[0-7]$/.test(ch)) {
+      const next = [...digits]
+      next[i] = ch === '' ? 0 : Number(ch)
+      setDigits(next)
+    }
+  }
+
+  const positions = Array.from({ length: NUM_BOXES }, (_, i) => NUM_BOXES - 1 - i)
+  const powers = positions.map(p => Math.pow(8, p))
+  const total = digits.reduce((acc, d, i) => acc + d * powers[i], 0)
+
+  // Equation with intermediate subtotals: "3×64 + 5×8 + 7×1 = 192 + 40 + 7 = 239 (decimal)"
+  const eqParts = digits.map((d, i) => `${d}×${powers[i]}`)
+  const subtotals = digits.map((d, i) => d * powers[i])
+  const eqStr = eqParts.join(' + ')
+  const subStr = subtotals.join(' + ')
+
+  return (
+    <ActivityShell title="Octal Builder" emoji=" ">
+      <p className="text-gray-300 text-sm mb-5">
+        Enter digits (0–7) into each position and see how <span className="font-semibold text-sky-300">base-8 place values</span> convert to decimal.
+      </p>
+
+      {/* Digit input boxes */}
+      <div className="flex justify-center gap-2 mb-1">
+        {digits.map((d, i) => (
+          <input
+            key={i}
+            type="text"
+            inputMode="numeric"
+            value={d}
+            onChange={e => handleChange(i, e.target.value)}
+            onFocus={e => e.target.select()}
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold font-mono text-center transition-all duration-150 select-none border-2 outline-none ${
+              d > 0
+                ? 'bg-sky-600 border-sky-400 text-white shadow-lg shadow-sky-600/30'
+                : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400 focus:border-sky-400'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Stacked labels */}
+      <div className="flex justify-center gap-2 mb-5">
+        {positions.map((pos, i) => (
+          <div key={i} className="w-12 sm:w-14 flex flex-col items-center text-[10px] leading-tight">
+            <span className="text-gray-500">Pos {pos}</span>
+            <span className="text-sky-400 font-mono">8{sup(pos)}</span>
+            <span className="text-gray-400 font-mono">{powers[i]}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Dynamic equation with subtotals */}
+      <div className="bg-white/5 rounded-xl border border-white/10 px-4 py-3 mb-4 overflow-x-auto">
+        <p className="text-center text-xs sm:text-sm font-mono text-gray-300 whitespace-nowrap">
+          {eqStr} = {subStr} = <span className="font-bold text-sky-300">{total}</span>
+          <span className="text-gray-500 ml-1">(decimal)</span>
+        </p>
+      </div>
+
+      {/* Current value */}
+      <p className="text-center text-gray-400 text-sm mb-4">
+        Current value:{' '}
+        <span className="font-mono font-bold text-lg text-white">{total}</span>
+        <span className="text-gray-600 text-xs ml-2">(octal: {total.toString(8)})</span>
+      </p>
+
+      <div className="flex items-center justify-center">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setDigits(Array(NUM_BOXES).fill(0))}
+          className="gap-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+        >
+          <RotateCcw className="w-3 h-3" /> Reset
+        </Button>
+      </div>
+    </ActivityShell>
+  )
+}
+
+// ── Hexadecimal Builder ─────────────────────
+const HEX_CHARS = '0123456789ABCDEF'
+
+const HexadecimalBuilder = () => {
+  const NUM_BOXES = 3
+  // Store raw numeric values 0-15 internally
+  const [digits, setDigits] = useState<number[]>(Array(NUM_BOXES).fill(0))
+
+  const handleChange = (i: number, raw: string) => {
+    const ch = raw.slice(-1).toUpperCase()
+    if (ch === '') {
+      const next = [...digits]
+      next[i] = 0
+      setDigits(next)
+      return
+    }
+    const idx = HEX_CHARS.indexOf(ch)
+    if (idx !== -1) {
+      const next = [...digits]
+      next[i] = idx
+      setDigits(next)
+    }
+  }
+
+  const positions = Array.from({ length: NUM_BOXES }, (_, i) => NUM_BOXES - 1 - i)
+  const powers = positions.map(p => Math.pow(16, p))
+  const total = digits.reduce((acc, d, i) => acc + d * powers[i], 0)
+
+  // Equation with letter→number conversion shown:
+  // "2×256 + 15×16 + 4×1 = 512 + 240 + 4 = 756 (decimal)"
+  // If digit ≥ 10 (A-F), the equation shows the decimal equivalent (e.g. 15 for F)
+  const eqParts = digits.map((d, i) => `${d}×${powers[i]}`)
+  const subtotals = digits.map((d, i) => d * powers[i])
+  const eqStr = eqParts.join(' + ')
+  const subStr = subtotals.join(' + ')
+
+  return (
+    <ActivityShell title="Hexadecimal Builder" emoji=" ">
+      <p className="text-gray-300 text-sm mb-5">
+        Enter hex digits (0–9, A–F) into each position and see how <span className="font-semibold text-purple-300">base-16 place values</span> convert to decimal.
+      </p>
+
+      {/* Hex input boxes */}
+      <div className="flex justify-center gap-2 mb-1">
+        {digits.map((d, i) => (
+          <input
+            key={i}
+            type="text"
+            value={HEX_CHARS[d]}
+            onChange={e => handleChange(i, e.target.value)}
+            onFocus={e => e.target.select()}
+            maxLength={2}
+            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl text-xl sm:text-2xl font-bold font-mono text-center transition-all duration-150 select-none border-2 outline-none uppercase ${
+              d > 0
+                ? 'bg-purple-600 border-purple-400 text-white shadow-lg shadow-purple-600/30'
+                : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400 focus:border-purple-400'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Stacked labels */}
+      <div className="flex justify-center gap-2 mb-5">
+        {positions.map((pos, i) => (
+          <div key={i} className="w-12 sm:w-14 flex flex-col items-center text-[10px] leading-tight">
+            <span className="text-gray-500">Pos {pos}</span>
+            <span className="text-purple-400 font-mono">16{sup(pos)}</span>
+            <span className="text-gray-400 font-mono">{powers[i]}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Dynamic equation with subtotals */}
+      <div className="bg-white/5 rounded-xl border border-white/10 px-4 py-3 mb-4 overflow-x-auto">
+        <p className="text-center text-xs sm:text-sm font-mono text-gray-300 whitespace-nowrap">
+          {eqStr} = {subStr} = <span className="font-bold text-purple-300">{total}</span>
+          <span className="text-gray-500 ml-1">(decimal)</span>
+        </p>
+      </div>
+
+      {/* Current value */}
+      <p className="text-center text-gray-400 text-sm mb-4">
+        Current value:{' '}
+        <span className="font-mono font-bold text-lg text-white">{total}</span>
+        <span className="text-gray-600 text-xs ml-2">(hex: 0x{total.toString(16).toUpperCase()})</span>
+      </p>
+
+      <div className="flex items-center justify-center">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setDigits(Array(NUM_BOXES).fill(0))}
+          className="gap-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+        >
+          <RotateCcw className="w-3 h-3" /> Reset
+        </Button>
       </div>
     </ActivityShell>
   )
@@ -156,7 +437,7 @@ const NumberSystemComplementExplorer = () => {
     const temp = [...flipped].reverse()
     for (let i = 0; i < temp.length; i++) {
       const sum = temp[i] + carry
-      temp[i] = sum % 2
+      temp[i] = (sum % 2) as 0 | 1
       carry = Math.floor(sum / 2)
     }
     return temp.reverse()
@@ -1808,11 +2089,21 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
   const tags = topicTags.map((t) => t.toLowerCase())
 
   // ── Lesson 1: Intro to Number Systems ──
+  // NOTE: hex must be checked BEFORE decimal because "hexadecimal" contains "decimal"
   if (lessonId === 1) {
+    if (title.includes('hex') || tags.includes('hexadecimal') || tags.includes('hex')) {
+      return <HexadecimalBuilder />
+    }
+    if (title.includes('decimal') || tags.includes('decimal')) {
+      return <DecimalBuilder />
+    }
+    if (title.includes('octal') || tags.includes('octal')) {
+      return <OctalBuilder />
+    }
     if (title.includes('boolean') || tags.includes('boolean')) {
       return <BooleanScenarioBuilder />
     }
-    return <BinaryBuilderActivity />
+    return <BinaryBuilder />
   }
 
   // ── Lesson 2: Logic Gates ──
