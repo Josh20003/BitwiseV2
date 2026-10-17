@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { CheckCircle, XCircle, RefreshCw, Zap, ChevronRight, RotateCcw, Info } from 'lucide-react'
+import { CheckCircle, XCircle, RefreshCw, Zap, ChevronRight, RotateCcw, Info, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 // ─────────────────────────────────────────────
@@ -25,7 +25,7 @@ const ActivityShell = ({
   emoji: string
   children: React.ReactNode
 }) => (
-  <div className="mt-10 rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a1f35] to-[#0f1220] shadow-xl overflow-hidden">
+  <div className="mt-10 mb-10 rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a1f35] to-[#0f1220] shadow-xl overflow-hidden">
     {/* Header */}
     <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10 bg-white/5">
       <span className="text-2xl">{emoji}</span>
@@ -42,87 +42,202 @@ const ActivityShell = ({
 )
 
 // ─────────────────────────────────────────────
-// 1. Binary Number Builder  (Lesson 5 – Binary topic)
+// 1. Number System Complement Explorer (Lesson 5)
+//    Moved from Lesson 9, expanded with 1's & 2's complement tabs + walkthrough
 // ─────────────────────────────────────────────
-const BinaryBuilderActivity = () => {
-  const targets = [5, 10, 22, 13, 29, 7]
-  const [targetIdx, setTargetIdx] = useState(0)
-  const target = targets[targetIdx]
-  const [bits, setBits] = useState<number[]>([0, 0, 0, 0, 0])
-  const value = bits.reduce((acc, b, i) => acc + b * Math.pow(2, 4 - i), 0)
-  const isCorrect = value === target
+type ComplementTab = '1s' | '2s'
+
+const NumberSystemComplementExplorer = () => {
+  const [activeTab, setActiveTab] = useState<ComplementTab>('1s')
+  const [bits, setBits] = useState<number[]>([0, 1, 0, 1, 1, 0, 1, 0])
+  const [showWalkthrough, setShowWalkthrough] = useState(false)
 
   const toggle = (i: number) => {
     const next = [...bits]
     next[i] = next[i] === 1 ? 0 : 1
     setBits(next)
   }
-  const next = () => {
-    setTargetIdx((prev) => (prev + 1) % targets.length)
-    setBits([0, 0, 0, 0, 0])
+
+  const value = bits.reduce((acc, b, i) => acc + b * Math.pow(2, 7 - i), 0)
+
+  // 1's complement: flip all bits
+  const onesComp: number[] = bits.map((b) => (b === 1 ? 0 : 1))
+  const onesValue = onesComp.reduce((acc, b, i) => acc + b * Math.pow(2, 7 - i), 0)
+
+  // 2's complement: flip all bits + add 1
+  const computeTwosComp = (srcBits: number[]): number[] => {
+    const flipped = srcBits.map((b) => (b === 1 ? 0 : 1))
+    let carry = 1
+    const temp = [...flipped].reverse()
+    for (let i = 0; i < temp.length; i++) {
+      const sum = temp[i] + carry
+      temp[i] = sum % 2
+      carry = Math.floor(sum / 2)
+    }
+    return temp.reverse()
   }
+  const twosComp = computeTwosComp(bits)
+  const twosValue = twosComp.reduce((acc, b, i) => acc + b * Math.pow(2, 7 - i), 0)
+
+  const resultBits = activeTab === '1s' ? onesComp : twosComp
+  const resultValue = activeTab === '1s' ? onesValue : twosValue
 
   return (
-    <ActivityShell title="Binary Bit Builder" emoji="🔲">
+    <ActivityShell title="Complement Explorer" emoji=" ">
       <p className="text-gray-300 text-sm mb-4">
-        Toggle the bits below to represent the decimal number in binary.
+        Toggle the original bits and explore how <span className="text-indigo-300 font-semibold">1's complement</span> and <span className="text-purple-300 font-semibold">2's complement</span> transform them.
       </p>
-      <div className="flex items-center justify-center gap-2 mb-1">
-        <span className="text-4xl font-mono font-bold text-indigo-300 tabular-nums mr-3">
-          {target}
-        </span>
-        <span className="text-gray-500 text-sm">=</span>
-      </div>
-      {/* Bit buttons */}
-      <div className="flex justify-center gap-2 mt-4 mb-2">
-        {bits.map((b, i) => (
+
+      {/* Tab selector */}
+      <div className="flex gap-2 mb-5">
+        {([['1s', "1's Complement"], ['2s', "2's Complement"]] as [ComplementTab, string][]).map(([key, label]) => (
           <button
-            key={i}
-            onClick={() => toggle(i)}
-            className={`w-14 h-14 rounded-xl text-2xl font-bold font-mono transition-all duration-150 select-none border-2 ${
-              b === 1
-                ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900'
-                : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
-            }`}
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 ${activeTab === key
+              ? key === '1s'
+                ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40'
+                : 'bg-purple-600 border-purple-400 text-white shadow-lg shadow-purple-900/40'
+              : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
+              }`}
           >
-            {b}
+            {label}
           </button>
         ))}
       </div>
-      {/* Position labels */}
-      <div className="flex justify-center gap-2 mb-4">
-        {[16, 8, 4, 2, 1].map((p) => (
-          <div key={p} className="w-14 text-center text-xs text-gray-500">
-            2<sup>{Math.log2(p)}</sup>={p}
+
+      {/* Original bits */}
+      <div className="mb-4">
+        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-widest">Original</p>
+        <div className="flex gap-1 flex-wrap items-center">
+          {bits.map((b, i) => (
+            <button
+              key={i}
+              onClick={() => toggle(i)}
+              className={`w-10 h-10 rounded-lg font-mono font-bold text-lg border-2 transition-all ${b === 1
+                ? 'bg-indigo-600 border-indigo-400 text-white'
+                : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+                }`}
+            >
+              {b}
+            </button>
+          ))}
+          <span className="ml-3 text-gray-400 text-sm font-mono">= {value}</span>
+        </div>
+      </div>
+
+      {/* Step indicator for 2's complement */}
+      {activeTab === '2s' && (
+        <div className="mb-3">
+          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+            <span className="bg-indigo-900/40 border border-indigo-700 rounded-lg px-2 py-1 text-indigo-300 font-semibold">Step 1</span>
+            <span>Flip all bits (1's complement)</span>
           </div>
-        ))}
+          <div className="flex gap-1 flex-wrap items-center mb-2">
+            {onesComp.map((b, i) => (
+              <div
+                key={i}
+                className={`w-10 h-10 rounded-lg font-mono font-bold text-lg border-2 flex items-center justify-center ${b === 1
+                  ? 'bg-indigo-700/60 border-indigo-500/60 text-indigo-200'
+                  : 'bg-gray-800 border-gray-700 text-gray-500'
+                  }`}
+              >
+                {b}
+              </div>
+            ))}
+            <span className="ml-3 text-indigo-300/60 text-sm font-mono">= {onesValue}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+            <span className="bg-purple-900/40 border border-purple-700 rounded-lg px-2 py-1 text-purple-300 font-semibold">Step 2</span>
+            <span>Add 1 to get 2's complement</span>
+          </div>
+        </div>
+      )}
+
+      {/* Result bits */}
+      <div className="mb-1">
+        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-widest">
+          {activeTab === '1s' ? "1's Complement" : "2's Complement"}
+        </p>
+        <div className="flex gap-1 flex-wrap items-center">
+          {resultBits.map((b, i) => (
+            <div
+              key={i}
+              className={`w-10 h-10 rounded-lg font-mono font-bold text-lg border-2 flex items-center justify-center ${activeTab === '1s'
+                ? b === 1 ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-gray-800 border-gray-700 text-gray-400'
+                : b === 1 ? 'bg-purple-600 border-purple-400 text-white' : 'bg-gray-800 border-gray-700 text-gray-400'
+                }`}
+            >
+              {b}
+            </div>
+          ))}
+          <span className={`ml-3 text-sm font-mono ${activeTab === '1s' ? 'text-indigo-300' : 'text-purple-300'}`}>
+            = {resultValue}
+          </span>
+        </div>
       </div>
-      {/* Running total */}
-      <p className="text-center text-gray-400 text-sm mb-4">
-        Current value:{' '}
-        <span className={`font-mono font-bold text-lg ${isCorrect ? 'text-emerald-400' : 'text-white'}`}>
-          {value}
-        </span>
-      </p>
-      <div className="flex items-center justify-center gap-4">
-        {isCorrect ? (
-          <>
-            <ResultBadge correct />
-            <Button size="sm" onClick={next} className="gap-1 bg-indigo-600 hover:bg-indigo-700">
-              Next <ChevronRight className="w-4 h-4" />
-            </Button>
-          </>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setBits([0, 0, 0, 0, 0])}
-            className="gap-1 border-gray-600 text-gray-300 hover:bg-gray-800"
-          >
-            <RotateCcw className="w-3 h-3" /> Reset
-          </Button>
-        )}
+
+      {/* Explanation panel */}
+      <div className="mt-4 rounded-xl bg-gray-800/60 border border-gray-700 px-4 py-3 text-sm space-y-2">
+        <div className="flex items-start gap-2">
+          <Info className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+          <div className="text-gray-400">
+            {activeTab === '1s' ? (
+              <>
+                <span className="text-white font-semibold">1's complement</span> inverts every bit: 0→1, 1→0.
+                <span className="block mt-1 text-gray-500">Original + 1's complement = {value + onesValue} (always 255 for 8 bits)</span>
+              </>
+            ) : (
+              <>
+                <span className="text-white font-semibold">2's complement</span> = flip all bits + add 1.
+                <span className="block mt-1 text-gray-500">This represents <span className="text-purple-300 font-mono">-{value}</span> in signed binary. Verify: {value} + {twosValue} = {value + twosValue} (= 256, which overflows to 0 in 8 bits)</span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Walkthrough toggle */}
+      <button
+        onClick={() => setShowWalkthrough(!showWalkthrough)}
+        className="mt-3 text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline underline-offset-2"
+      >
+        {showWalkthrough ? 'Hide' : 'Show'} step-by-step walkthrough
+      </button>
+
+      {showWalkthrough && (
+        <div className="mt-3 rounded-xl bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-700/40 p-4 text-sm space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">1</div>
+            <span className="text-gray-300">Original number: <span className="font-mono text-white">{bits.join('')}</span> = <span className="font-mono text-indigo-300">{value}</span></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">2</div>
+            <span className="text-gray-300">Flip every bit → <span className="font-mono text-white">{onesComp.join('')}</span> = <span className="font-mono text-indigo-300">{onesValue}</span> (1's complement)</span>
+          </div>
+          {activeTab === '2s' && (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">3</div>
+                <span className="text-gray-300">Add 1 → <span className="font-mono text-white">{twosComp.join('')}</span> = <span className="font-mono text-purple-300">{twosValue}</span> (2's complement)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white">✓</div>
+                <span className="text-gray-300">This means <span className="font-mono text-purple-300">-{value}</span> in signed 8-bit representation</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setBits([0, 1, 0, 1, 1, 0, 1, 0])}
+        className="mt-4 border-gray-600 text-gray-300 hover:bg-gray-800 gap-1"
+      >
+        <RotateCcw className="w-3 h-3" /> Reset
+      </Button>
     </ActivityShell>
   )
 }
@@ -159,7 +274,7 @@ const BaseConverterQuiz = ({
   }
 
   return (
-    <ActivityShell title={`${fromLabel} → ${toLabel} Conversion Practice`} emoji="🔄">
+    <ActivityShell title={`${fromLabel} → ${toLabel} Conversion Practice`} emoji=" ">
       <p className="text-gray-300 text-sm mb-4">
         Convert the following {fromLabel} number to {toLabel}.
       </p>
@@ -245,11 +360,10 @@ const LogicGateSimulator = () => {
       <span className="text-xs text-gray-500 font-mono">{label}</span>
       <button
         onClick={onChange}
-        className={`w-12 h-12 rounded-xl text-xl font-bold font-mono border-2 transition-all ${
-          val === 1
-            ? 'bg-indigo-600 border-indigo-400 text-white'
-            : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
-        }`}
+        className={`w-12 h-12 rounded-xl text-xl font-bold font-mono border-2 transition-all ${val === 1
+          ? 'bg-indigo-600 border-indigo-400 text-white'
+          : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+          }`}
       >
         {val}
       </button>
@@ -257,18 +371,17 @@ const LogicGateSimulator = () => {
   )
 
   return (
-    <ActivityShell title="Logic Gate Simulator" emoji="⚡">
+    <ActivityShell title="Logic Gate Simulator" emoji=" ">
       {/* Gate selector */}
       <div className="flex flex-wrap gap-2 mb-5">
         {gates.map((g) => (
           <button
             key={g}
             onClick={() => setGate(g)}
-            className={`px-3 py-1 rounded-lg text-sm font-semibold font-mono transition-all ${
-              gate === g
-                ? 'bg-indigo-600 text-white border border-indigo-400'
-                : 'bg-gray-800 text-gray-400 border border-gray-700 hover:border-gray-500'
-            }`}
+            className={`px-3 py-1 rounded-lg text-sm font-semibold font-mono transition-all ${gate === g
+              ? 'bg-indigo-600 text-white border border-indigo-400'
+              : 'bg-gray-800 text-gray-400 border border-gray-700 hover:border-gray-500'
+              }`}
           >
             {g}
           </button>
@@ -292,19 +405,18 @@ const LogicGateSimulator = () => {
             {gate === 'NOT'
               ? `NOT(A) = A'`
               : gate === 'AND' ? 'A·B' : gate === 'OR' ? 'A+B'
-              : gate === 'NAND' ? "(A·B)'" : gate === 'NOR' ? "(A+B)'"
-              : gate === 'XOR' ? 'A⊕B' : '(A⊕B)\''}
+                : gate === 'NAND' ? "(A·B)'" : gate === 'NOR' ? "(A+B)'"
+                  : gate === 'XOR' ? 'A⊕B' : '(A⊕B)\''}
           </div>
         </div>
         {/* Output */}
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs text-gray-500 font-mono">Output</span>
           <div
-            className={`w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold font-mono border-2 shadow-lg transition-all ${
-              output === 1
-                ? 'bg-emerald-600 border-emerald-400 text-white shadow-emerald-900'
-                : 'bg-gray-800 border-gray-600 text-gray-400'
-            }`}
+            className={`w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold font-mono border-2 shadow-lg transition-all ${output === 1
+              ? 'bg-emerald-600 border-emerald-400 text-white shadow-emerald-900'
+              : 'bg-gray-800 border-gray-600 text-gray-400'
+              }`}
           >
             {output}
           </div>
@@ -324,8 +436,8 @@ const LogicGateSimulator = () => {
           </thead>
           <tbody>
             {(isTwoInput
-              ? [[0,0],[0,1],[1,0],[1,1]] as [number,number][]
-              : [[0],[1]] as [number,number][]
+              ? ([[0, 0], [0, 1], [1, 0], [1, 1]] as [number, number][])
+              : ([[0, 0], [1, 0]] as [number, number][])
             ).map((row, idx) => {
               const [ra, rb] = row
               const out = isTwoInput ? evalGate(gate, ra, rb ?? 0) : evalGate(gate, ra, 0)
@@ -333,9 +445,8 @@ const LogicGateSimulator = () => {
               return (
                 <tr
                   key={idx}
-                  className={`border-t border-gray-700 transition-colors ${
-                    isActive ? 'bg-indigo-900/40 font-bold' : 'bg-gray-900'
-                  }`}
+                  className={`border-t border-gray-700 transition-colors ${isActive ? 'bg-indigo-900/40 font-bold' : 'bg-gray-900'
+                    }`}
                 >
                   <td className="px-3 py-2 text-center text-white">{ra}</td>
                   {isTwoInput && <td className="px-3 py-2 text-center text-white">{rb}</td>}
@@ -369,7 +480,7 @@ const TruthTableBuilder = () => {
   const [submitted, setSubmitted] = useState(false)
   const expr = expressions[exprIdx]
 
-  const rows: [number, number][] = [[0,0],[0,1],[1,0],[1,1]]
+  const rows: [number, number][] = [[0, 0], [0, 1], [1, 0], [1, 1]]
   const correct = rows.map(([a, b]) => expr.fn(a, b))
 
   const toggle = (rowIdx: number) => {
@@ -393,7 +504,7 @@ const TruthTableBuilder = () => {
   }
 
   return (
-    <ActivityShell title="Truth Table Challenge" emoji="📋">
+    <ActivityShell title="Truth Table Challenge" emoji=" ">
       <p className="text-gray-300 text-sm mb-1">
         Complete the truth table by clicking the output cells to cycle between <b>0</b>, <b>1</b>, and <em>blank</em>.
       </p>
@@ -421,15 +532,14 @@ const TruthTableBuilder = () => {
                   <td className="px-4 py-2 text-center">
                     <button
                       onClick={() => toggle(idx)}
-                      className={`w-10 h-10 rounded-lg font-bold text-lg border-2 transition-all ${
-                        isRight === true
-                          ? 'bg-emerald-700 border-emerald-400 text-white'
-                          : isRight === false
+                      className={`w-10 h-10 rounded-lg font-bold text-lg border-2 transition-all ${isRight === true
+                        ? 'bg-emerald-700 border-emerald-400 text-white'
+                        : isRight === false
                           ? 'bg-red-700 border-red-400 text-white'
                           : user !== null
-                          ? 'bg-indigo-700 border-indigo-400 text-white hover:bg-indigo-600'
-                          : 'bg-gray-800 border-dashed border-gray-600 text-gray-600 hover:border-gray-400'
-                      }`}
+                            ? 'bg-indigo-700 border-indigo-400 text-white hover:bg-indigo-600'
+                            : 'bg-gray-800 border-dashed border-gray-600 text-gray-600 hover:border-gray-400'
+                        }`}
                     >
                       {user !== null ? user : '?'}
                     </button>
@@ -509,7 +619,7 @@ const BooleanLawMatcher = () => {
   }
 
   return (
-    <ActivityShell title="Boolean Law Simplifier" emoji="🧮">
+    <ActivityShell title="Boolean Law Simplifier" emoji=" ">
       <p className="text-gray-300 text-sm mb-4">
         Apply Boolean laws to simplify each expression.
       </p>
@@ -524,15 +634,14 @@ const BooleanLawMatcher = () => {
           <button
             key={opt}
             onClick={() => { setSelected(opt); setChecked(false) }}
-            className={`w-16 h-14 rounded-xl font-mono font-bold text-xl border-2 transition-all ${
-              selected === opt
-                ? checked
-                  ? opt === q.result
-                    ? 'bg-emerald-700 border-emerald-400 text-white'
-                    : 'bg-red-700 border-red-400 text-white'
-                  : 'bg-indigo-700 border-indigo-400 text-white'
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
-            }`}
+            className={`w-16 h-14 rounded-xl font-mono font-bold text-xl border-2 transition-all ${selected === opt
+              ? checked
+                ? opt === q.result
+                  ? 'bg-emerald-700 border-emerald-400 text-white'
+                  : 'bg-red-700 border-red-400 text-white'
+                : 'bg-indigo-700 border-indigo-400 text-white'
+              : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
+              }`}
           >
             {opt}
           </button>
@@ -600,7 +709,7 @@ const BinaryArithmeticTrainer = ({ op }: { op: ArithOp }) => {
   return (
     <ActivityShell
       title={op === 'add' ? 'Binary Addition Practice' : 'Binary Subtraction Practice'}
-      emoji={op === 'add' ? '➕' : '➖'}
+      emoji={op === 'add' ? '' : ''}
     >
       <p className="text-gray-300 text-sm mb-4">
         Solve the binary {op === 'add' ? 'addition' : 'subtraction'} and enter the result in binary.
@@ -657,116 +766,391 @@ const BinaryArithmeticTrainer = ({ op }: { op: ArithOp }) => {
 }
 
 // ─────────────────────────────────────────────
-// 7. Bit Flipper — 1's & 2's Complement  (Lesson 9)
+// 7. Logic Gate Circuit Builder  (Lesson 9 – Logic Gates)
+//    Users select and place the correct logic gate to complete a circuit
 // ─────────────────────────────────────────────
-const ComplementExplorer = ({ mode }: { mode: "1s" | "2s" | "inversion" }) => {
-  const [bits, setBits] = useState<number[]>([0,1,0,1,1,0,1,0])
+type CircuitGateType = 'AND' | 'OR' | 'NOT' | 'NAND' | 'NOR' | 'XOR'
 
-  const toggle = (i: number) => {
-    const next = [...bits]
-    next[i] = next[i] === 1 ? 0 : 1
-    setBits(next)
+interface CircuitPuzzle {
+  description: string
+  inputs: { a: number; b: number; expected: number }[]
+  answer: CircuitGateType
+  hint: string
+}
+
+const CIRCUIT_PUZZLES: CircuitPuzzle[] = [
+  {
+    description: 'Place a gate so the output is 1 only when BOTH inputs are 1.',
+    inputs: [
+      { a: 0, b: 0, expected: 0 },
+      { a: 0, b: 1, expected: 0 },
+      { a: 1, b: 0, expected: 0 },
+      { a: 1, b: 1, expected: 1 },
+    ],
+    answer: 'AND',
+    hint: 'This gate outputs 1 only when A=1 AND B=1.',
+  },
+  {
+    description: 'Place a gate so the output is 1 when AT LEAST ONE input is 1.',
+    inputs: [
+      { a: 0, b: 0, expected: 0 },
+      { a: 0, b: 1, expected: 1 },
+      { a: 1, b: 0, expected: 1 },
+      { a: 1, b: 1, expected: 1 },
+    ],
+    answer: 'OR',
+    hint: 'This gate outputs 1 when A=1 OR B=1 (or both).',
+  },
+  {
+    description: 'Place a gate so the output is 1 when EXACTLY ONE input is 1.',
+    inputs: [
+      { a: 0, b: 0, expected: 0 },
+      { a: 0, b: 1, expected: 1 },
+      { a: 1, b: 0, expected: 1 },
+      { a: 1, b: 1, expected: 0 },
+    ],
+    answer: 'XOR',
+    hint: 'This gate outputs 1 only when the inputs are different.',
+  },
+  {
+    description: 'Place a gate so the output is the OPPOSITE of AND.',
+    inputs: [
+      { a: 0, b: 0, expected: 1 },
+      { a: 0, b: 1, expected: 1 },
+      { a: 1, b: 0, expected: 1 },
+      { a: 1, b: 1, expected: 0 },
+    ],
+    answer: 'NAND',
+    hint: 'NAND = NOT(AND). It outputs 0 only when both inputs are 1.',
+  },
+  {
+    description: 'Place a gate so the output is 0 when ANY input is 1.',
+    inputs: [
+      { a: 0, b: 0, expected: 1 },
+      { a: 0, b: 1, expected: 0 },
+      { a: 1, b: 0, expected: 0 },
+      { a: 1, b: 1, expected: 0 },
+    ],
+    answer: 'NOR',
+    hint: 'NOR = NOT(OR). It outputs 1 only when both inputs are 0.',
+  },
+]
+
+const AVAILABLE_GATES: CircuitGateType[] = ['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR']
+
+const gateColorMap: Record<CircuitGateType, { bg: string; border: string; shadow: string }> = {
+  AND: { bg: 'bg-indigo-600', border: 'border-indigo-400', shadow: 'shadow-indigo-900/40' },
+  OR: { bg: 'bg-blue-600', border: 'border-blue-400', shadow: 'shadow-blue-900/40' },
+  NOT: { bg: 'bg-orange-600', border: 'border-orange-400', shadow: 'shadow-orange-900/40' },
+  NAND: { bg: 'bg-pink-600', border: 'border-pink-400', shadow: 'shadow-pink-900/40' },
+  NOR: { bg: 'bg-rose-600', border: 'border-rose-400', shadow: 'shadow-rose-900/40' },
+  XOR: { bg: 'bg-emerald-600', border: 'border-emerald-400', shadow: 'shadow-emerald-900/40' },
+}
+
+const gateSymbolMap: Record<CircuitGateType, string> = {
+  AND: 'A · B',
+  OR: 'A + B',
+  NOT: "A'",
+  NAND: "(A · B)'",
+  NOR: "(A + B)'",
+  XOR: 'A ⊕ B',
+}
+
+const evalCircuitGate = (gate: CircuitGateType, a: number, b: number): number => {
+  switch (gate) {
+    case 'AND': return a & b
+    case 'OR': return a | b
+    case 'NOT': return a === 1 ? 0 : 1
+    case 'NAND': return (a & b) === 1 ? 0 : 1
+    case 'NOR': return (a | b) === 1 ? 0 : 1
+    case 'XOR': return a ^ b
   }
+}
 
-  const value = bits.reduce((acc, b, i) => acc + b * Math.pow(2, 7 - i), 0)
+const LogicGateCircuitBuilder = () => {
+  const [puzzleIdx, setPuzzleIdx] = useState(0)
+  const [selectedGate, setSelectedGate] = useState<CircuitGateType | null>(null)
+  const [placedGate, setPlacedGate] = useState<CircuitGateType | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [score, setScore] = useState(0)
+  const [showHint, setShowHint] = useState(false)
+  const [previewInputIdx, setPreviewInputIdx] = useState(0)
 
-  const onesComp = bits.map((b) => (b === 1 ? 0 : 1))
-  const onesValue = onesComp.reduce((acc, b, i) => acc + b * Math.pow(2, 7 - i), 0)
+  const puzzle = CIRCUIT_PUZZLES[puzzleIdx % CIRCUIT_PUZZLES.length]
+  const isCorrect = placedGate === puzzle.answer
 
-  let twosComp: number[] = []
-  if (mode === '2s') {
-    let carry = 1
-    const temp = [...onesComp].reverse()
-    for (let i = 0; i < temp.length; i++) {
-      const sum = temp[i] + carry
-      temp[i] = sum % 2
-      carry = Math.floor(sum / 2)
+  const previewRow = puzzle.inputs[previewInputIdx]
+  const liveOutput = placedGate ? evalCircuitGate(placedGate, previewRow.a, previewRow.b) : null
+
+  const handlePlaceGate = () => {
+    if (selectedGate && !submitted) {
+      setPlacedGate(selectedGate)
+      setSelectedGate(null)
     }
-    twosComp = temp.reverse()
   }
-  const twosValue = twosComp.reduce((acc, b, i) => acc + b * Math.pow(2, 7 - i), 0)
 
-  const title = mode === 'inversion' ? 'Bit Inversion (NOT)' : mode === '1s' ? "1's Complement Explorer" : "2's Complement Explorer"
-  const emoji = mode === 'inversion' ? '🔃' : mode === '1s' ? '🔀' : '💡'
+  const handleSubmit = () => {
+    if (!placedGate) return
+    setSubmitted(true)
+    if (isCorrect) setScore((s) => s + 1)
+  }
+
+  const handleNext = () => {
+    setPuzzleIdx((p) => p + 1)
+    setPlacedGate(null)
+    setSelectedGate(null)
+    setSubmitted(false)
+    setShowHint(false)
+    setPreviewInputIdx(0)
+  }
+
+  const handleReset = () => {
+    setPlacedGate(null)
+    setSelectedGate(null)
+    setSubmitted(false)
+    setShowHint(false)
+  }
 
   return (
-    <ActivityShell title={title} emoji={emoji}>
-      <p className="text-gray-300 text-sm mb-4">
-        Toggle the bits below and see the {mode === 'inversion' ? 'inverted result' : mode === '1s' ? "1's complement" : "2's complement"} update in real time.
+    <ActivityShell title="Logic Gate Circuit Builder" emoji=" ">
+      <p className="text-gray-300 text-sm mb-2">
+        {puzzle.description}
       </p>
-      {/* Input bits */}
-      <div className="mb-3">
-        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-widest">Original</p>
-        <div className="flex gap-1 flex-wrap">
-          {bits.map((b, i) => (
-            <button
-              key={i}
-              onClick={() => toggle(i)}
-              className={`w-10 h-10 rounded-lg font-mono font-bold text-lg border-2 transition-all ${
-                b === 1
-                  ? 'bg-indigo-600 border-indigo-400 text-white'
-                  : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+      <p className="text-xs text-gray-500 mb-5">
+        Select a gate from the palette below, then click the empty slot to place it.
+      </p>
+
+      {/* ── Circuit Diagram ── */}
+      <div className="rounded-xl bg-gray-900/80 border border-gray-700 p-4 mb-5">
+        <div className="flex items-center justify-center gap-3 sm:gap-5">
+          {/* Input wires */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-mono w-4">A</span>
+              <div className={`w-10 h-10 rounded-lg font-mono font-bold text-lg border-2 flex items-center justify-center transition-all ${previewRow.a === 1
+                ? 'bg-indigo-600 border-indigo-400 text-white'
+                : 'bg-gray-800 border-gray-600 text-gray-400'
+                }`}
+              >
+                {previewRow.a}
+              </div>
+              <div className="w-6 h-0.5 bg-gray-600" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-mono w-4">B</span>
+              <div className={`w-10 h-10 rounded-lg font-mono font-bold text-lg border-2 flex items-center justify-center transition-all ${previewRow.b === 1
+                ? 'bg-indigo-600 border-indigo-400 text-white'
+                : 'bg-gray-800 border-gray-600 text-gray-400'
+                }`}
+              >
+                {previewRow.b}
+              </div>
+              <div className="w-6 h-0.5 bg-gray-600" />
+            </div>
+          </div>
+
+          {/* Gate slot */}
+          <button
+            onClick={handlePlaceGate}
+            disabled={submitted || !selectedGate}
+            className={`w-24 h-20 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1 ${placedGate
+              ? `${gateColorMap[placedGate].bg} ${gateColorMap[placedGate].border} shadow-lg ${gateColorMap[placedGate].shadow}`
+              : selectedGate
+                ? 'border-dashed border-yellow-500 bg-yellow-900/20 cursor-pointer hover:bg-yellow-900/30'
+                : 'border-dashed border-gray-600 bg-gray-800/50'
+              }`}
+          >
+            {placedGate ? (
+              <>
+                <span className="text-white font-bold font-mono text-sm">{placedGate}</span>
+                <span className="text-white/60 text-[10px] font-mono">{gateSymbolMap[placedGate]}</span>
+              </>
+            ) : selectedGate ? (
+              <span className="text-yellow-400 text-xs font-semibold">Click to place</span>
+            ) : (
+              <>
+                <span className="text-gray-600 text-2xl">?</span>
+                <span className="text-gray-600 text-[10px]">Empty slot</span>
+              </>
+            )}
+          </button>
+
+          {/* Output wire & result */}
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-0.5 bg-gray-600" />
+            <div className={`w-12 h-12 rounded-xl font-mono font-bold text-xl border-2 flex items-center justify-center transition-all ${liveOutput !== null
+              ? liveOutput === 1
+                ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-900/40'
+                : 'bg-gray-800 border-gray-600 text-gray-400'
+              : 'bg-gray-800/50 border-dashed border-gray-600 text-gray-600'
               }`}
             >
-              {b}
+              {liveOutput !== null ? liveOutput : '?'}
+            </div>
+            <span className="text-xs text-gray-500 font-mono">Out</span>
+          </div>
+        </div>
+
+        {/* Input row selector */}
+        <div className="flex justify-center gap-2 mt-4">
+          {puzzle.inputs.map((row, idx) => (
+            <button
+              key={idx}
+              onClick={() => setPreviewInputIdx(idx)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all border ${previewInputIdx === idx
+                ? 'bg-indigo-700 border-indigo-500 text-white'
+                : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-500'
+                }`}
+            >
+              {row.a},{row.b}→{row.expected}
             </button>
           ))}
-          <span className="ml-3 self-center text-gray-400 text-sm font-mono">= {value}</span>
         </div>
       </div>
 
-      {/* Result */}
-      <div className="mb-1">
-        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-widest">
-          {mode === 'inversion' ? 'Inverted (NOT)' : mode === '1s' ? "1's Complement" : "2's Complement"}
-        </p>
-        <div className="flex gap-1 flex-wrap">
-          {(mode === '2s' ? twosComp : onesComp).map((b, i) => (
-            <div
-              key={i}
-              className={`w-10 h-10 rounded-lg font-mono font-bold text-lg border-2 flex items-center justify-center ${
-                b === 1
-                  ? 'bg-purple-600 border-purple-400 text-white'
-                  : 'bg-gray-800 border-gray-700 text-gray-400'
-              }`}
+      {/* ── Gate Palette ── */}
+      <div className="mb-5">
+        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-widest">Gate Palette</p>
+        <div className="flex flex-wrap gap-2">
+          {AVAILABLE_GATES.map((gate) => {
+            const colors = gateColorMap[gate]
+            const isSelected = selectedGate === gate
+            const isPlaced = placedGate === gate
+            return (
+              <button
+                key={gate}
+                onClick={() => !submitted && setSelectedGate(gate)}
+                disabled={submitted}
+                className={`px-3 py-2 rounded-xl font-mono font-bold text-sm border-2 transition-all flex flex-col items-center gap-0.5 min-w-[60px] ${isSelected
+                  ? `${colors.bg} ${colors.border} text-white shadow-lg ${colors.shadow} scale-105`
+                  : isPlaced && submitted
+                    ? isCorrect
+                      ? 'bg-emerald-800 border-emerald-500 text-emerald-200'
+                      : 'bg-red-800 border-red-500 text-red-200'
+                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300'
+                  } ${submitted ? 'cursor-default' : 'cursor-pointer'}`}
+              >
+                <span>{gate}</span>
+                <span className="text-[10px] font-normal opacity-60">{gateSymbolMap[gate]}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Truth Table Verification ── */}
+      {placedGate && (
+        <div className="rounded-xl overflow-hidden border border-gray-700 mb-4">
+          <table className="w-full text-sm font-mono">
+            <thead>
+              <tr className="bg-gray-800">
+                <th className="px-3 py-2 text-gray-400 text-center">A</th>
+                <th className="px-3 py-2 text-gray-400 text-center">B</th>
+                <th className="px-3 py-2 text-gray-400 text-center">Expected</th>
+                <th className="px-3 py-2 text-indigo-400 text-center">Your Gate</th>
+                {submitted && <th className="px-3 py-2 text-gray-400 text-center">Match</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {puzzle.inputs.map((row, idx) => {
+                const gateOut = evalCircuitGate(placedGate, row.a, row.b)
+                const matches = gateOut === row.expected
+                return (
+                  <tr key={idx} className={`border-t border-gray-700 ${previewInputIdx === idx ? 'bg-indigo-900/20' : 'bg-gray-900'}`}>
+                    <td className="px-3 py-2 text-center text-white">{row.a}</td>
+                    <td className="px-3 py-2 text-center text-white">{row.b}</td>
+                    <td className="px-3 py-2 text-center text-yellow-300 font-bold">{row.expected}</td>
+                    <td className={`px-3 py-2 text-center font-bold ${submitted
+                      ? matches ? 'text-emerald-400' : 'text-red-400'
+                      : 'text-white'
+                      }`}
+                    >
+                      {gateOut}
+                    </td>
+                    {submitted && (
+                      <td className="px-3 py-2 text-center">
+                        {matches
+                          ? <CheckCircle className="w-4 h-4 text-emerald-400 inline" />
+                          : <XCircle className="w-4 h-4 text-red-400 inline" />
+                        }
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ── Feedback ── */}
+      {submitted && (
+        <div className={`rounded-xl p-3 text-sm mb-4 ${isCorrect
+          ? 'bg-emerald-900/30 border border-emerald-700'
+          : 'bg-red-900/30 border border-red-700'
+          }`}
+        >
+          <ResultBadge correct={isCorrect} />
+          {isCorrect ? (
+            <p className="mt-1 text-emerald-300/80 text-xs">
+              The <span className="font-mono font-bold text-white">{puzzle.answer}</span> gate ({gateSymbolMap[puzzle.answer]}) produces the correct truth table!
+            </p>
+          ) : (
+            <p className="mt-1 text-red-300/80 text-xs">
+              The correct gate was <span className="font-mono font-bold text-white">{puzzle.answer}</span> ({gateSymbolMap[puzzle.answer]}). {puzzle.hint}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* ── Hint ── */}
+      {!submitted && (
+        <button
+          onClick={() => setShowHint(!showHint)}
+          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors underline underline-offset-2 mb-3 block"
+        >
+          {showHint ? 'Hide hint' : 'Need a hint?'}
+        </button>
+      )}
+      {showHint && !submitted && (
+        <div className="rounded-lg bg-indigo-900/20 border border-indigo-700/40 px-3 py-2 text-xs text-indigo-300 mb-4">
+          <Info className="w-3.5 h-3.5 inline-block mr-1" />
+          {puzzle.hint}
+        </div>
+      )}
+
+      {/* ── Action Buttons ── */}
+      <div className="flex items-center gap-2">
+        {!submitted ? (
+          <>
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={!placedGate}
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
-              {b}
-            </div>
-          ))}
-          <span className="ml-3 self-center text-purple-300 text-sm font-mono">
-            = {mode === '2s' ? twosValue : onesValue}
-          </span>
+              Check Circuit
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleReset}
+              className="border-gray-600 text-gray-300 hover:bg-gray-800 gap-1"
+            >
+              <RotateCcw className="w-3 h-3" /> Reset
+            </Button>
+          </>
+        ) : (
+          <Button size="sm" onClick={handleNext} className="bg-emerald-600 hover:bg-emerald-700 gap-1">
+            Next Puzzle <ChevronRight className="w-4 h-4" />
+          </Button>
+        )}
+        <div className="ml-auto flex items-center gap-1.5 text-sm">
+          <Trophy className="w-4 h-4 text-yellow-400" />
+          <span className="font-mono font-bold text-yellow-300">{score}</span>
+          <span className="text-gray-600">/ {puzzleIdx + (submitted ? 1 : 0)}</span>
         </div>
       </div>
-
-      {mode !== 'inversion' && (
-        <div className="mt-4 rounded-xl bg-gray-800/60 border border-gray-700 px-4 py-3 text-sm">
-          <span className="text-gray-400">Original: </span>
-          <span className="font-mono text-white">{value}</span>
-          <span className="text-gray-400 mx-2">→</span>
-          <span className="text-gray-400">{mode === '1s' ? "1's complement" : "2's complement"}: </span>
-          <span className="font-mono text-purple-300">
-            {mode === '2s' ? `-${value}` : `-(${value} = ~${value})`}
-          </span>
-        </div>
-      )}
-
-      {mode === 'inversion' && (
-        <div className="mt-3 text-sm text-gray-400 bg-gray-800/60 rounded-xl px-4 py-2 border border-gray-700">
-          <Info className="w-4 h-4 inline-block mr-1 text-indigo-400" />
-          Original + Inverted ={' '}
-          <span className="font-mono text-white">{value + onesValue}</span> (always 255 for 8 bits)
-        </div>
-      )}
-
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => setBits([0,1,0,1,1,0,1,0])}
-        className="mt-4 border-gray-600 text-gray-300 hover:bg-gray-800 gap-1"
-      >
-        <RotateCcw className="w-3 h-3" /> Reset
-      </Button>
     </ActivityShell>
   )
 }
@@ -775,7 +1159,7 @@ const ComplementExplorer = ({ mode }: { mode: "1s" | "2s" | "inversion" }) => {
 // 8. Signed / Unsigned Interpreter  (Lesson 10)
 // ─────────────────────────────────────────────
 const SignedUnsignedInterpreter = () => {
-  const [bits, setBits] = useState<number[]>([1,0,1,1,0,1,1,0])
+  const [bits, setBits] = useState<number[]>([1, 0, 1, 1, 0, 1, 1, 0])
 
   const toggle = (i: number) => {
     const next = [...bits]
@@ -790,7 +1174,7 @@ const SignedUnsignedInterpreter = () => {
     : -(256 - unsigned)
 
   return (
-    <ActivityShell title="Signed vs Unsigned Interpreter" emoji="±">
+    <ActivityShell title="Signed vs Unsigned Interpreter" emoji=" ">
       <p className="text-gray-300 text-sm mb-4">
         Toggle bits and observe how the same bit pattern represents different values depending on interpretation.
         The <span className="text-yellow-400 font-semibold">MSB (leftmost bit)</span> is the sign bit in signed mode.
@@ -804,19 +1188,18 @@ const SignedUnsignedInterpreter = () => {
             {i !== 0 && <span className="text-[10px] text-gray-600"> </span>}
             <button
               onClick={() => toggle(i)}
-              className={`w-11 h-11 rounded-lg font-mono font-bold text-lg border-2 transition-all ${
-                i === 0
-                  ? b === 1
-                    ? 'bg-yellow-600 border-yellow-400 text-white'
-                    : 'bg-gray-800 border-yellow-600/40 text-gray-400 hover:border-yellow-500'
-                  : b === 1
+              className={`w-11 h-11 rounded-lg font-mono font-bold text-lg border-2 transition-all ${i === 0
+                ? b === 1
+                  ? 'bg-yellow-600 border-yellow-400 text-white'
+                  : 'bg-gray-800 border-yellow-600/40 text-gray-400 hover:border-yellow-500'
+                : b === 1
                   ? 'bg-indigo-600 border-indigo-400 text-white'
                   : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
-              }`}
+                }`}
             >
               {b}
             </button>
-            <span className="text-[10px] text-gray-600 font-mono">{Math.pow(2, 7-i)}</span>
+            <span className="text-[10px] text-gray-600 font-mono">{Math.pow(2, 7 - i)}</span>
           </div>
         ))}
       </div>
@@ -870,7 +1253,7 @@ const BcdAsciiEncoder = ({ mode }: { mode: 'bcd' | 'ascii' }) => {
   return (
     <ActivityShell
       title={isBcd ? 'BCD Encoder' : 'ASCII to Binary Encoder'}
-      emoji={isBcd ? '🔢' : '🔡'}
+      emoji={isBcd ? ' ' : ' '}
     >
       <p className="text-gray-300 text-sm mb-4">
         {isBcd
@@ -934,16 +1317,16 @@ const BooleanScenarioBuilder = () => {
 
   const ops = [
     { label: 'A AND B', symbol: 'A · B', value: a && b, color: 'indigo' },
-    { label: 'A OR B',  symbol: 'A + B', value: a || b,  color: 'green'  },
-    { label: 'NOT A',   symbol: "A'",    value: !a,       color: 'orange' },
-    { label: 'NOT B',   symbol: "B'",    value: !b,       color: 'pink'   },
+    { label: 'A OR B', symbol: 'A + B', value: a || b, color: 'green' },
+    { label: 'NOT A', symbol: "A'", value: !a, color: 'orange' },
+    { label: 'NOT B', symbol: "B'", value: !b, color: 'pink' },
   ]
 
   const colorMap: Record<string, { pill: string; true: string; false: string }> = {
     indigo: { pill: 'bg-indigo-600 border-indigo-400', true: 'text-indigo-300', false: 'text-gray-600' },
-    green:  { pill: 'bg-green-600  border-green-400',  true: 'text-green-300',  false: 'text-gray-600' },
+    green: { pill: 'bg-green-600  border-green-400', true: 'text-green-300', false: 'text-gray-600' },
     orange: { pill: 'bg-orange-600 border-orange-400', true: 'text-orange-300', false: 'text-gray-600' },
-    pink:   { pill: 'bg-pink-600   border-pink-400',   true: 'text-pink-300',   false: 'text-gray-600' },
+    pink: { pill: 'bg-pink-600   border-pink-400', true: 'text-pink-300', false: 'text-gray-600' },
   }
 
   const ToggleBtn = ({
@@ -951,11 +1334,10 @@ const BooleanScenarioBuilder = () => {
   }: { label: string; value: boolean; onClick: () => void }) => (
     <button
       onClick={onClick}
-      className={`w-28 h-28 rounded-2xl text-4xl font-mono font-bold border-3 transition-all duration-150 select-none flex flex-col items-center justify-center gap-1 border-2 ${
-        value
-          ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/50'
-          : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
-      }`}
+      className={`w-28 h-28 rounded-2xl text-4xl font-mono font-bold border-3 transition-all duration-150 select-none flex flex-col items-center justify-center gap-1 border-2 ${value
+        ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/50'
+        : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+        }`}
     >
       <span>{label}</span>
       <span className={`text-sm font-semibold ${value ? 'text-indigo-200' : 'text-gray-600'}`}>
@@ -965,7 +1347,7 @@ const BooleanScenarioBuilder = () => {
   )
 
   return (
-    <ActivityShell title="Boolean Values Playground" emoji="🔀">
+    <ActivityShell title="Boolean Values Playground" emoji=" ">
       <p className="text-gray-400 text-sm mb-6">
         Toggle <span className="font-mono font-bold text-white">A</span> and{' '}
         <span className="font-mono font-bold text-white">B</span> to see how Boolean
@@ -985,11 +1367,10 @@ const BooleanScenarioBuilder = () => {
           return (
             <div
               key={op.label}
-              className={`rounded-xl border-2 p-3 text-center transition-all duration-200 ${
-                op.value
-                  ? `border-${op.color}-600 bg-${op.color}-900/20`
-                  : 'border-gray-700 bg-gray-800/40'
-              }`}
+              className={`rounded-xl border-2 p-3 text-center transition-all duration-200 ${op.value
+                ? `border-${op.color}-600 bg-${op.color}-900/20`
+                : 'border-gray-700 bg-gray-800/40'
+                }`}
             >
               <div className="text-xs text-gray-500 font-semibold uppercase tracking-widest mb-1">
                 {op.label}
@@ -1020,11 +1401,11 @@ const BooleanScenarioBuilder = () => {
 const KMapActivity = () => {
   // 2-variable K-Map practice: show random truth table, user identifies the simplified expression
   const problems = [
-    { values: [0,0,0,1], answer: "A · B", hint: "Only bottom-right cell = 1. Both A and B must be 1." },
-    { values: [0,1,0,1], answer: "B", hint: "Right column (B=1) is all 1s. Simplify to just B." },
-    { values: [0,0,1,1], answer: "A", hint: "Bottom row (A=1) is all 1s. Simplify to just A." },
-    { values: [0,1,1,1], answer: "A + B", hint: "Three 1s — everything except (A=0,B=0). That's A OR B." },
-    { values: [1,0,0,0], answer: "A' · B'", hint: "Only top-left (A=0,B=0) = 1. Both must be 0." },
+    { values: [0, 0, 0, 1], answer: "A · B", hint: "Only bottom-right cell = 1. Both A and B must be 1." },
+    { values: [0, 1, 0, 1], answer: "B", hint: "Right column (B=1) is all 1s. Simplify to just B." },
+    { values: [0, 0, 1, 1], answer: "A", hint: "Bottom row (A=1) is all 1s. Simplify to just A." },
+    { values: [0, 1, 1, 1], answer: "A + B", hint: "Three 1s — everything except (A=0,B=0). That's A OR B." },
+    { values: [1, 0, 0, 0], answer: "A' · B'", hint: "Only top-left (A=0,B=0) = 1. Both must be 0." },
   ]
   const [pi, setPi] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
@@ -1048,7 +1429,7 @@ const KMapActivity = () => {
   ]
 
   return (
-    <ActivityShell title="K-Map Simplification Challenge" emoji="🗺️">
+    <ActivityShell title="K-Map Simplification Challenge" emoji=" ">
       <p className="text-gray-300 text-sm mb-4">
         Analyze the Karnaugh Map and select the simplified Boolean expression.
       </p>
@@ -1074,11 +1455,10 @@ const KMapActivity = () => {
                   return (
                     <div
                       key={col}
-                      className={`w-12 h-12 border border-gray-600 flex items-center justify-center text-xl font-mono font-bold ${
-                        v === 1
-                          ? 'bg-indigo-700 text-white'
-                          : 'bg-gray-800 text-gray-600'
-                      }`}
+                      className={`w-12 h-12 border border-gray-600 flex items-center justify-center text-xl font-mono font-bold ${v === 1
+                        ? 'bg-indigo-700 text-white'
+                        : 'bg-gray-800 text-gray-600'
+                        }`}
                     >
                       {v}
                     </div>
@@ -1096,15 +1476,14 @@ const KMapActivity = () => {
           <button
             key={c}
             onClick={() => { setSelected(c); setChecked(false) }}
-            className={`px-4 py-2 rounded-xl font-mono text-sm font-semibold border-2 transition-all ${
-              selected === c
-                ? checked
-                  ? c === p.answer
-                    ? 'bg-emerald-800 border-emerald-500 text-emerald-200'
-                    : 'bg-red-800 border-red-500 text-red-200'
-                  : 'bg-indigo-800 border-indigo-500 text-white'
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
-            }`}
+            className={`px-4 py-2 rounded-xl font-mono text-sm font-semibold border-2 transition-all ${selected === c
+              ? checked
+                ? c === p.answer
+                  ? 'bg-emerald-800 border-emerald-500 text-emerald-200'
+                  : 'bg-red-800 border-red-500 text-red-200'
+                : 'bg-indigo-800 border-indigo-500 text-white'
+              : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'
+              }`}
           >
             {c}
           </button>
@@ -1178,66 +1557,9 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
     return <BooleanLawMatcher />
   }
 
-  // ── Lesson 5: Intro to Number Systems ──
+  // ── Lesson 5: Intro to Number Systems (Complement Explorer) ──
   if (lessonId === 5) {
-    if (title.includes('binary') || tags.includes('binary')) {
-      return <BinaryBuilderActivity />
-    }
-    if (title.includes('hexadecimal') || tags.includes('hexadecimal')) {
-      return (
-        <BaseConverterQuiz
-          fromBase={16}
-          toBase={2}
-          fromLabel="Hexadecimal"
-          toLabel="Binary"
-          questions={[
-            { from: 'A', to: '1010' },
-            { from: 'F', to: '1111' },
-            { from: '3', to: '0011' },
-            { from: 'C', to: '1100' },
-            { from: 'B', to: '1011' },
-            { from: '7', to: '0111' },
-            { from: 'E', to: '1110' },
-          ]}
-        />
-      )
-    }
-    if (title.includes('octal') || tags.includes('octal')) {
-      return (
-        <BaseConverterQuiz
-          fromBase={8}
-          toBase={2}
-          fromLabel="Octal"
-          toLabel="Binary"
-          questions={[
-            { from: '7', to: '111' },
-            { from: '5', to: '101' },
-            { from: '357', to: '011101111' },
-            { from: '4', to: '100' },
-            { from: '12', to: '001010' },
-            { from: '3', to: '011' },
-          ]}
-        />
-      )
-    }
-    if (title.includes('decimal') || tags.includes('decimal')) {
-      return (
-        <BaseConverterQuiz
-          fromBase={10}
-          toBase={2}
-          fromLabel="Decimal"
-          toLabel="Binary"
-          questions={[
-            { from: '5', to: '101' },
-            { from: '10', to: '1010' },
-            { from: '15', to: '1111' },
-            { from: '8', to: '1000' },
-            { from: '22', to: '10110' },
-          ]}
-        />
-      )
-    }
-    return <BinaryBuilderActivity />
+    return <NumberSystemComplementExplorer />
   }
 
   // ── Lesson 6: Types of Number Systems ──
@@ -1343,15 +1665,9 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
     return <BinaryArithmeticTrainer op="add" />
   }
 
-  // ── Lesson 9: Complements ──
+  // ── Lesson 9: Logic Gates (Circuit Builder) ──
   if (lessonId === 9) {
-    if (title.includes("2's") || title.includes('twos') || tags.includes('twos')) {
-      return <ComplementExplorer mode="2s" />
-    }
-    if (title.includes('inversion') || tags.includes('not') || tags.includes('flip')) {
-      return <ComplementExplorer mode="inversion" />
-    }
-    return <ComplementExplorer mode="1s" />
+    return <LogicGateCircuitBuilder />
   }
 
   // ── Lesson 10: Signed and Unsigned ──
