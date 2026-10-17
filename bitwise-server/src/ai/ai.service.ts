@@ -58,6 +58,62 @@ export class AiService {
     return this.getFallbackResponse(message);
   }
 
+  async getTutorResponse(
+    context: string,
+    step: string,
+    question: string,
+  ): Promise<string> {
+    this.logger.log('Processing tutor request');
+
+    const tutorPrompt = `You are a friendly tutor on the Bitwise learning platform.
+The student is working on: ${context}
+Current step: ${step}
+${question ? `Student's question: ${question}` : 'Provide a beginner-friendly explanation of this step.'}
+
+Respond with:
+1. A clear, simple explanation (2-3 sentences max)
+2. A short worked example if helpful
+3. One follow-up question to test understanding
+
+Keep it concise. Use plain language. No markdown headers.`;
+
+    const validKeys = AI_CONFIG.chatApiKeys;
+
+    if (validKeys.length === 0) {
+      this.logger.warn('No API keys for tutor. Using fallback.');
+      return this.getTutorFallback(step, question);
+    }
+
+    for (const apiKey of validKeys) {
+      try {
+        const google = createGoogleProvider(apiKey);
+        const result = await generateText({
+          model: google(AI_CONFIG.modelName),
+          prompt: tutorPrompt,
+          temperature: 0.4,
+          topP: 0.9,
+          maxOutputTokens: 400,
+        });
+        return result.text;
+      } catch (error: any) {
+        this.logger.warn(
+          `Tutor API call failed with key ending in ...${apiKey.slice(-4)}: ${error.message}`,
+        );
+        continue;
+      }
+    }
+
+    this.logger.error('All API keys failed for tutor.');
+    return this.getTutorFallback(step, question);
+  }
+
+  private getTutorFallback(step: string, question: string): string {
+    if (question) {
+      return `Great question! The step "${step}" works by applying the fundamental rules of the number system involved. Each digit is processed according to its positional value. Try breaking it down column by column to see the pattern! 🧠`;
+    }
+    return `This step processes the value column by column using positional notation. Each digit has a weight based on its position (powers of the base). Work through it slowly and you'll see the pattern! 💡`;
+  }
+
   private getFallbackResponse(message: string): string {
     const lowerMsg = message.toLowerCase();
 

@@ -187,7 +187,7 @@ export const KMapHelpGuide: React.FC<KMapHelpGuideProps> = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <Button
           variant="outline"
           size="sm"

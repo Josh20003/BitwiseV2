@@ -1,14 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeftRight } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiService } from '@/services/api.service';
+import { AskAiTutor } from '@/components/AskAiTutor';
 
 export function NumberSystemConverter() {
-  const [sourceValue, setSourceValue] = useState('');
-  const [sourceBase, setSourceBase] = useState('2');
-  const [targetBase, setTargetBase] = useState('10');
+  const [sourceValue, setSourceValue] = useState('123');
+  const [sourceBase, setSourceBase] = useState('8');
+  const [targetBase, setTargetBase] = useState('2');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,55 +30,75 @@ export function NumberSystemConverter() {
 
   const parseBase = (base: string) => parseInt(base, 10);
 
-  const handleConvert = async () => {
+  const handleConvert = async (val = sourceValue, sBase = sourceBase, tBase = targetBase) => {
+    if (!val.trim()) return;
     setLoading(true);
     setError('');
     try {
-      const data = await apiService.post<{ success: boolean, result: any, error?: string }>('/calculator/convert', {
-        value: sourceValue.trim(),
-        fromBase: parseBase(sourceBase),
-        toBase: parseBase(targetBase)
+      const data = await apiService.post<{
+        success: boolean;
+        result: any;
+        error?: string;
+      }>('/calculator/convert', {
+        value: val.trim(),
+        fromBase: parseBase(sBase),
+        toBase: parseBase(tBase),
       });
-      
+
       if (data.success && data.result) {
         setResult(data.result);
       } else {
         throw new Error(data.error || 'Conversion failed');
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      setError(err.message || 'An error occurred during conversion');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    // Initial calculation on mount to match the mockup
+    handleConvert('123', '8', '2');
+  }, []);
+
+  const handleSwapBases = () => {
+    const temp = sourceBase;
+    setSourceBase(targetBase);
+    setTargetBase(temp);
+  };
+
   return (
     <div className="w-full space-y-6">
-      <Card>
-        <CardContent className="space-y-6 pt-6">
+      {/* Input Card */}
+      <Card className="bg-card border-border overflow-hidden">
+        <CardContent className="space-y-5 pt-6">
           {/* Source Value Input */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">Value to Convert</label>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-foreground">
+              Value to Convert
+            </label>
             <Input
               type="text"
-              placeholder="Enter number..."
+              placeholder="e.g. 123"
               value={sourceValue}
               onChange={(e) => setSourceValue(e.target.value.toUpperCase())}
-              className="font-mono"
+              className="font-mono text-sm h-10 bg-background"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="none"
               spellCheck={false}
-              inputMode="text"
             />
           </div>
 
-          {/* Base Selection Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-foreground">From Base</label>
+          {/* Base Selection Row with Swap button */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex-1 w-full space-y-1.5">
+              <label className="block text-xs font-medium text-foreground">
+                From Base
+              </label>
               <Select value={sourceBase} onValueChange={setSourceBase}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10 bg-background text-xs font-medium">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -83,10 +111,21 @@ export function NumberSystemConverter() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-foreground">To Base</label>
+            <button
+              type="button"
+              onClick={handleSwapBases}
+              className="sm:mt-5 p-2 rounded-lg border border-border/70 hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition-colors shrink-0"
+              title="Swap from/to bases"
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+            </button>
+
+            <div className="flex-1 w-full space-y-1.5">
+              <label className="block text-xs font-medium text-foreground">
+                To Base
+              </label>
               <Select value={targetBase} onValueChange={setTargetBase}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10 bg-background text-xs font-medium">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -101,15 +140,15 @@ export function NumberSystemConverter() {
           </div>
 
           {error && (
-            <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm border border-destructive/20">
+            <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-xs border border-destructive/20">
               {error}
             </div>
           )}
 
           <Button
-            onClick={handleConvert}
-            disabled={loading || !sourceValue}
-            className="w-full"
+            onClick={() => handleConvert()}
+            disabled={loading || !sourceValue.trim()}
+            className="w-full h-10 text-xs font-medium cursor-pointer"
           >
             {loading ? 'Converting...' : 'Convert'}
           </Button>
@@ -118,77 +157,128 @@ export function NumberSystemConverter() {
 
       {/* Results */}
       {result && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Conversion Result</CardTitle>
+        <Card className="bg-card border-border overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-bold">Conversion Result</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Result Display */}
-            <div className="p-4 bg-muted rounded-lg border border-border space-y-2">
-              <div className="text-sm text-muted-foreground">Input</div>
-              <div className="text-2xl font-mono font-bold text-foreground">
-                {result.sourceValue} <span className="text-muted-foreground text-lg">(base {result.sourceBase})</span>
+            {/* Result Display: horizontal layout matching mockup */}
+            <div className="p-5 rounded-xl border border-border/70 bg-[#090d18] flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground font-medium mb-1">
+                  Input
+                </div>
+                <div className="text-xl sm:text-2xl font-mono font-bold text-foreground">
+                  {result.sourceValue}{' '}
+                  <span className="text-muted-foreground text-xs sm:text-sm font-normal">
+                    (base {result.sourceBase})
+                  </span>
+                </div>
               </div>
 
-              <div className="text-center py-2 text-muted-foreground">↓</div>
+              <div className="text-muted-foreground text-xl font-bold px-4">→</div>
 
-              <div className="text-sm text-muted-foreground">Output</div>
-              <div className="text-2xl font-mono font-bold text-emerald-500 dark:text-emerald-400">
-                {result.targetValue} <span className="text-muted-foreground text-lg">(base {result.targetBase})</span>
+              <div>
+                <div className="text-xs text-muted-foreground font-medium mb-1">
+                  Output
+                </div>
+                <div className="text-xl sm:text-2xl font-mono font-bold text-emerald-400">
+                  {result.targetValue}{' '}
+                  <span className="text-muted-foreground text-xs sm:text-sm font-normal">
+                    (base {result.targetBase})
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Conversion Steps */}
             {result.steps && result.steps.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-lg text-foreground">Conversion Steps</h3>
+                <h3 className="font-semibold text-sm sm:text-base text-foreground tracking-tight">
+                  Conversion Steps
+                </h3>
                 {result.steps.map((step: any, idx: number) => (
-                  <div key={idx} className="p-3 border-l-4 border-primary bg-primary/5 rounded">
-                    <div className="text-sm font-medium text-foreground">{step.description}</div>
-                    <div className="text-sm mt-1 font-mono text-muted-foreground">{step.operation}</div>
-                    <div className="text-lg font-mono font-bold text-primary mt-2">{step.result}</div>
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl border border-border/80 bg-[#0c101d] shadow-sm"
+                  >
+                    <AskAiTutor
+                      context={`Number conversion from base ${result.sourceBase} to base ${result.targetBase}: ${result.sourceValue}`}
+                      stepDescription={`${step.description}: ${step.operation || ''} = ${step.result}`}
+                      suggestedQuestions={[
+                        `Why does ${step.operation || result.sourceValue} equal ${step.result}?`,
+                        'Can you explain how this step works mathematically?',
+                      ]}
+                      subtitle="Answers based on this conversion step"
+                    >
+                      <div>
+                        <div className="font-semibold text-xs sm:text-sm text-foreground">
+                          {step.description}
+                        </div>
+                        {step.operation && (
+                          <div className="text-xs font-mono text-muted-foreground mt-1">
+                            {step.operation}
+                          </div>
+                        )}
+                        <div className="text-base sm:text-lg font-mono font-bold text-foreground mt-1">
+                          {step.result}
+                        </div>
+                      </div>
+                    </AskAiTutor>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Explanation */}
+            {/* Explanation if available */}
             {result.explanation && (
-              <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <h4 className="font-semibold mb-2 text-foreground">Explanation</h4>
-                <p className="text-sm whitespace-pre-wrap text-muted-foreground">{result.explanation}</p>
+              <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 space-y-1.5">
+                <h4 className="font-semibold text-xs text-foreground">
+                  Summary
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {result.explanation}
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Quick Reference */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Reference</CardTitle>
+      {/* Quick Reference matching mockup */}
+      <Card className="bg-card border-border overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-bold">Quick Reference</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="p-3 rounded-lg bg-muted/50 border border-border">
-              <h4 className="font-semibold mb-1 text-foreground">Binary (Base 2)</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+            <div className="p-3.5 rounded-xl bg-[#090d18] border border-border/70 space-y-1">
+              <h4 className="font-semibold text-foreground">Binary (Base 2)</h4>
               <p className="text-muted-foreground">Uses digits: 0, 1</p>
-              <p className="text-muted-foreground/70 text-xs mt-1">Used in digital systems</p>
+              <p className="text-muted-foreground/70 text-[11px]">
+                Used in digital systems
+              </p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50 border border-border">
-              <h4 className="font-semibold mb-1 text-foreground">Octal (Base 8)</h4>
+            <div className="p-3.5 rounded-xl bg-[#090d18] border border-border/70 space-y-1">
+              <h4 className="font-semibold text-foreground">Octal (Base 8)</h4>
               <p className="text-muted-foreground">Uses digits: 0-7</p>
-              <p className="text-muted-foreground/70 text-xs mt-1">Compact binary representation</p>
+              <p className="text-muted-foreground/70 text-[11px]">
+                Compact binary representation
+              </p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50 border border-border">
-              <h4 className="font-semibold mb-1 text-foreground">Decimal (Base 10)</h4>
+            <div className="p-3.5 rounded-xl bg-[#090d18] border border-border/70 space-y-1">
+              <h4 className="font-semibold text-foreground">Decimal (Base 10)</h4>
               <p className="text-muted-foreground">Uses digits: 0-9</p>
-              <p className="text-muted-foreground/70 text-xs mt-1">Our everyday number system</p>
+              <p className="text-muted-foreground/70 text-[11px]">
+                Our everyday number system
+              </p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50 border border-border">
-              <h4 className="font-semibold mb-1 text-foreground">Hexadecimal (Base 16)</h4>
+            <div className="p-3.5 rounded-xl bg-[#090d18] border border-border/70 space-y-1">
+              <h4 className="font-semibold text-foreground">Hexadecimal (Base 16)</h4>
               <p className="text-muted-foreground">Uses digits: 0-9, A-F</p>
-              <p className="text-muted-foreground/70 text-xs mt-1">Used in computing and memory addressing</p>
+              <p className="text-muted-foreground/70 text-[11px]">
+                Used in computing and memory addressing
+              </p>
             </div>
           </div>
         </CardContent>

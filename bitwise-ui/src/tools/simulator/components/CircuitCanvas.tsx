@@ -1746,7 +1746,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       <div className="absolute top-3 left-3 z-10 flex flex-col md:flex-row gap-0.5 p-1 bg-background/90 backdrop-blur-sm rounded-md shadow-lg border border-gray-200">
         {tools.map((tool) => (
           <Tooltip key={tool.id}>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <Button
                 variant={
                   toolbarState.selectedTool === tool.id ? 'default' : 'ghost'
@@ -1767,7 +1767,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         <div className="h-px w-8 md:w-px md:h-8 bg-gray-200 my-1 md:mx-1 self-center" />
         {/* Undo Button */}
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
@@ -1783,7 +1783,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         </Tooltip>
         {/* Redo Button */}
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
@@ -1802,7 +1802,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       <div className="absolute top-3 right-15 z-10 flex flex-col gap-2 p-1">
         {/* Boolean Expression Toggle */}
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Button
               variant={showBooleanExpression ? 'default' : 'outline'}
               size="sm"
@@ -1821,7 +1821,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       <div className="absolute top-3 right-3 z-10 flex flex-col gap-2 p-1">
         {/* Clear All */}
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Button
               variant="destructive"
               size="sm"
@@ -1836,7 +1836,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
 
         {/* Reset */}
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Button
               variant="outline"
               size="sm"
@@ -1854,7 +1854,7 @@ export const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
 
         {/* Grid Toggle */}
         <Tooltip>
-          <TooltipTrigger>
+          <TooltipTrigger asChild>
             <Button
               variant={
                 circuitHook.circuitState.snapToGrid ? 'default' : 'outline'
