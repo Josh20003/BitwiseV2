@@ -1059,7 +1059,7 @@ const BinaryArithmeticTrainer = ({ op }: { op: ArithOp }) => {
     return { a, b, ans: op === 'add' ? a + b : a - b }
   }, [op])
 
-  const [q, setQ] = useState(genQ)
+  const [q, setQ] = useState(() => genQ())
   const [input, setInput] = useState('')
   const [checked, setChecked] = useState(false)
   const isCorrect = checked && parseInt(input, 2) === q.ans
