@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { CheckCircle, XCircle, RefreshCw, Zap, ChevronRight, RotateCcw, Info, Trophy } from 'lucide-react'
+import { CheckCircle, XCircle, RefreshCw, Zap, ChevronRight, RotateCcw, Info, Trophy, ArrowUp, BookOpen, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 // ─────────────────────────────────────────────
@@ -612,14 +612,12 @@ const NumberSystemComplementExplorer = () => {
 // 2. Base Converter Quiz  (Lesson 5 – Decimal/Octal/Hex topics, Lesson 6)
 // ─────────────────────────────────────────────
 const BaseConverterQuiz = ({
-  fromBase,
-  toBase,
   fromLabel,
   toLabel,
   questions,
 }: {
-  fromBase: number
-  toBase: number
+  fromBase?: number
+  toBase?: number
   fromLabel: string
   toLabel: string
   questions: { from: string; to: string }[]
@@ -975,7 +973,7 @@ const BooleanLawMatcher = () => {
   const [selected, setSelected] = useState<string | null>(null)
   const [checked, setChecked] = useState(false)
   const q = pairs[idx]
-  const options = ["A", "0", "1", "A'"].filter((o) => true)
+  const options = ["A", "0", "1", "A'"]
   const isCorrect = selected === q.result
 
   const next = () => {
@@ -2240,6 +2238,1296 @@ const KMapActivity = () => {
 }
 
 // ─────────────────────────────────────────────
+// 12b. Binary ↔ Decimal Relationship Explorer  (Lesson 2 – Binary ↔ Decimal)
+// ─────────────────────────────────────────────
+const RELATIONSHIP_CHALLENGES = [
+  { target: 42, hint: '32 + 8 + 2' },
+  { target: 100, hint: '64 + 32 + 4' },
+  { target: 7, hint: '4 + 2 + 1' },
+  { target: 200, hint: '128 + 64 + 8' },
+  { target: 55, hint: '32 + 16 + 4 + 2 + 1' },
+  { target: 170, hint: '128 + 32 + 8 + 2' },
+  { target: 15, hint: '8 + 4 + 2 + 1' },
+  { target: 255, hint: 'All bits ON' },
+]
+
+const BinaryDecimalRelationship = () => {
+  const [bits, setBits] = useState<number[]>([0, 0, 1, 0, 1, 0, 1, 0]) // 42
+  const [challengeMode, setChallengeMode] = useState(false)
+  const [ci, setCi] = useState(0)
+  const [showHint, setShowHint] = useState(false)
+  const [completed, setCompleted] = useState(0)
+
+  const toggle = (i: number) => {
+    const next = [...bits]
+    next[i] = next[i] === 1 ? 0 : 1
+    setBits(next)
+  }
+
+  const decimalValue = bits.reduce((acc, b, i) => acc + b * Math.pow(2, 7 - i), 0)
+  const powers = bits.map((_, i) => Math.pow(2, 7 - i)) // [128,64,32,16,8,4,2,1]
+  const activePowers = bits.map((b, i) => b === 1 ? powers[i] : 0).filter(v => v > 0)
+
+  const challenge = RELATIONSHIP_CHALLENGES[ci % RELATIONSHIP_CHALLENGES.length]
+  const isSolved = decimalValue === challenge.target
+
+  const nextChallenge = () => {
+    setCi(p => p + 1)
+    setBits([0, 0, 0, 0, 0, 0, 0, 0])
+    setShowHint(false)
+    setCompleted(p => p + 1)
+  }
+
+  return (
+    <ActivityShell title="Binary ↔ Decimal Relationship" emoji=" ">
+      <p className="text-gray-300 text-sm mb-4">
+        Toggle each bit to see how <span className="text-indigo-300 font-semibold">powers of 2</span> build up a decimal number.
+        Each position has a weight — only <span className="text-emerald-300 font-semibold">active (1)</span> bits contribute to the total.
+      </p>
+
+      {/* Bit toggles with power labels */}
+      <div className="flex flex-col items-center gap-1 mb-4">
+        {/* Power of 2 labels */}
+        <div className="flex gap-1.5">
+          {powers.map((_, i) => (
+            <div key={`pow-${i}`} className="w-12 text-center">
+              <span className="text-[10px] text-gray-500 font-mono">2{`\u2077\u2076\u2075\u2074\u00B3\u00B2\u00B9\u2070`[i]}</span>
+            </div>
+          ))}
+        </div>
+        {/* Weight labels */}
+        <div className="flex gap-1.5">
+          {powers.map((p, i) => (
+            <div key={`wt-${i}`} className="w-12 text-center">
+              <span className={`text-[10px] font-mono font-bold ${bits[i] === 1 ? 'text-emerald-400' : 'text-gray-600'}`}>{p}</span>
+            </div>
+          ))}
+        </div>
+        {/* Bit buttons */}
+        <div className="flex gap-1.5">
+          {bits.map((bit, i) => (
+            <button
+              key={i}
+              onClick={() => toggle(i)}
+              className={`w-12 h-14 rounded-xl text-xl font-bold font-mono border-2 transition-all ${bit === 1
+                ? 'bg-emerald-600 border-emerald-400 text-white shadow-md shadow-emerald-900/50'
+                : 'bg-gray-800 border-gray-600 text-gray-500 hover:border-gray-400'
+                }`}
+            >
+              {bit}
+            </button>
+          ))}
+        </div>
+        {/* Position indices */}
+        <div className="flex gap-1.5">
+          {powers.map((_, i) => (
+            <div key={`pos-${i}`} className="w-12 text-center">
+              <span className="text-[9px] text-gray-600 font-mono">pos {7 - i}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Expansion and result */}
+      <div className="rounded-xl border border-gray-700 bg-gray-900/60 p-4 mb-4">
+        <div className="text-sm text-gray-400 mb-2 font-mono">
+          {activePowers.length > 0 ? (
+            <>
+              <span className="text-gray-500">Expansion: </span>
+              {activePowers.map((p, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="text-gray-600"> + </span>}
+                  <span className="text-emerald-400 font-bold">{p}</span>
+                </span>
+              ))}
+            </>
+          ) : (
+            <span className="text-gray-600 italic">Toggle a bit to see the expansion</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">Binary:</span>
+          <span className="text-lg font-mono font-bold text-indigo-300 tracking-widest">{bits.join('')}<sub className="text-xs text-gray-500">₂</sub></span>
+          <span className="text-gray-600">=</span>
+          <span className="text-sm text-gray-500">Decimal:</span>
+          <span className="text-2xl font-mono font-bold text-yellow-300">{decimalValue}<sub className="text-xs text-gray-500">₁₀</sub></span>
+        </div>
+        {/* Odd/Even indicator */}
+        <div className="mt-2 text-xs text-gray-500">
+          LSB is <span className={`font-bold ${bits[7] === 1 ? 'text-amber-400' : 'text-cyan-400'}`}>{bits[7]}</span> → number is <span className={`font-semibold ${bits[7] === 1 ? 'text-amber-400' : 'text-cyan-400'}`}>{bits[7] === 1 ? 'ODD' : 'EVEN'}</span>
+        </div>
+      </div>
+
+      {/* Challenge mode */}
+      <button
+        onClick={() => { setChallengeMode(!challengeMode); setBits([0, 0, 0, 0, 0, 0, 0, 0]); setShowHint(false) }}
+        className="text-sm text-indigo-400 hover:text-indigo-300 underline underline-offset-2 mb-3 transition-colors"
+      >
+        {challengeMode ? 'Back to Free Explore' : 'Challenge: Build a Decimal Number'}
+      </button>
+
+      {challengeMode && (
+        <div className="mt-2 p-4 rounded-xl border border-gray-700 bg-gray-900/50">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-gray-300 text-sm">
+              Toggle the bits to make: <span className="text-2xl font-mono font-bold text-yellow-300 ml-2">{challenge.target}<sub className="text-xs text-gray-500">₁₀</sub></span>
+            </p>
+            <span className="text-xs text-gray-600">{completed} solved</span>
+          </div>
+
+          {isSolved ? (
+            <div className="rounded-xl p-3 text-sm bg-emerald-900/30 border border-emerald-700 flex items-center justify-between">
+              <ResultBadge correct={true} />
+              <Button size="sm" onClick={nextChallenge} className="bg-emerald-600 hover:bg-emerald-700 gap-1">
+                Next Challenge <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className={`rounded-lg px-3 py-1.5 text-sm font-mono ${decimalValue < challenge.target ? 'text-blue-400' : 'text-red-400'}`}>
+                Current: {decimalValue} ({decimalValue < challenge.target ? `need ${challenge.target - decimalValue} more` : `${decimalValue - challenge.target} too much`})
+              </div>
+              <button
+                onClick={() => setShowHint(!showHint)}
+                className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
+              >
+                {showHint ? 'Hide hint' : '💡 Hint'}
+              </button>
+            </div>
+          )}
+          {showHint && !isSolved && (
+            <p className="mt-2 text-xs text-gray-500 italic">Hint: {challenge.hint}</p>
+          )}
+        </div>
+      )}
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
+// 12. Digit Groupings Explorer  (Lesson 2 – Digit Groupings)
+// ─────────────────────────────────────────────
+const DIGIT_GROUPING_QUIZ = [
+  { binary: '10110101', answer: 'B5', hint: 'Split into nibbles: 1011 = B, 0101 = 5' },
+  { binary: '11001010', answer: 'CA', hint: 'Split into nibbles: 1100 = C, 1010 = A' },
+  { binary: '11111111', answer: 'FF', hint: 'Split into nibbles: 1111 = F, 1111 = F' },
+  { binary: '01000001', answer: '41', hint: 'Split into nibbles: 0100 = 4, 0001 = 1 (ASCII "A")' },
+  { binary: '00000000', answer: '00', hint: 'Split into nibbles: 0000 = 0, 0000 = 0' },
+  { binary: '10101010', answer: 'AA', hint: 'Split into nibbles: 1010 = A, 1010 = A' },
+]
+
+const DigitGroupingsExplorer = () => {
+  const [bits, setBits] = useState<number[]>([1, 0, 1, 1, 0, 1, 0, 1])
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [qi, setQi] = useState(0)
+  const [quizInput, setQuizInput] = useState('')
+  const [checked, setChecked] = useState(false)
+
+  const toggle = (i: number) => {
+    const next = [...bits]
+    next[i] = next[i] === 1 ? 0 : 1
+    setBits(next)
+  }
+
+  // Compute groupings
+  const nibbleHigh = bits.slice(0, 4)
+  const nibbleLow = bits.slice(4, 8)
+  const toNibbleHex = (nibble: number[]) => parseInt(nibble.join(''), 2).toString(16).toUpperCase()
+  const byteValue = parseInt(bits.join(''), 2)
+
+  const q = DIGIT_GROUPING_QUIZ[qi % DIGIT_GROUPING_QUIZ.length]
+  const isCorrect = quizInput.trim().toUpperCase() === q.answer.toUpperCase()
+
+  const checkQuiz = () => { if (quizInput.trim()) setChecked(true) }
+  const advanceQuiz = () => { setQi(p => p + 1); setQuizInput(''); setChecked(false) }
+
+  return (
+    <ActivityShell title="Digit Groupings Explorer" emoji=" ">
+      <p className="text-gray-300 text-sm mb-4">
+        Toggle bits to explore how binary digits group into{' '}
+        <span className="text-amber-300 font-semibold">nibbles</span> (4 bits) and{' '}
+        <span className="text-cyan-300 font-semibold">bytes</span> (8 bits).
+      </p>
+
+      {/* Interactive bit toggles with grouping highlights */}
+      <div className="flex flex-col items-center gap-4 mb-6">
+        <div className="flex gap-1">
+          {/* High nibble */}
+          <div className="flex gap-1 p-2 rounded-lg border-2 border-amber-500/40 bg-amber-900/10 relative">
+            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-amber-400 bg-[#1a1f35] px-1.5 rounded">
+              NIBBLE (HIGH)
+            </span>
+            {nibbleHigh.map((bit, i) => (
+              <button
+                key={`h-${i}`}
+                onClick={() => toggle(i)}
+                className={`w-10 h-12 rounded-lg text-lg font-bold font-mono border-2 transition-all ${bit === 1
+                  ? 'bg-indigo-600 border-indigo-400 text-white shadow-md shadow-indigo-900/50'
+                  : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+                  }`}
+              >
+                {bit}
+              </button>
+            ))}
+          </div>
+          {/* Low nibble */}
+          <div className="flex gap-1 p-2 rounded-lg border-2 border-amber-500/40 bg-amber-900/10 relative">
+            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-amber-400 bg-[#1a1f35] px-1.5 rounded">
+              NIBBLE (LOW)
+            </span>
+            {nibbleLow.map((bit, i) => (
+              <button
+                key={`l-${i}`}
+                onClick={() => toggle(i + 4)}
+                className={`w-10 h-12 rounded-lg text-lg font-bold font-mono border-2 transition-all ${bit === 1
+                  ? 'bg-indigo-600 border-indigo-400 text-white shadow-md shadow-indigo-900/50'
+                  : 'bg-gray-800 border-gray-600 text-gray-400 hover:border-gray-400'
+                  }`}
+              >
+                {bit}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Byte border */}
+        <div className="w-full max-w-sm border-2 border-cyan-500/30 rounded-xl p-3 bg-cyan-900/10">
+          <div className="text-[9px] font-bold text-cyan-400 mb-2 text-center">1 BYTE = 2 NIBBLES = 8 BITS</div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <span className="text-xs text-gray-500 block">High Nibble</span>
+              <span className="text-lg font-mono font-bold text-amber-300">0x{toNibbleHex(nibbleHigh)}</span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 block">Low Nibble</span>
+              <span className="text-lg font-mono font-bold text-amber-300">0x{toNibbleHex(nibbleLow)}</span>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 block">Full Byte</span>
+              <span className="text-lg font-mono font-bold text-cyan-300">0x{toNibbleHex(nibbleHigh)}{toNibbleHex(nibbleLow)}</span>
+            </div>
+          </div>
+          <div className="mt-2 text-center">
+            <span className="text-xs text-gray-500">Decimal: </span>
+            <span className="font-mono font-bold text-white">{byteValue}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Reference table */}
+      <div className="rounded-xl overflow-hidden border border-gray-700 mb-4">
+        <table className="w-full text-sm font-mono">
+          <thead>
+            <tr className="bg-gray-800">
+              <th className="px-3 py-2 text-gray-400 text-center">Name</th>
+              <th className="px-3 py-2 text-gray-400 text-center">Size</th>
+              <th className="px-3 py-2 text-gray-400 text-center">Hex Digits</th>
+              <th className="px-3 py-2 text-gray-400 text-center">Range</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ['Bit', '1 bit', '¼', '0–1'],
+              ['Nibble', '4 bits', '1', '0–F'],
+              ['Byte', '8 bits', '2', '00–FF'],
+              ['Word', '16 bits', '4', '0000–FFFF'],
+            ].map(([name, size, hex, range], idx) => (
+              <tr key={idx} className="border-t border-gray-700 bg-gray-900">
+                <td className="px-3 py-2 text-center text-white font-semibold">{name}</td>
+                <td className="px-3 py-2 text-center text-gray-300">{size}</td>
+                <td className="px-3 py-2 text-center text-amber-300">{hex}</td>
+                <td className="px-3 py-2 text-center text-gray-300">{range}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mini quiz */}
+      <button
+        onClick={() => setShowQuiz(!showQuiz)}
+        className="text-sm text-indigo-400 hover:text-indigo-300 underline underline-offset-2 mb-3 transition-colors"
+      >
+        {showQuiz ? 'Hide Practice' : 'Practice: Convert Binary to Hex'}
+      </button>
+
+      {showQuiz && (
+        <div className="mt-2 p-4 rounded-xl border border-gray-700 bg-gray-900/50">
+          <p className="text-gray-300 text-sm mb-3">
+            Group into nibbles and write the hex value for this byte:
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">
+            <div className="bg-gray-800 rounded-xl px-6 py-3 text-2xl font-mono font-bold text-yellow-300 border border-gray-700 tracking-widest">
+              {q.binary.slice(0, 4)} <span className="text-gray-600">|</span> {q.binary.slice(4)}
+            </div>
+            <span className="text-gray-500 text-xl">→</span>
+            <div className="flex gap-2">
+              <input
+                value={quizInput}
+                onChange={(e) => { setQuizInput(e.target.value); setChecked(false) }}
+                onKeyDown={(e) => e.key === 'Enter' && !checked && checkQuiz()}
+                placeholder="Hex (e.g. B5)"
+                className="w-28 rounded-xl px-4 py-2 font-mono text-lg bg-gray-800 border border-gray-600 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500"
+              />
+              {!checked ? (
+                <Button size="sm" onClick={checkQuiz} disabled={!quizInput.trim()} className="bg-indigo-600 hover:bg-indigo-700">Check</Button>
+              ) : (
+                <Button size="sm" onClick={advanceQuiz} className="bg-emerald-600 hover:bg-emerald-700 gap-1">Next <ChevronRight className="w-4 h-4" /></Button>
+              )}
+            </div>
+          </div>
+          {checked && (
+            <div className={`rounded-xl p-3 text-sm ${isCorrect ? 'bg-emerald-900/30 border border-emerald-700' : 'bg-red-900/30 border border-red-700'}`}>
+              <ResultBadge correct={isCorrect} />
+              {!isCorrect && (
+                <p className="mt-1 text-gray-300">
+                  The correct answer is <span className="font-mono font-bold text-white">{q.answer}</span>
+                  <br /><span className="text-gray-400 text-xs">{q.hint}</span>
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
+// 13. Decimal to Binary Practice & Visualizer (Lesson 3 – Page 1: Decimal to Binary)
+// ─────────────────────────────────────────────
+const DEC_TO_BIN_PROBLEMS = [
+  { dec: 45, bin: '101101', hint: '45 ÷ 2 = 22 R 1, 22 ÷ 2 = 11 R 0, 11 ÷ 2 = 5 R 1, 5 ÷ 2 = 2 R 1, 2 ÷ 2 = 1 R 0, 1 ÷ 2 = 0 R 1 → 101101' },
+  { dec: 100, bin: '1100100', hint: '100 = 64 + 32 + 4 → bit 6, bit 5, bit 2 are 1' },
+  { dec: 25, bin: '11001', hint: '25 ÷ 2 = 12 R 1, 12 ÷ 2 = 6 R 0, 6 ÷ 2 = 3 R 0, 3 ÷ 2 = 1 R 1, 1 ÷ 2 = 0 R 1 → 11001' },
+  { dec: 200, bin: '11001000', hint: '200 = 128 (2⁷) + 64 (2⁶) + 8 (2³) → 11001000' },
+  { dec: 13, bin: '1101', hint: '13 = 8 + 4 + 1 → 1101' },
+  { dec: 255, bin: '11111111', hint: 'All 8 bits are 1s: 128+64+32+16+8+4+2+1 = 255' },
+]
+
+function computeDivSteps(num: number) {
+  if (num === 0) return [{ dividend: 0, quotient: 0, remainder: 0 }]
+  const steps = []
+  let curr = num
+  while (curr > 0) {
+    const q = Math.floor(curr / 2)
+    const r = curr % 2
+    steps.push({ dividend: curr, quotient: q, remainder: r })
+    curr = q
+  }
+  return steps
+}
+
+const DecimalToBinaryPractice = () => {
+  const [activeTab, setActiveTab] = useState<'visualizer' | 'quiz'>('visualizer')
+  const [selectedNum, setSelectedNum] = useState<number>(45)
+  const [customInput, setCustomInput] = useState<string>('')
+
+  // Quiz state
+  const [qi, setQi] = useState(0)
+  const [quizInput, setQuizInput] = useState('')
+  const [checked, setChecked] = useState(false)
+  const [showHint, setShowHint] = useState(false)
+  const [score, setScore] = useState(0)
+  const [streak, setStreak] = useState(0)
+
+  const steps = computeDivSteps(selectedNum)
+  const binaryResult = selectedNum === 0 ? '0' : steps.map(s => s.remainder).reverse().join('')
+  const powersCheck = steps.map((s, i) => s.remainder === 1 ? Math.pow(2, i) : 0).filter(v => v > 0).reverse()
+
+  const currentProblem = DEC_TO_BIN_PROBLEMS[qi % DEC_TO_BIN_PROBLEMS.length]
+  const isCorrect = quizInput.trim() === currentProblem.bin
+
+  const handleCheck = () => {
+    if (!quizInput.trim()) return
+    setChecked(true)
+    if (quizInput.trim() === currentProblem.bin) {
+      setScore(s => s + 1)
+      setStreak(st => st + 1)
+    } else {
+      setStreak(0)
+    }
+  }
+
+  const handleNext = () => {
+    setQi(q => q + 1)
+    setQuizInput('')
+    setChecked(false)
+    setShowHint(false)
+  }
+
+  const handleCustomSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const parsed = parseInt(customInput, 10)
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 255) {
+      setSelectedNum(parsed)
+      setCustomInput('')
+    }
+  }
+
+  return (
+    <ActivityShell title="Decimal to Binary Conversion" emoji="⚡">
+      {/* Mode navigation */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab('visualizer')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all border ${
+            activeTab === 'visualizer'
+              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40'
+              : 'bg-gray-800/80 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Layers className="w-4 h-4" />
+            <span>Division-Remainder Visualizer</span>
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('quiz')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all border ${
+            activeTab === 'quiz'
+              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40'
+              : 'bg-gray-800/80 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Trophy className="w-4 h-4 text-amber-400" />
+            <span>Practice Challenge</span>
+            {score > 0 && <span className="bg-amber-400/20 text-amber-300 text-xs px-2 py-0.5 rounded-full">{score}</span>}
+          </div>
+        </button>
+      </div>
+
+      {activeTab === 'visualizer' ? (
+        <div className="space-y-6">
+          {/* Preset selector */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Choose a Decimal Number:</span>
+              <span className="text-xs text-gray-500">Repeated division by 2</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {[45, 25, 100, 200, 13, 255].map(num => (
+                <button
+                  key={num}
+                  onClick={() => setSelectedNum(num)}
+                  className={`px-3.5 py-1.5 rounded-xl font-mono text-sm font-bold transition-all border ${
+                    selectedNum === num
+                      ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-900/50 scale-105'
+                      : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-500'
+                  }`}
+                >
+                  {num}₁₀
+                </button>
+              ))}
+              <form onSubmit={handleCustomSubmit} className="flex items-center gap-1.5 ml-auto">
+                <input
+                  type="number"
+                  min="0"
+                  max="255"
+                  value={customInput}
+                  onChange={e => setCustomInput(e.target.value)}
+                  placeholder="0–255"
+                  className="w-20 px-2.5 py-1 text-sm font-mono bg-gray-900 border border-gray-700 rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500"
+                />
+                <Button type="submit" size="sm" variant="outline" className="h-8 px-2 text-xs border-gray-700">
+                  Set
+                </Button>
+              </form>
+            </div>
+          </div>
+
+          {/* Division table & reading upward indicator */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 rounded-2xl border border-white/10 bg-gray-900/60 p-4">
+              <div className="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
+                <div className="text-sm font-bold text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
+                  Division by 2 Steps for <span className="font-mono text-yellow-300 text-base">{selectedNum}₁₀</span>
+                </div>
+                <span className="text-xs text-gray-400 font-mono">{steps.length} steps</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-sm">
+                  <thead>
+                    <tr className="text-gray-500 text-xs border-b border-gray-800">
+                      <th className="pb-2">Step</th>
+                      <th className="pb-2">Operation</th>
+                      <th className="pb-2">Quotient</th>
+                      <th className="pb-2 text-right">Remainder</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800/60">
+                    {steps.map((st, i) => {
+                      const isLast = i === steps.length - 1
+                      return (
+                        <tr key={i} className="hover:bg-white/[0.02]">
+                          <td className="py-2 text-xs text-gray-500">#{i + 1}</td>
+                          <td className="py-2 text-gray-300">
+                            <span className="text-white font-bold">{st.dividend}</span> ÷ 2
+                          </td>
+                          <td className="py-2 text-indigo-300 font-semibold">{st.quotient}</td>
+                          <td className="py-2 text-right">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-md font-bold text-sm ${
+                              st.remainder === 1
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-gray-800 text-gray-400 border border-gray-700'
+                            }`}>
+                              {st.remainder}
+                            </span>
+                            {isLast && <span className="ml-1.5 text-[10px] text-amber-400 font-sans font-bold">MSB</span>}
+                            {i === 0 && <span className="ml-1.5 text-[10px] text-cyan-400 font-sans font-bold">LSB</span>}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Read upward summary card */}
+            <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-b from-indigo-950/30 to-purple-950/20 p-4 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider mb-2">
+                  <ArrowUp className="w-4 h-4 text-indigo-400 animate-pulse" />
+                  <span>Read Bottom to Top</span>
+                </div>
+                <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                  Record each remainder as you divide. The <span className="text-amber-300 font-semibold">last remainder</span> is the Most Significant Bit (MSB), and the <span className="text-cyan-300 font-semibold">first</span> is the Least Significant Bit (LSB).
+                </p>
+
+                <div className="bg-black/40 rounded-xl p-3 border border-white/5 mb-4 text-center">
+                  <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Binary Result</span>
+                  <div className="text-2xl font-mono font-bold tracking-widest text-emerald-300">
+                    {binaryResult}
+                    <sub className="text-xs text-gray-500 ml-1">₂</sub>
+                  </div>
+                </div>
+              </div>
+
+              {/* Verification sum */}
+              <div className="border-t border-white/10 pt-3">
+                <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Verification (Powers of 2):</span>
+                <div className="text-xs font-mono text-gray-300 leading-relaxed">
+                  {powersCheck.join(' + ') || '0'} = <span className="text-yellow-300 font-bold">{selectedNum}₁₀</span> ✓
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Quiz Challenge Mode */
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+              Question {((qi) % DEC_TO_BIN_PROBLEMS.length) + 1} of {DEC_TO_BIN_PROBLEMS.length}
+            </span>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="text-gray-400">Score: <strong className="text-white">{score}</strong></span>
+              {streak > 1 && (
+                <span className="text-amber-400 font-bold flex items-center gap-1">
+                  🔥 {streak} streak!
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Question Card */}
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-gray-900/90 to-indigo-950/40 p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider block mb-1">Convert Decimal to Binary</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-mono font-extrabold text-yellow-300">{currentProblem.dec}</span>
+                <span className="text-sm font-mono text-gray-500 font-bold">₁₀</span>
+                <span className="text-xl text-gray-600 mx-2">→</span>
+                <span className="text-xl font-mono text-indigo-300">?₂</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+              <input
+                value={quizInput}
+                onChange={e => {
+                  setQuizInput(e.target.value.replace(/[^01]/g, ''))
+                  setChecked(false)
+                }}
+                onKeyDown={e => e.key === 'Enter' && !checked && handleCheck()}
+                placeholder="Binary (0s and 1s)"
+                className="w-full sm:w-48 px-4 py-3 rounded-xl font-mono text-lg text-center tracking-widest bg-gray-950 border border-gray-700 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500"
+              />
+              {!checked ? (
+                <Button onClick={handleCheck} disabled={!quizInput.trim()} className="bg-indigo-600 hover:bg-indigo-700 px-5">
+                  Check
+                </Button>
+              ) : (
+                <Button onClick={handleNext} className="bg-emerald-600 hover:bg-emerald-700 px-5 gap-1">
+                  Next <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Result Feedback */}
+          {checked && (
+            <div className={`rounded-xl p-4 text-sm border transition-all ${
+              isCorrect ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-red-950/30 border-red-500/40'
+            }`}>
+              <ResultBadge correct={isCorrect} />
+              {!isCorrect && (
+                <p className="mt-2 text-gray-300">
+                  The correct binary for {currentProblem.dec}₁₀ is{' '}
+                  <span className="font-mono font-bold text-white bg-black/40 px-2 py-0.5 rounded border border-white/10">
+                    {currentProblem.bin}₂
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Hint Drawer */}
+          <div className="border border-white/5 rounded-xl bg-white/[0.02] p-3">
+            <button
+              onClick={() => setShowHint(!showHint)}
+              className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-indigo-300 transition-colors"
+            >
+              <Info className="w-4 h-4 text-indigo-400" />
+              <span>{showHint ? 'Hide division steps hint' : 'Need help? Show division steps'}</span>
+            </button>
+            {showHint && (
+              <div className="mt-3 pt-3 border-t border-white/5 text-xs text-gray-300 font-mono leading-relaxed">
+                <p className="text-indigo-300 mb-1 font-sans font-semibold">Division breakdown for {currentProblem.dec}:</p>
+                <div className="bg-black/40 p-2.5 rounded-lg border border-white/5 text-gray-400">
+                  {currentProblem.hint}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
+// 14. Binary to Decimal Practice & Visualizer (Lesson 3 – Page 2: Binary to Decimal)
+// ─────────────────────────────────────────────
+const BIN_TO_DEC_PROBLEMS = [
+  { bin: '101101', dec: 45, breakdown: '32 + 8 + 4 + 1 = 45' },
+  { bin: '11010110', dec: 214, breakdown: '128 + 64 + 16 + 4 + 2 = 214' },
+  { bin: '10110', dec: 22, breakdown: '16 + 4 + 2 = 22' },
+  { bin: '1111', dec: 15, breakdown: '8 + 4 + 2 + 1 = 15' },
+  { bin: '1000000', dec: 64, breakdown: '2⁶ = 64' },
+  { bin: '11111111', dec: 255, breakdown: '128 + 64 + 32 + 16 + 8 + 4 + 2 + 1 = 255' },
+]
+
+const BinaryToDecimalPractice = () => {
+  const [activeTab, setActiveTab] = useState<'visualizer' | 'quiz'>('visualizer')
+  const [bits, setBits] = useState<number[]>([1, 1, 0, 1, 0, 1, 1, 0]) // 214
+  const [showDoubling, setShowDoubling] = useState(false)
+
+  // Quiz state
+  const [qi, setQi] = useState(0)
+  const [quizInput, setQuizInput] = useState('')
+  const [checked, setChecked] = useState(false)
+  const [showHint, setShowHint] = useState(false)
+  const [score, setScore] = useState(0)
+  const [streak, setStreak] = useState(0)
+
+  const toggleBit = (i: number) => {
+    const next = [...bits]
+    next[i] = next[i] === 1 ? 0 : 1
+    setBits(next)
+  }
+
+  const powers = [128, 64, 32, 16, 8, 4, 2, 1]
+  const decimalValue = bits.reduce((acc, b, i) => acc + b * powers[i], 0)
+  const activeTerms = bits.map((b, i) => (b === 1 ? powers[i] : 0)).filter(v => v > 0)
+
+  // Doubling method steps trace
+  const doublingSteps: { bit: number; prev: number; doubled: number; total: number }[] = []
+  let running = 0
+  bits.forEach((b) => {
+    const doubled = running * 2
+    const total = doubled + b
+    doublingSteps.push({ bit: b, prev: running, doubled, total })
+    running = total
+  })
+
+  const currentProblem = BIN_TO_DEC_PROBLEMS[qi % BIN_TO_DEC_PROBLEMS.length]
+  const isCorrect = quizInput.trim() === currentProblem.dec.toString()
+
+  const handleCheck = () => {
+    if (!quizInput.trim()) return
+    setChecked(true)
+    if (quizInput.trim() === currentProblem.dec.toString()) {
+      setScore(s => s + 1)
+      setStreak(st => st + 1)
+    } else {
+      setStreak(0)
+    }
+  }
+
+  const handleNext = () => {
+    setQi(q => q + 1)
+    setQuizInput('')
+    setChecked(false)
+    setShowHint(false)
+  }
+
+  return (
+    <ActivityShell title="Binary to Decimal Conversion" emoji="🔢">
+      {/* Tab Switcher */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab('visualizer')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all border ${
+            activeTab === 'visualizer'
+              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40'
+              : 'bg-gray-800/80 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Layers className="w-4 h-4" />
+            <span>Positional Expansion Explorer</span>
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('quiz')}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all border ${
+            activeTab === 'quiz'
+              ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40'
+              : 'bg-gray-800/80 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Trophy className="w-4 h-4 text-amber-400" />
+            <span>Practice Challenge</span>
+            {score > 0 && <span className="bg-amber-400/20 text-amber-300 text-xs px-2 py-0.5 rounded-full">{score}</span>}
+          </div>
+        </button>
+      </div>
+
+      {activeTab === 'visualizer' ? (
+        <div className="space-y-6">
+          {/* Quick presets */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Quick Presets:</span>
+              <span className="text-xs text-gray-500">Click any bit to toggle 0 ↔ 1</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: '11010110 (214)', bits: [1,1,0,1,0,1,1,0] },
+                { label: '101101 (45)', bits: [0,0,1,0,1,1,0,1] },
+                { label: '10110 (22)', bits: [0,0,0,1,0,1,1,0] },
+                { label: '1111 (15)', bits: [0,0,0,0,1,1,1,1] },
+                { label: '1000000 (64)', bits: [0,1,0,0,0,0,0,0] },
+                { label: '11111111 (255)', bits: [1,1,1,1,1,1,1,1] },
+              ].map(p => (
+                <button
+                  key={p.label}
+                  onClick={() => setBits(p.bits)}
+                  className="px-3 py-1 rounded-xl text-xs font-mono font-semibold bg-gray-800 text-gray-300 border border-gray-700 hover:border-indigo-500 hover:text-white transition-all"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Positional Table & Bit Buttons */}
+          <div className="rounded-2xl border border-white/10 bg-gray-900/60 p-5">
+            <div className="flex flex-col items-center gap-2">
+              {/* Powers of 2 row */}
+              <div className="flex gap-2">
+                {powers.map((_, i) => (
+                  <div key={`p-${i}`} className="w-12 text-center">
+                    <span className="text-[10px] text-gray-500 font-mono">2{`\u2077\u2076\u2075\u2074\u00B3\u00B2\u00B9\u2070`[i]}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Weight row */}
+              <div className="flex gap-2">
+                {powers.map((p, i) => (
+                  <div key={`w-${i}`} className="w-12 text-center">
+                    <span className={`text-xs font-mono font-bold ${bits[i] === 1 ? 'text-emerald-400' : 'text-gray-600'}`}>
+                      {p}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bit toggle buttons */}
+              <div className="flex gap-2">
+                {bits.map((b, i) => (
+                  <button
+                    key={`b-${i}`}
+                    onClick={() => toggleBit(i)}
+                    className={`w-12 h-14 rounded-xl text-2xl font-bold font-mono border-2 transition-all cursor-pointer ${
+                      b === 1
+                        ? 'bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-900/40 scale-105'
+                        : 'bg-gray-800/90 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
+
+              {/* Position row */}
+              <div className="flex gap-2">
+                {powers.map((_, i) => (
+                  <div key={`pos-${i}`} className="w-12 text-center">
+                    <span className="text-[9px] text-gray-600 font-mono">pos {7 - i}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Expansion Equation */}
+            <div className="mt-6 pt-5 border-t border-gray-800">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2">
+                Positional Expansion Formula:
+              </span>
+              <div className="bg-black/40 rounded-xl p-3 border border-white/5 font-mono text-sm overflow-x-auto">
+                <div className="text-gray-400 mb-1">
+                  Sum of active weights (bit = 1):
+                </div>
+                <div className="text-emerald-400 font-bold text-base flex flex-wrap items-center gap-1.5">
+                  {activeTerms.length > 0 ? (
+                    <>
+                      {activeTerms.map((t, idx) => (
+                        <span key={idx}>
+                          {idx > 0 && <span className="text-gray-600 mx-1">+</span>}
+                          <span>{t}</span>
+                        </span>
+                      ))}
+                      <span className="text-gray-500 mx-2">=</span>
+                      <span className="text-2xl font-extrabold text-yellow-300">{decimalValue}₁₀</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-500 italic text-sm">All bits 0 = 0₁₀</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Alternative: Doubling Method Toggle */}
+          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+            <button
+              onClick={() => setShowDoubling(!showDoubling)}
+              className="flex items-center justify-between w-full text-xs font-semibold text-gray-300 hover:text-indigo-300 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-indigo-400" />
+                <span>Alternative: The Doubling Method (Shift & Add)</span>
+              </div>
+              <span className="text-gray-500">{showDoubling ? 'Hide' : 'Show trace'}</span>
+            </button>
+            {showDoubling && (
+              <div className="mt-3 pt-3 border-t border-white/5 text-xs text-gray-300 font-mono space-y-1">
+                <p className="text-gray-400 font-sans mb-2">
+                  Start with 0. For each bit from left to right: double the running total and add the bit:
+                </p>
+                <div className="bg-black/30 p-3 rounded-lg border border-white/5 space-y-1">
+                  {doublingSteps.map((st, i) => (
+                    <div key={i} className="text-gray-400 flex items-center gap-2">
+                      <span className="text-gray-600 w-12">Step {i + 1}:</span>
+                      <span>({st.prev} × 2) + {st.bit} =</span>
+                      <strong className="text-indigo-300">{st.total}</strong>
+                    </div>
+                  ))}
+                  <div className="pt-2 text-yellow-300 font-bold border-t border-gray-800">
+                    Final Result = {decimalValue}₁₀
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Quiz Challenge Mode */
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+              Question {((qi) % BIN_TO_DEC_PROBLEMS.length) + 1} of {BIN_TO_DEC_PROBLEMS.length}
+            </span>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="text-gray-400">Score: <strong className="text-white">{score}</strong></span>
+              {streak > 1 && (
+                <span className="text-amber-400 font-bold flex items-center gap-1">
+                  🔥 {streak} streak!
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Question Card */}
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-gray-900/90 to-indigo-950/40 p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider block mb-1">Convert Binary to Decimal</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-mono font-extrabold text-indigo-300 tracking-wider">{currentProblem.bin}</span>
+                <span className="text-sm font-mono text-gray-500 font-bold">₂</span>
+                <span className="text-xl text-gray-600 mx-2">→</span>
+                <span className="text-xl font-mono text-yellow-300">?₁₀</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+              <input
+                type="number"
+                value={quizInput}
+                onChange={e => {
+                  setQuizInput(e.target.value)
+                  setChecked(false)
+                }}
+                onKeyDown={e => e.key === 'Enter' && !checked && handleCheck()}
+                placeholder="Decimal value"
+                className="w-full sm:w-44 px-4 py-3 rounded-xl font-mono text-lg text-center bg-gray-950 border border-gray-700 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500"
+              />
+              {!checked ? (
+                <Button onClick={handleCheck} disabled={!quizInput.trim()} className="bg-indigo-600 hover:bg-indigo-700 px-5">
+                  Check
+                </Button>
+              ) : (
+                <Button onClick={handleNext} className="bg-emerald-600 hover:bg-emerald-700 px-5 gap-1">
+                  Next <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Result Feedback */}
+          {checked && (
+            <div className={`rounded-xl p-4 text-sm border transition-all ${
+              isCorrect ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-red-950/30 border-red-500/40'
+            }`}>
+              <ResultBadge correct={isCorrect} />
+              {!isCorrect && (
+                <p className="mt-2 text-gray-300">
+                  The correct decimal value for {currentProblem.bin}₂ is{' '}
+                  <span className="font-mono font-bold text-white bg-black/40 px-2 py-0.5 rounded border border-white/10">
+                    {currentProblem.dec}₁₀
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Hint Drawer */}
+          <div className="border border-white/5 rounded-xl bg-white/[0.02] p-3">
+            <button
+              onClick={() => setShowHint(!showHint)}
+              className="flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-indigo-300 transition-colors"
+            >
+              <Info className="w-4 h-4 text-indigo-400" />
+              <span>{showHint ? 'Hide positional expansion hint' : 'Need help? Show expansion hint'}</span>
+            </button>
+            {showHint && (
+              <div className="mt-3 pt-3 border-t border-white/5 text-xs text-gray-300 font-mono leading-relaxed">
+                <p className="text-indigo-300 mb-1 font-sans font-semibold">Positional expansion for {currentProblem.bin}₂:</p>
+                <div className="bg-black/40 p-2.5 rounded-lg border border-white/5 text-gray-300">
+                  {currentProblem.breakdown}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
+// 15. Hex Conversion Multi-Mode Practice  (Lesson 3 – Page 3: Hex Conversion)
+// ─────────────────────────────────────────────
+type HexMode = 'hex-binary' | 'dec-hex' | 'hex-octal'
+
+const HEX_MODE_CONFIG: Record<HexMode, {
+  label: string
+  subtitle: string
+  fromLabel: string
+  toLabel: string
+  fromBase: number
+  toBase: number
+  questions: { from: string; to: string; explanation: string }[]
+}> = {
+  'hex-binary': {
+    label: 'Hex ↔ Binary',
+    subtitle: 'Direct, 4-bit groups',
+    fromLabel: 'Hexadecimal',
+    toLabel: 'Binary',
+    fromBase: 16,
+    toBase: 2,
+    questions: [
+      { from: 'A5', to: '10100101', explanation: 'A = 1010, 5 = 0101 → 10100101' },
+      { from: 'FF', to: '11111111', explanation: 'F = 1111, F = 1111 → 11111111' },
+      { from: '3C', to: '00111100', explanation: '3 = 0011, C = 1100 → 00111100' },
+      { from: 'D6', to: '11010110', explanation: 'D = 1101, 6 = 0110 → 11010110' },
+      { from: '1B', to: '00011011', explanation: '1 = 0001, B = 1011 → 00011011' },
+      { from: '7E', to: '01111110', explanation: '7 = 0111, E = 1110 → 01111110' },
+    ],
+  },
+  'dec-hex': {
+    label: 'Decimal → Hex',
+    subtitle: 'Division by 16',
+    fromLabel: 'Decimal',
+    toLabel: 'Hexadecimal',
+    fromBase: 10,
+    toBase: 16,
+    questions: [
+      { from: '255', to: 'FF', explanation: '255 ÷ 16 = 15 R 15 (F), 15 ÷ 16 = 0 R 15 (F) → FF' },
+      { from: '500', to: '1F4', explanation: '500 ÷ 16 = 31 R 4, 31 ÷ 16 = 1 R 15 (F), 1 ÷ 16 = 0 R 1 → 1F4' },
+      { from: '100', to: '64', explanation: '100 ÷ 16 = 6 R 4, 6 ÷ 16 = 0 R 6 → 64' },
+      { from: '47', to: '2F', explanation: '47 ÷ 16 = 2 R 15 (F), 2 ÷ 16 = 0 R 2 → 2F' },
+      { from: '4096', to: '1000', explanation: '4096 ÷ 16 = 256 R 0, 256 ÷ 16 = 16 R 0, 16 ÷ 16 = 1 R 0, 1 ÷ 16 = 0 R 1 → 1000' },
+      { from: '170', to: 'AA', explanation: '170 ÷ 16 = 10 R 10 (A), 10 ÷ 16 = 0 R 10 (A) → AA' },
+    ],
+  },
+  'hex-octal': {
+    label: 'Hex ↔ Octal',
+    subtitle: 'via Binary',
+    fromLabel: 'Hexadecimal',
+    toLabel: 'Octal',
+    fromBase: 16,
+    toBase: 8,
+    questions: [
+      { from: '1F', to: '37', explanation: '1F₁₆ → 0001 1111₂ → 000 011 111₂ → 37₈' },
+      { from: 'FF', to: '377', explanation: 'FF₁₆ → 1111 1111₂ → 011 111 111₂ → 377₈' },
+      { from: 'A5', to: '245', explanation: 'A5₁₆ → 1010 0101₂ → 010 100 101₂ → 245₈' },
+      { from: '3C', to: '74', explanation: '3C₁₆ → 0011 1100₂ → 000 111 100₂ → 74₈' },
+      { from: '7E', to: '176', explanation: '7E₁₆ → 0111 1110₂ → 001 111 110₂ → 176₈' },
+      { from: 'D0', to: '320', explanation: 'D0₁₆ → 1101 0000₂ → 011 010 000₂ → 320₈' },
+    ],
+  },
+}
+
+const HEX_NIBBLE_MAP: Record<string, string> = {
+  '0': '0000', '1': '0001', '2': '0010', '3': '0011',
+  '4': '0100', '5': '0101', '6': '0110', '7': '0111',
+  '8': '1000', '9': '1001', 'A': '1010', 'B': '1011',
+  'C': '1100', 'D': '1101', 'E': '1110', 'F': '1111',
+}
+
+const HexConversionPractice = () => {
+  const [mode, setMode] = useState<HexMode>('hex-binary')
+  const [qi, setQi] = useState(0)
+  const [input, setInput] = useState('')
+  const [checked, setChecked] = useState(false)
+  const [showHelper, setShowHelper] = useState(false)
+  const [score, setScore] = useState(0)
+  const [streak, setStreak] = useState(0)
+
+  const config = HEX_MODE_CONFIG[mode]
+  const q = config.questions[qi % config.questions.length]
+  const isCorrect = input.trim().toUpperCase() === q.to.toUpperCase()
+
+  const check = () => {
+    if (!input.trim()) return
+    setChecked(true)
+    if (input.trim().toUpperCase() === q.to.toUpperCase()) {
+      setScore(s => s + 1)
+      setStreak(st => st + 1)
+    } else {
+      setStreak(0)
+    }
+  }
+
+  const advance = () => {
+    setQi(p => p + 1)
+    setInput('')
+    setChecked(false)
+    setShowHelper(false)
+  }
+
+  const switchMode = (m: HexMode) => {
+    setMode(m)
+    setQi(0)
+    setInput('')
+    setChecked(false)
+    setShowHelper(false)
+  }
+
+  return (
+    <ActivityShell title="Hexadecimal Conversions Practice" emoji="🔄">
+      <p className="text-gray-300 text-sm mb-5">
+        Master conversions between hexadecimal, binary, decimal, and octal. Choose a conversion mode:
+      </p>
+
+      {/* 3 Mode buttons with icons and subtitles */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-6">
+        {(Object.keys(HEX_MODE_CONFIG) as HexMode[]).map((key) => {
+          const cfg = HEX_MODE_CONFIG[key]
+          const isActive = mode === key
+          return (
+            <button
+              key={key}
+              onClick={() => switchMode(key)}
+              className={`p-3 rounded-xl text-left transition-all border ${
+                isActive
+                  ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 border-indigo-400 text-white shadow-lg shadow-indigo-950/60 scale-[1.02]'
+                  : 'bg-gray-900/80 border-gray-800 text-gray-400 hover:border-gray-700 hover:text-gray-200'
+              }`}
+            >
+              <div className="text-sm font-bold">{cfg.label}</div>
+              <div className={`text-[11px] mt-0.5 ${isActive ? 'text-indigo-200' : 'text-gray-500'}`}>
+                {cfg.subtitle}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Question Progress & Stats */}
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+          Question {((qi) % config.questions.length) + 1} of {config.questions.length}
+        </span>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-gray-400">Score: <strong className="text-white">{score}</strong></span>
+          {streak > 1 && (
+            <span className="text-amber-400 font-bold flex items-center gap-1">
+              🔥 {streak} streak!
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Interactive Question Card */}
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-gray-900/90 to-indigo-950/40 p-6 mb-5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="text-center sm:text-left">
+            <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider block mb-1">
+              Convert from {config.fromLabel}
+            </span>
+            <div className="flex items-baseline justify-center sm:justify-start gap-2">
+              <span className="text-4xl font-mono font-extrabold text-yellow-300 tracking-wider">
+                {q.from}
+              </span>
+              <sub className="text-sm font-mono text-gray-500 font-bold">
+                {config.fromBase === 16 ? '₁₆' : config.fromBase === 10 ? '₁₀' : '₂'}
+              </sub>
+              <span className="text-xl text-gray-600 mx-3">→</span>
+              <span className="text-xl font-mono text-indigo-300">
+                ?{config.toBase === 2 ? '₂' : config.toBase === 16 ? '₁₆' : '₈'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+            <input
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value)
+                setChecked(false)
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && !checked && check()}
+              placeholder={`${config.toLabel} value`}
+              className="w-full sm:w-48 px-4 py-3 rounded-xl font-mono text-lg text-center uppercase tracking-widest bg-gray-950 border border-gray-700 text-white placeholder:text-gray-600 focus:outline-none focus:border-indigo-500"
+            />
+            {!checked ? (
+              <Button onClick={check} disabled={!input.trim()} className="bg-indigo-600 hover:bg-indigo-700 px-5">
+                Check
+              </Button>
+            ) : (
+              <Button onClick={advance} className="bg-emerald-600 hover:bg-emerald-700 px-5 gap-1">
+                Next <ChevronRight className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Result feedback */}
+      {checked && (
+        <div className={`rounded-xl p-4 text-sm mb-4 border transition-all ${
+          isCorrect ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-red-950/30 border-red-500/40'
+        }`}>
+          <ResultBadge correct={isCorrect} />
+          <p className="mt-2 text-gray-300 font-mono text-xs leading-relaxed">
+            {q.explanation}
+          </p>
+        </div>
+      )}
+
+      {/* Mode-specific Helper Card */}
+      <div className="border border-white/5 rounded-xl bg-white/[0.02] p-4">
+        <button
+          onClick={() => setShowHelper(!showHelper)}
+          className="flex items-center justify-between w-full text-xs font-semibold text-gray-400 hover:text-indigo-300 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-indigo-400" />
+            <span>
+              {mode === 'hex-binary' && 'Show 4-bit nibble mapping guide'}
+              {mode === 'dec-hex' && 'Show division by 16 guide'}
+              {mode === 'hex-octal' && 'Show Hex ↔ Octal 2-step bridge visual'}
+            </span>
+          </div>
+          <span className="text-gray-500">{showHelper ? 'Hide' : 'Show guide'}</span>
+        </button>
+
+        {showHelper && (
+          <div className="mt-3 pt-3 border-t border-white/5 text-xs text-gray-300">
+            {mode === 'hex-binary' && (
+              <div>
+                <p className="text-gray-400 mb-2">Each hexadecimal digit maps directly to exactly 4 binary bits:</p>
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 font-mono text-center">
+                  {Object.entries(HEX_NIBBLE_MAP).map(([hexChar, nibble]) => (
+                    <div key={hexChar} className="bg-black/40 p-1.5 rounded border border-white/5">
+                      <span className="text-yellow-300 font-bold block">{hexChar}</span>
+                      <span className="text-gray-400 text-[10px]">{nibble}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {mode === 'dec-hex' && (
+              <div className="space-y-1 font-mono">
+                <p className="text-gray-400 font-sans mb-1">Division by 16 Method:</p>
+                <div className="bg-black/40 p-3 rounded border border-white/5 space-y-1 text-gray-300">
+                  <p>1. Repeatedly divide by 16, record remainders (0–15).</p>
+                  <p>2. Convert remainders 10–15 to hex letters: 10=A, 11=B, 12=C, 13=D, 14=E, 15=F.</p>
+                  <p>3. Read remainders from bottom to top (last remainder is MSB).</p>
+                </div>
+              </div>
+            )}
+
+            {mode === 'hex-octal' && (
+              <div className="space-y-2 font-mono">
+                <p className="text-gray-400 font-sans">Convert through Binary as the bridge:</p>
+                <div className="bg-black/40 p-3 rounded border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center">
+                  <div className="bg-indigo-950/40 border border-indigo-500/20 px-3 py-1.5 rounded-lg">
+                    <span className="text-[10px] text-gray-400 block">Step 1: Hex</span>
+                    <span className="text-yellow-300 font-bold">4-bit Groups</span>
+                  </div>
+                  <span className="text-gray-500">→</span>
+                  <div className="bg-purple-950/40 border border-purple-500/20 px-3 py-1.5 rounded-lg">
+                    <span className="text-[10px] text-gray-400 block">Bridge: Binary</span>
+                    <span className="text-emerald-300 font-bold">Regroup to 3 bits</span>
+                  </div>
+                  <span className="text-gray-500">→</span>
+                  <div className="bg-indigo-950/40 border border-indigo-500/20 px-3 py-1.5 rounded-lg">
+                    <span className="text-[10px] text-gray-400 block">Step 2: Octal</span>
+                    <span className="text-cyan-300 font-bold">Base 8 Digits</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </ActivityShell>
+  )
+}
+
+// ─────────────────────────────────────────────
 // MAIN EXPORT — picks the right activity based on lessonId + topic title
 // ─────────────────────────────────────────────
 interface LessonInteractiveActivityProps {
@@ -2274,14 +3562,46 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
     return <BinaryBuilder />
   }
 
-  // ── Lesson 2: Logic Gates ──
+  // ── Lesson 2: Types of Number Systems ──
   if (lessonId === 2) {
-    return <LogicGateSimulator />
+    if (title.includes('hex') || tags.includes('hexadecimal')) {
+      return (
+        <BaseConverterQuiz
+          fromBase={2}
+          toBase={16}
+          fromLabel="Binary"
+          toLabel="Hex"
+          questions={[
+            { from: '1010', to: 'A' },
+            { from: '1111', to: 'F' },
+            { from: '11001100', to: 'CC' },
+            { from: '10110111', to: 'B7' },
+            { from: '01000001', to: '41' },
+            { from: '11111111', to: 'FF' },
+          ]}
+        />
+      )
+    }
+    if (title.includes('digit') || title.includes('grouping') || tags.includes('nibble') || tags.includes('byte') || tags.includes('grouping')) {
+      return <DigitGroupingsExplorer />
+    }
+    // Default: Binary ↔ Decimal relationship
+    return <BinaryDecimalRelationship />
   }
 
-  // ── Lesson 3: Truth Tables ──
+  // ── Lesson 3: Conversion of Number Systems ──
   if (lessonId === 3) {
-    return <TruthTableBuilder />
+    if (title.includes('decimal to binary')) {
+      return <DecimalToBinaryPractice />
+    }
+    if (title.includes('binary to decimal')) {
+      return <BinaryToDecimalPractice />
+    }
+    if (title.includes('hex') || tags.includes('hexadecimal')) {
+      return <HexConversionPractice />
+    }
+    // Default: Binary to Decimal (page 2)
+    return <BinaryToDecimalPractice />
   }
 
   // ── Lesson 4: Binary Arithmetic (moved from original Lesson 8) ──
@@ -2345,4 +3665,5 @@ export const LessonInteractiveActivity: React.FC<LessonInteractiveActivityProps>
   return null
 }
 
+export { LogicGateSimulator, TruthTableBuilder, DecimalToBinaryPractice, BinaryToDecimalPractice, HexConversionPractice }
 export default LessonInteractiveActivity
