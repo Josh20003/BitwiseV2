@@ -137,7 +137,7 @@ export function AskAiTutor({
                 className={msg.role === 'user' ? 'flex justify-end' : ''}
               >
                 {msg.role === 'user' ? (
-                  <div className="bg-primary/20 text-primary-foreground border border-primary/30 text-xs px-3 py-2 rounded-lg rounded-br-sm max-w-[85%] font-medium">
+                  <div className="bg-purple-600/30 text-white border border-purple-500/40 text-xs px-3 py-2 rounded-lg rounded-br-sm max-w-[85%] font-medium">
                     {msg.text}
                   </div>
                 ) : (

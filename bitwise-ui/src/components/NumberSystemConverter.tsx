@@ -199,7 +199,7 @@ export function NumberSystemConverter() {
                   Calculation Trace
                 </h4>
                 <div className="space-y-2.5">
-                  {result.steps.map((step, idx) => {
+                  {result.steps.map((step: any, idx: number) => {
                     const isCurrent = idx === currentTraceStep;
 
                     if (isCurrent) {
