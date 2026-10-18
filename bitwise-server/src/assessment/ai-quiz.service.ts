@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
@@ -21,7 +21,7 @@ export class AiQuizService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * Generates a 10-item adaptive quiz based on the user's EMA mastery.
@@ -249,8 +249,8 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
     const questions: QuizQuestion[] = parsed.map((q: any, i: number) => {
       const idx =
         typeof q.correctOptionIndex === 'number' &&
-        q.correctOptionIndex >= 0 &&
-        q.correctOptionIndex <= 3
+          q.correctOptionIndex >= 0 &&
+          q.correctOptionIndex <= 3
           ? q.correctOptionIndex
           : 0;
       return {

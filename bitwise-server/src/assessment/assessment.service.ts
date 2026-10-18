@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { generateText } from 'ai';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { AdaptiveService } from '../adaptive/adaptive.service';
 import { EmaMasteryService } from './ema-mastery.service';
 import {
@@ -24,7 +24,7 @@ export class AssessmentService {
     private adaptiveService: AdaptiveService,
     private emaMasteryService: EmaMasteryService,
     private llmProvider: LlmProviderService,
-  ) {}
+  ) { }
 
   // Only allow these tags
   private allowedTags = [
@@ -258,9 +258,9 @@ export class AssessmentService {
     const averageMastery =
       masteryPercentages.length > 0
         ? Math.round(
-            masteryPercentages.reduce((sum, score) => sum + score, 0) /
-              masteryPercentages.length,
-          )
+          masteryPercentages.reduce((sum, score) => sum + score, 0) /
+          masteryPercentages.length,
+        )
         : 0;
 
     const latestMastery = masteryPercentages[0] || 0;

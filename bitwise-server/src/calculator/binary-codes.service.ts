@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 export interface EncodingRule {
   pattern: string;
@@ -24,7 +24,7 @@ export interface BinaryCodeResult {
 export class BinaryCodesService {
   private readonly logger = new Logger(BinaryCodesService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Encode a decimal number using BCD (Binary Coded Decimal)

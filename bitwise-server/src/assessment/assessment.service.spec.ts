@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AssessmentService } from './assessment.service';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { AdaptiveService } from '../adaptive/adaptive.service';
 import { EmaMasteryService } from './ema-mastery.service';
 import { LlmProviderService } from './llm-provider.service';

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class UserProgressService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Mark a topic as viewed (called when user opens topic page)
@@ -216,7 +216,7 @@ export class UserProgressService {
       averageProgress:
         userLessons.length > 0
           ? userLessons.reduce((sum, l) => sum + l.progress, 0) /
-            userLessons.length
+          userLessons.length
           : 0,
     };
   }

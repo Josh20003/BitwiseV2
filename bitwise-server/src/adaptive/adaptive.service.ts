@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 interface BKTParameters {
   pLearn: number; // Probability of learning
@@ -45,7 +45,7 @@ export interface UserSkillWithTopic {
 
 @Injectable()
 export class AdaptiveService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // BKT Parameters for different difficulty levels
   private bktParams: Record<string, BKTParameters> = {
@@ -312,9 +312,9 @@ export class AdaptiveService {
     const overallMastery =
       lessonMasteries.length > 0
         ? lessonMasteries.reduce((sum, lm) => sum + lm.masteryScore, 0) /
-          lessonMasteries.length
+        lessonMasteries.length
         : userSkills.reduce((sum, skill) => sum + skill.mastery, 0) /
-          (userSkills.length || 1);
+        (userSkills.length || 1);
 
     // Find weakest lessons
     const weakestLessons = lessonMasteries

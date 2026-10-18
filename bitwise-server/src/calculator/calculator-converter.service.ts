@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 export interface ConversionStep {
   description: string;
@@ -20,7 +20,7 @@ export interface ConversionResult {
 export class CalculatorConverterService {
   private readonly logger = new Logger(CalculatorConverterService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Convert a number from one base to another

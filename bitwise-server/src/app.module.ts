@@ -7,7 +7,7 @@ import { BookmarkModule } from './bookmark/bookmark.module';
 import { CalculatorModule } from './calculator/calculator.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { AssessmentModule } from './assessment/assessment.module';
-import { PrismaModule } from 'prisma/prisma.module';
+import { PrismaModule } from '../prisma/prisma.module';
 import { AdaptiveModule } from './adaptive/adaptive.module';
 import { UserProgressModule } from './user-progress/user-progress.module';
 import { ExamplesModule } from './examples/examples.module';
@@ -49,4 +49,4 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

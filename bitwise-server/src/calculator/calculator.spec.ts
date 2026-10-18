@@ -14,7 +14,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CalculatorArithmeticService } from './calculator-arithmetic.service';
 import { CalculatorComplementService } from './calculator-complement.service';
 import { CalculatorConverterService } from './calculator-converter.service';
