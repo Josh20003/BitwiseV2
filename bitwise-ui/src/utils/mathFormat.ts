@@ -66,7 +66,7 @@ export function cleanLatexNotation(text: string): string {
     'x': 'ˣ',
     'y': 'ʸ',
   };
-  cleaned = cleaned.replace(/\^\{?([0-9]+|[inxy\+\-\=]+)\}?/g, (_match, p1) => {
+  cleaned = cleaned.replace(/\^\{?([0-9]+|[inxy=+-]+)\}?/g, (_match, p1) => {
     return p1
       .split('')
       .map((c: string) => supMap[c] || c)
@@ -74,7 +74,7 @@ export function cleanLatexNotation(text: string): string {
   });
 
   // Strip math delimiters: $...$
-  cleaned = cleaned.replace(/\$([^\$]+)\$/g, '$1');
+  cleaned = cleaned.replace(/\$([^$]+)\$/g, '$1');
 
   // Strip any remaining lone $
   cleaned = cleaned.replace(/\$/g, '');

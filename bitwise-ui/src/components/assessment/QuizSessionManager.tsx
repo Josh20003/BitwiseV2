@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Loader2,
   Volume2,
+  Lock,
 } from 'lucide-react';
 import CircuitRenderer from '@/components/CircuitRenderer';
 import { cleanLatexNotation } from '@/utils/mathFormat';
@@ -400,7 +401,7 @@ export function QuizSessionManager({
             selectedAnswers,
           });
 
-          if (score === 1.0) {
+          if (score >= 0.8) {
             confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
           }
 
@@ -441,7 +442,7 @@ export function QuizSessionManager({
             selectedAnswers,
           });
 
-          if (finalScore === 1.0) {
+          if (finalScore >= 0.8) {
             confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
           }
 
@@ -535,19 +536,51 @@ export function QuizSessionManager({
   }
 
   if (quizState === 'COMPLETED') {
+    const percent = Math.round(scoreData.score * 100);
+    const isPassed = percent >= 80;
+
     return (
       <Card className="max-w-2xl mx-auto border border-gray-200 dark:border-gray-800 shadow-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Assessment Complete!</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-center justify-center p-8 bg-purple-500/5 rounded-2xl border border-purple-500/10">
-            <div className="text-5xl font-extrabold font-mono text-purple-600 dark:text-purple-400 mb-2">
-              {Math.round(scoreData.score * 100)}%
+          <div className={`flex flex-col items-center justify-center p-8 rounded-2xl border ${
+            isPassed 
+              ? 'bg-emerald-500/10 border-emerald-500/20' 
+              : 'bg-amber-500/10 border-amber-500/20'
+          }`}>
+            <div className={`text-5xl font-extrabold font-mono mb-2 ${
+              isPassed 
+                ? 'text-emerald-600 dark:text-emerald-400' 
+                : 'text-amber-600 dark:text-amber-400'
+            }`}>
+              {percent}%
             </div>
             <div className="text-sm font-semibold text-muted-foreground">
               {scoreData.correct} out of {scoreData.total} correct
             </div>
+
+            {/* 80% Passing threshold indicator */}
+            <div className="mt-4">
+              {isPassed ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Passed (80% Passing Mark Reached)</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-semibold text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Passing Mark Not Met (80% Required to Continue)</span>
+                </div>
+              )}
+            </div>
+
+            {!isPassed && nextLessonId && (
+              <p className="text-xs text-amber-700 dark:text-amber-300 text-center mt-3 max-w-md">
+                You need at least 80% (8 out of 10) on this quiz to unlock and continue to Lesson {nextLessonId}. Review the explanations below and try again!
+              </p>
+            )}
           </div>
           
           {scoreData.emaData && (
@@ -615,17 +648,27 @@ export function QuizSessionManager({
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-            <Button variant="outline" onClick={() => setQuizState('IDLE')} className="gap-2 font-medium">
+            <Button
+              variant={isPassed ? "outline" : "default"}
+              onClick={() => setQuizState('IDLE')}
+              className={`gap-2 font-medium ${!isPassed ? 'bg-purple-600 hover:bg-purple-700 text-white font-semibold' : ''}`}
+            >
               <RotateCcw className="w-4 h-4" />
-              Take Again
+              {isPassed ? 'Take Again' : 'Try Again to Pass (80%)'}
             </Button>
-            {nextLessonId && (
+            {nextLessonId && isPassed && (
               <Link to="/lesson/$lessonId" params={{ lessonId: String(nextLessonId) }} search={{ topicId: undefined }}>
-                <Button className="gap-2 bg-purple-600 hover:bg-purple-700 text-white w-full font-semibold">
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full font-semibold">
                   Continue to Lesson {nextLessonId}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </Link>
+            )}
+            {nextLessonId && !isPassed && (
+              <Button disabled variant="outline" className="gap-2 opacity-50 cursor-not-allowed w-full">
+                <Lock className="w-4 h-4" />
+                Lesson {nextLessonId} Locked (Requires 80%)
+              </Button>
             )}
             <Link to="/roadmap">
               <Button variant="ghost" className="gap-2 text-muted-foreground w-full">

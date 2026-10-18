@@ -462,12 +462,6 @@ export function BinaryArithmeticWorkspace() {
                           <AskAiTutor
                             context={`Binary Arithmetic: ${operand1} ${operation} ${operand2}`}
                             stepDescription={`Step ${idx + 1}: ${step.description}`}
-                            suggestedQuestions={[
-                              operation === '+'
-                                ? `Why is the carry ${step.carryOut || '0'}?`
-                                : 'How does borrowing work in binary?',
-                              'Can you explain this column calculation?',
-                            ]}
                           >
                             <div>
                               <span className="font-bold text-xs sm:text-sm block mb-1 text-foreground">
@@ -488,8 +482,13 @@ export function BinaryArithmeticWorkspace() {
                         onClick={() => setCurrentStepIndex(idx)}
                         className="p-3 px-4 rounded-xl border border-border/70 bg-[#0a0d18] flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-border cursor-pointer transition-colors"
                       >
-                        <span>Step {idx + 1}</span>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-bold text-foreground shrink-0">Step {idx + 1}</span>
+                          <span className="text-muted-foreground font-normal truncate">
+                            • {step.description}
+                          </span>
+                        </div>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                       </div>
                     );
                   })}

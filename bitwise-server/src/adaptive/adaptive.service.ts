@@ -289,18 +289,28 @@ export class AdaptiveService {
     });
 
     // Also update UserLesson with this mastery score
+    // Preserve best passing score (e.g. assessmentScore if >= 0.8) so achieving 80% properly unlocks the next lesson
     const userLesson = await this.prisma.userLesson.findUnique({
       where: { userId_lessonId: { userId, lessonId } },
     });
 
-    if (userLesson) {
-      await this.prisma.userLesson.update({
-        where: { userId_lessonId: { userId, lessonId } },
-        data: { masteryScore: newMastery },
-      });
-    }
+    const bestMastery = Math.max(userLesson?.masteryScore || 0, assessmentScore, newMastery);
 
-    return newMastery;
+    await this.prisma.userLesson.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      update: {
+        masteryScore: bestMastery,
+      },
+      create: {
+        userId,
+        lessonId,
+        masteryScore: bestMastery,
+        status: 'not-started',
+        progress: 0,
+      },
+    });
+
+    return bestMastery;
   }
 
   /**

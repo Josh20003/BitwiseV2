@@ -520,7 +520,7 @@ function RouteComponent() {
     analytics,
     statistics,
     error: roadmapError,
-  } = useRoadmapData(user?.id, lessonIds)
+  } = useRoadmapData(effectiveUser?.id, lessonIds)
 
   // Rotate quotes every 10 seconds
   useEffect(() => {
@@ -608,7 +608,7 @@ function RouteComponent() {
   }
 
   // Show a popup when user clicks a locked lesson
-  const showLockedPopup = useCallback(() => {
+  const showLockedPopup = useCallback((prevLessonNum?: number) => {
     toast.custom((t) => (
       <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg p-4 flex items-start gap-4 max-w-sm pointer-events-auto border border-gray-200 dark:border-gray-700 animate-in slide-in-from-bottom-5">
         <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-full shrink-0">
@@ -619,7 +619,7 @@ function RouteComponent() {
             Lesson Locked
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            You must complete the previous lesson 100% before you can unlock this one!
+            You must complete Lesson {prevLessonNum ?? 'the previous lesson'} and score at least 80% on its AI Quiz to unlock this one!
           </p>
         </div>
         <button
@@ -705,14 +705,35 @@ function RouteComponent() {
           ? Math.round(progress.masteryScore * 100)
           : null
 
+      // Check if previous lesson is completed AND its AI quiz has been passed with at least 80%
       const previousLessonProgress =
         lessonId > 1
           ? lessonProgress.find((p: LessonProgress) => p.lessonId === lessonId - 1)
           : null
       const isPreviousLessonCompleted =
-        lessonId === 1 ||
         previousLessonProgress?.status === 'completed' ||
         (previousLessonProgress?.progress || 0) >= 1
+
+      // Check if previous lesson's AI quiz was passed with at least 80%
+      const prevLessonMastery = lessonId > 1
+        ? (topicMastery[lessonId - 1] as TopicMastery[] | undefined)
+        : undefined
+      const hasPrevQuizAttempts = prevLessonMastery?.some((topic) => (topic.attempts || 0) > 0) ?? false
+
+      // Score on previous lesson: check both previousLessonProgress.masteryScore and topic mastery average
+      const prevMasteryRaw = previousLessonProgress?.masteryScore
+      const prevMasteryPercent = prevMasteryRaw != null
+        ? (prevMasteryRaw > 1 ? prevMasteryRaw : prevMasteryRaw * 100)
+        : (hasPrevQuizAttempts && prevLessonMastery?.length
+            ? (prevLessonMastery.reduce((sum, topic) => sum + ((topic.attempts || 0) > 0 ? topic.mastery : 0), 0) / prevLessonMastery.length) * 100
+            : 0)
+
+      const isPreviousQuizPassed = prevMasteryPercent >= 80
+
+      // Lesson 1 is always unlocked. For others, require both lesson completion AND 80% AI quiz pass.
+      const isLocked = lessonId === 1
+        ? false
+        : !(isPreviousLessonCompleted && isPreviousQuizPassed)
 
       return {
         status: isCompleted
@@ -724,7 +745,7 @@ function RouteComponent() {
           ? Math.round(progress.progress > 1 ? progress.progress : progress.progress * 100)
           : 0,
         masteryScore,
-        isLocked: !isPreviousLessonCompleted,
+        isLocked,
       } as const
     },
     [lessonProgress, topicMastery]
@@ -1017,7 +1038,7 @@ function RouteComponent() {
                     {isLocked && (
                       <div 
                         className="absolute inset-0 z-10 bg-gray-50/50 dark:bg-gray-900/50 cursor-pointer flex items-center justify-center"
-                        onClick={showLockedPopup}
+                        onClick={() => showLockedPopup(lesson.id - 1)}
                       >
                         <div className="bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg text-gray-500 transition-transform hover:scale-110">
                           <Lock className="w-6 h-6" />
@@ -1127,7 +1148,7 @@ function RouteComponent() {
                     {isLocked && (
                       <div 
                         className="absolute inset-0 z-10 bg-gray-50/50 dark:bg-gray-900/50 cursor-pointer rounded-md" 
-                        onClick={showLockedPopup}
+                        onClick={() => showLockedPopup(lesson.id - 1)}
                       />
                     )}
                     <div className="p-4 flex items-center gap-4">
@@ -1289,16 +1310,15 @@ function RouteComponent() {
                     {/* Topics with Difficulty */}
                     <div className="space-y-2 mb-4">
                       {lessonTopics.map((topic, idx) => {
-                        // Match by index position within the lesson's topics array
-                        // Database topicIds are sequential: Lesson 1 = 1,2,3, Lesson 2 = 4,5,6, etc.
-                        const dbTopicId = (lesson.id - 1) * 3 + idx + 1
                         const topicMasteryData = masteryInfo.topics.find(
-                          (t) => t.topicId === dbTopicId || 
-                                 String(t.topicId) === String(dbTopicId) ||
-                                 t.topicId === parseInt(topic.id.split('-')[1])
-                        )
-                        // Default to 0 mastery (Easy) when no data, not 0.5 (Medium)
-                        const mastery = topicMasteryData?.mastery ?? 0
+                          (t) =>
+                            (t.topicTitle && t.topicTitle.toLowerCase().trim() === topic.title.toLowerCase().trim()) ||
+                            t.topicId === parseInt(topic.id.split('-')[1]) ||
+                            String(t.topicId) === topic.id
+                        ) || masteryInfo.topics[idx]
+
+                        const attempts = (topicMasteryData as any)?.attempts ?? 0
+                        const mastery = attempts > 0 ? (topicMasteryData?.mastery ?? 0) : 0
                         const difficulty = getDifficultyFromMastery(mastery)
 
                         return (
