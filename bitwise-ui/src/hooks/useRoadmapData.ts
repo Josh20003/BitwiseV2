@@ -9,6 +9,7 @@ import {
 
 interface TopicMastery {
   topicId: number
+  topicTitle?: string
   mastery: number
   level: number
   attempts: number
@@ -65,6 +66,7 @@ export function useRoadmapData(userId: string | undefined, lessonIds: number[]):
           (acc: Record<number, TopicMastery[]>, lessonSummary: LessonSkillSummary) => {
             acc[lessonSummary.lessonId] = lessonSummary.skills.map((skill) => ({
               topicId: skill.topicId,
+              topicTitle: skill.topicTitle,
               mastery: skill.mastery,
               level: skill.level,
               attempts: skill.attempts,

@@ -173,18 +173,23 @@ export class AdaptiveService {
   async getAdaptiveRecommendations(userId: string) {
     const userSkills = await this.getUserSkills(userId);
 
-    // Find weakest skills (lowest mastery)
-    const weakestSkills = userSkills
+    // Only consider skills with attempts from Adaptive AI Practice
+    const attemptedSkills = userSkills.filter((skill) => skill.attempts > 0);
+
+    // Find weakest skills (lowest mastery among attempted skills)
+    const weakestSkills = attemptedSkills
       .sort((a, b) => a.mastery - b.mastery)
       .slice(0, 3);
 
     // Find skills that need reinforcement (level < 0.6)
-    const needsReinforcement = userSkills.filter((skill) => skill.level < 0.6);
+    const needsReinforcement = attemptedSkills.filter((skill) => skill.level < 0.6);
 
     // Determine overall knowledge level
     const avgMastery =
-      userSkills.reduce((sum, skill) => sum + skill.mastery, 0) /
-      userSkills.length;
+      attemptedSkills.length > 0
+        ? attemptedSkills.reduce((sum, skill) => sum + skill.mastery, 0) /
+          attemptedSkills.length
+        : 0;
 
     let recommendedDifficulty: string;
     if (avgMastery < 0.4) {
@@ -308,25 +313,29 @@ export class AdaptiveService {
       include: { lesson: true },
     });
 
+    const attemptedSkills = userSkills.filter((s) => s.attempts > 0);
+
     // Calculate overall mastery from lesson-level scores if available
     const overallMastery =
       lessonMasteries.length > 0
         ? lessonMasteries.reduce((sum, lm) => sum + lm.masteryScore, 0) /
           lessonMasteries.length
-        : userSkills.reduce((sum, skill) => sum + skill.mastery, 0) /
-          (userSkills.length || 1);
+        : attemptedSkills.length > 0
+          ? attemptedSkills.reduce((sum, skill) => sum + skill.mastery, 0) /
+            attemptedSkills.length
+          : 0;
 
     // Find weakest lessons
     const weakestLessons = lessonMasteries
       .sort((a, b) => a.masteryScore - b.masteryScore)
       .slice(0, 2);
 
-    // Get topic-level recommendations
-    const weakestSkills = userSkills
+    // Get topic-level recommendations from attempted skills
+    const weakestSkills = attemptedSkills
       .sort((a, b) => a.mastery - b.mastery)
       .slice(0, 3);
 
-    const needsReinforcement = userSkills.filter((skill) => skill.level < 0.6);
+    const needsReinforcement = attemptedSkills.filter((skill) => skill.level < 0.6);
 
     let recommendedDifficulty: string;
     if (overallMastery < 0.4) {

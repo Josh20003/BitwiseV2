@@ -73,6 +73,7 @@ interface TopicProgress {
 
 interface TopicMastery {
   topicId: string | number
+  topicTitle?: string
   mastery: number
   attempts: number
   level: number
@@ -634,17 +635,46 @@ function RouteComponent() {
   // Get topic mastery info for a specific lesson
   const getLessonTopicMastery = useCallback((lessonId: number) => {
     const lessonMasteryData = topicMastery[lessonId] as TopicMastery[] | undefined
+    const progress = lessonProgress.find((p: LessonProgress) => p.lessonId === lessonId)
+
     if (!lessonMasteryData || lessonMasteryData.length === 0) {
+      if (progress?.masteryScore != null) {
+        return {
+          topics: [],
+          averageMastery: Math.round(progress.masteryScore * 100),
+          hasData: true,
+        }
+      }
       return { topics: [], averageMastery: 0, hasData: false }
     }
-    
-    const averageMastery = lessonMasteryData.reduce((sum, t) => sum + t.mastery, 0) / lessonMasteryData.length
-    return {
-      topics: lessonMasteryData,
-      averageMastery: Math.round(averageMastery * 100),
-      hasData: true
+
+    const hasAttempts = lessonMasteryData.some((t) => (t.attempts || 0) > 0)
+    if (!hasAttempts && progress?.masteryScore == null) {
+      return {
+        topics: lessonMasteryData.map(t => ({ ...t, mastery: 0 })),
+        averageMastery: 0,
+        hasData: false,
+      }
     }
-  }, [topicMastery])
+
+    // Only attempted topics contribute positive mastery; unattempted topics have 0 mastery
+    const validTopics = lessonMasteryData.map((t) => ({
+      ...t,
+      mastery: (t.attempts || 0) > 0 ? t.mastery : 0,
+    }))
+
+    const averageMastery = progress?.masteryScore != null
+      ? Math.round(progress.masteryScore * 100)
+      : Math.round(
+          (validTopics.reduce((sum, t) => sum + t.mastery, 0) / validTopics.length) * 100
+        )
+
+    return {
+      topics: validTopics,
+      averageMastery,
+      hasData: true,
+    }
+  }, [topicMastery, lessonProgress])
 
   // Get difficulty label based on mastery
   const getDifficultyFromMastery = (mastery: number): { label: string; color: string } => {
@@ -662,15 +692,16 @@ function RouteComponent() {
         progress?.status === 'completed' || (progress?.progress || 0) >= 1
       const isStarted = (progress?.progress || 0) > 0
 
-      // Calculate mastery from adaptive practice for this lesson
+      // Calculate mastery exclusively from adaptive AI practice for this lesson
       const lessonMastery = topicMastery[lessonId] as TopicMastery[] | undefined
-      const masteryScore = lessonMastery?.length
+      const hasAnyAttempts = lessonMastery?.some((topic) => (topic.attempts || 0) > 0)
+      const masteryScore = hasAnyAttempts && lessonMastery?.length
         ? Math.round(
-            (lessonMastery.reduce((sum, topic) => sum + topic.mastery, 0) /
+            (lessonMastery.reduce((sum, topic) => sum + ((topic.attempts || 0) > 0 ? topic.mastery : 0), 0) /
               lessonMastery.length) *
               100
           )
-        : progress?.masteryScore
+        : progress?.masteryScore != null
           ? Math.round(progress.masteryScore * 100)
           : null
 
@@ -833,54 +864,41 @@ function RouteComponent() {
                   </p>
                   <div className="space-y-1.5">
                     {(() => {
-                      // Build topic list from ALL lessons with progress from multiple sources
-                      const allTopicsList = lessons.flatMap(lesson =>
-                        lesson.topics.map((topic, idx) => {
-                          // 1. Check topic completion progress (from viewing/completing topics)
-                          const lessonTopics = topicsProgress[lesson.id] as Array<{
-                            topicId: string | number
-                            status: string
-                            topic?: { title: string }
-                          }> | undefined
-                          const topicProgress = lessonTopics?.find(
-                            (t) => t.topicId === idx + 1 || String(t.topicId) === topic.id.split('-')[1]
-                          )
-                          const completionProgress = topicProgress?.status === 'completed' ? 1.0
-                            : topicProgress?.status === 'viewed' ? 0.5
-                            : 0
-
-                          // 2. Check assessment mastery (from AI practice)
+                      // Build topic list from ALL lessons based EXCLUSIVELY on Adaptive AI Practice performance
+                      const allTopicsList = lessons.flatMap((lesson, _lessonIdx) =>
+                        lesson.topics.map((topic, topicIdx) => {
                           const lessonAnalytics = analytics?.skillsByLesson?.find(
                             (l) => l.lessonId === lesson.id
                           )
                           const skillData = lessonAnalytics?.skills?.find(
-                            (s) => s.topicId === idx + 1 || String(s.topicId) === topic.id.split('-')[1]
-                          )
-                          const assessmentMastery = skillData?.mastery ?? 0
+                            (s) =>
+                              (s.topicTitle && s.topicTitle.toLowerCase().trim() === topic.title.toLowerCase().trim()) ||
+                              s.topicId === parseInt(topic.id.split('-')[1])
+                          ) || lessonAnalytics?.skills?.[topicIdx]
 
-                          // Use the higher of the two
-                          const effectiveProgress = Math.max(completionProgress, assessmentMastery)
+                          const attempts = skillData?.attempts ?? 0
+                          const assessmentMastery = attempts > 0 ? (skillData?.mastery ?? 0) : 0
 
                           return {
                             id: topic.id,
                             title: topic.title,
-                            progress: effectiveProgress,
+                            progress: assessmentMastery,
+                            attempts,
                             lessonId: lesson.id,
                           }
                         })
                       )
 
-                      // Sort by lowest progress first (focus areas = weakest topics)
-                      const sorted = [...allTopicsList].sort((a, b) => a.progress - b.progress)
+                      // Focus areas show topics attempted in Adaptive AI Practice that need the most work
+                      const attemptedTopics = allTopicsList.filter((t) => t.attempts > 0)
+                      const sorted = [...attemptedTopics].sort((a, b) => a.progress - b.progress)
 
-                      const hasAnalyticsData = allTopicsList.some(t => t.progress > 0)
-
-                      if (!hasAnalyticsData) {
+                      if (sorted.length === 0) {
                         return (
                           <div className="flex flex-col items-center justify-center py-4 px-3 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/30 dark:bg-gray-900/10 my-1">
                             <Brain className="w-6 h-6 text-purple-400 dark:text-purple-500 mb-2 animate-pulse" />
                             <p className="text-[10px] text-muted-foreground leading-normal font-medium max-w-[180px]">
-                              No mastery data available yet. Start a practice assessment or complete lesson topics to see your focus areas!
+                              No mastery data available yet. Start an adaptive AI practice assessment to see your focus areas!
                             </p>
                           </div>
                         )
@@ -1404,7 +1422,10 @@ function RouteComponent() {
                       topicMastery[selectedLesson?.id || 0] as
                         | TopicMastery[]
                         | undefined
-                    )?.find((m) => m.topicId === topic.id)
+                    )?.find((m) =>
+                      (m.topicTitle && m.topicTitle.toLowerCase().trim() === topic.title.toLowerCase().trim()) ||
+                      Number(m.topicId) === topic.id
+                    )
                     const isTopicCompleted =
                       topic.status === 'completed' ||
                       topicStatus?.status === 'completed'
@@ -1412,7 +1433,7 @@ function RouteComponent() {
                       isTopicCompleted ||
                       topic.status === 'viewed' ||
                       topicStatus?.status === 'viewed'
-                    const masteryPercent = mastery
+                    const masteryPercent = (mastery && (mastery.attempts || 0) > 0)
                       ? Math.round(mastery.mastery * 100)
                       : 0
 
@@ -1583,13 +1604,15 @@ function RouteComponent() {
                         {/* Topics */}
                         <div className="space-y-2">
                           {lessonTopics.map((topic, idx) => {
-                            const dbTopicId = (lesson.id - 1) * 3 + idx + 1
                             const topicMasteryData = masteryInfo.topics.find(
-                              (t) => t.topicId === dbTopicId || 
-                                     String(t.topicId) === String(dbTopicId) ||
-                                     t.topicId === parseInt(topic.id.split('-')[1])
-                            )
-                            const mastery = topicMasteryData?.mastery ?? 0
+                              (t) =>
+                                (t.topicTitle && t.topicTitle.toLowerCase().trim() === topic.title.toLowerCase().trim()) ||
+                                t.topicId === parseInt(topic.id.split('-')[1]) ||
+                                String(t.topicId) === topic.id
+                            ) || masteryInfo.topics[idx]
+
+                            const attempts = (topicMasteryData as any)?.attempts ?? 0
+                            const mastery = attempts > 0 ? (topicMasteryData?.mastery ?? 0) : 0
                             const difficulty = getDifficultyFromMastery(mastery)
 
                             return (
