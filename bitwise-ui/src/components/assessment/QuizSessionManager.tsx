@@ -187,6 +187,53 @@ const QuestionStemRenderer = ({ stem }: { stem: any }) => {
   return null;
 };
 
+const LESSON_METADATA: Record<number, { title: string; topics: string[] }> = {
+  1: {
+    title: 'Introduction to Number Systems',
+    topics: ['Binary', 'Decimal', 'Octal', 'Hexadecimal'],
+  },
+  2: {
+    title: 'Types of Number Systems',
+    topics: ['Binary ↔ Decimal', 'Binary ↔ Hex', 'Digit Groupings'],
+  },
+  3: {
+    title: 'Conversion of Number Systems',
+    topics: ['Decimal to Binary', 'Binary to Decimal', 'Hex Conversion'],
+  },
+  4: {
+    title: 'Binary Arithmetic',
+    topics: ['Binary Addition', 'Subtraction', 'Multiplication', 'Division'],
+  },
+  5: {
+    title: 'Complements',
+    topics: ["1's Complement", "2's Complement", 'Bit Inversion'],
+  },
+  6: {
+    title: 'Signed and Unsigned Numbers',
+    topics: ['MSB', 'Signed Representation', 'Unsigned Representation'],
+  },
+  7: {
+    title: 'Binary Codes (BCD & ASCII)',
+    topics: ['BCD Encoding', 'ASCII Conversion', 'Character-to-Binary'],
+  },
+  8: {
+    title: 'Intro to Boolean Algebra',
+    topics: ['What is Boolean Algebra?', 'Boolean Values', 'Applications'],
+  },
+  9: {
+    title: 'Logic Gates',
+    topics: ['AND, OR, NOT', 'NAND, NOR', 'XOR, XNOR'],
+  },
+  10: {
+    title: 'Truth Tables',
+    topics: ['Constructing Truth Tables', 'Reading Truth Tables', 'Truth Tables for Gates'],
+  },
+  11: {
+    title: 'Simplification & Karnaugh Maps',
+    topics: ['Boolean Laws', 'Karnaugh Maps', 'Practical Examples'],
+  },
+};
+
 export function QuizSessionManager({
   userId,
   topic,
@@ -209,6 +256,17 @@ export function QuizSessionManager({
   const [error, setError] = useState<string | null>(null);
   const [submittedQuestion, setSubmittedQuestion] = useState<string | null>(null);
   const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [lessonInfo, setLessonInfo] = useState<{
+    lessonId: number;
+    lessonTitle: string;
+    topicMasteries?: Array<{
+      topicId: number;
+      topicTitle: string;
+      mastery: number;
+      difficulty: string;
+      questionCount: number;
+    }>;
+  } | null>(null);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -238,6 +296,9 @@ export function QuizSessionManager({
         if (data.success && data.data && data.data.questions.length > 0) {
           setQuestions(data.data.questions);
           setAttemptId(data.data.attemptId);
+          if (data.data.lessonInfo) {
+            setLessonInfo(data.data.lessonInfo);
+          }
           setQuizState('IN_PROGRESS');
           setCurrentIndex(0);
           setSelectedAnswers({});
@@ -398,6 +459,8 @@ export function QuizSessionManager({
   };
 
   if (quizState === 'IDLE') {
+    const currentLesson = lessonId ? LESSON_METADATA[lessonId] : null;
+
     return (
       <Card className="max-w-2xl mx-auto text-center py-10 px-6 border border-gray-200 dark:border-gray-800 shadow-md">
         <CardHeader>
@@ -406,19 +469,30 @@ export function QuizSessionManager({
               <Brain className="w-8 h-8" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">AI Adaptive Assessment</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {currentLesson
+              ? `Lesson ${lessonId}: ${currentLesson.title}`
+              : 'AI Adaptive Assessment'}
+          </CardTitle>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            Test your knowledge on <span className="font-semibold text-foreground capitalize">{topic.replace(/-/g, ' ')}</span>.
-            {lessonId ? (
+            {currentLesson ? (
               <>
-                {['boolean-algebra', 'logic-gates', 'truth-tables', 'karnaugh-maps'].includes(topic) ? (
-                  <> The questions will feature real-time visual diagrams (truth tables, circuits, or Karnaugh maps) and adaptively align to your personal BKT mastery skill level.</>
-                ) : (
-                  <> The questions will feature customized computational problems (base conversions, positional values, arithmetic, or complements) and adaptively align to your personal BKT mastery skill level.</>
-                )}
+                Focused practice session exclusively for{' '}
+                <span className="font-semibold text-foreground">{currentLesson.title}</span>.
+                Questions are 100% focused on{' '}
+                <span className="font-semibold text-foreground">
+                  {currentLesson.topics.join(', ')}
+                </span>{' '}
+                and dynamically adapt to your personal mastery skill level.
               </>
             ) : (
-              <> The difficulty will dynamically adjust based on your historical Exponential Moving Average (EMA) mastery scores.</>
+              <>
+                Test your knowledge on{' '}
+                <span className="font-semibold text-foreground capitalize">
+                  {topic.replace(/-/g, ' ')}
+                </span>
+                . The difficulty will dynamically adjust based on your mastery level.
+              </>
             )}
           </p>
         </CardHeader>
@@ -429,35 +503,30 @@ export function QuizSessionManager({
               <span>{error}</span>
             </div>
           )}
-          <Button size="lg" onClick={startQuiz} disabled={loading} className="mt-4 px-8 bg-purple-600 hover:bg-purple-700 text-white font-semibold">
+          <Button
+            size="lg"
+            onClick={startQuiz}
+            disabled={loading}
+            className="mt-4 px-8 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+          >
             {loading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {['boolean-algebra', 'logic-gates', 'truth-tables', 'karnaugh-maps'].includes(topic)
-                  ? 'Generating Visual Assessment...'
+                {currentLesson
+                  ? `Generating Lesson ${lessonId} Assessment...`
                   : 'Generating Assessment...'}
               </span>
+            ) : currentLesson ? (
+              `Start Lesson ${lessonId} Practice`
             ) : (
               'Start Assessment'
             )}
           </Button>
           {loading && (
             <p className="text-xs text-muted-foreground mt-4 animate-pulse">
-              {(() => {
-                if (['boolean-algebra', 'logic-gates', 'truth-tables', 'karnaugh-maps'].includes(topic)) {
-                  return 'Please wait: Groq AI is engineering customized truth tables, circuits, and questions for your current mastery...';
-                }
-                if (topic === 'number-systems') {
-                  return 'Please wait: Groq AI is preparing customized number bases, positional structures, and conversion puzzles for your current mastery...';
-                }
-                if (topic === 'binary-arithmetic') {
-                  return 'Please wait: Groq AI is calculating binary arithmetic drills, carry-bit challenges, and solutions for your current mastery...';
-                }
-                if (topic === 'complements') {
-                  return 'Please wait: Groq AI is structuring complement problems, signed representations, and subtraction drills for your current mastery...';
-                }
-                return 'Please wait: Groq AI is crafting customized practice questions and step-by-step explanations for your current mastery...';
-              })()}
+              {currentLesson
+                ? `Please wait: AI is generating 10 questions focused exclusively on ${currentLesson.title}...`
+                : 'Please wait: AI is engineering customized practice questions for your current mastery...'}
             </p>
           )}
         </CardContent>
@@ -578,6 +647,24 @@ export function QuizSessionManager({
   // Determine if it is rich question object format
   const isRichFormat = currentQ.answerId !== undefined;
 
+  const currentTopicName = (() => {
+    if (lessonInfo?.topicMasteries && currentQ.topicId) {
+      const match = lessonInfo.topicMasteries.find(
+        (t) => t.topicId === currentQ.topicId,
+      );
+      if (match) return match.topicTitle;
+    }
+    if (currentQ.topic) {
+      return currentQ.topic.replace(/-/g, ' ');
+    }
+    return null;
+  })();
+
+  const currentLessonTitle =
+    lessonInfo?.lessonTitle ||
+    (lessonId && LESSON_METADATA[lessonId]?.title) ||
+    null;
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="pb-6 mb-6">
@@ -610,12 +697,14 @@ export function QuizSessionManager({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="px-4 py-1.5 rounded-full bg-gray-100/80 dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Lesson {lessonId || '1'}
+            <span className="px-4 py-1.5 rounded-full bg-blue-100/80 dark:bg-blue-900/40 text-sm font-semibold text-blue-800 dark:text-blue-300">
+              Lesson {lessonId || '1'}{currentLessonTitle ? `: ${currentLessonTitle}` : ''}
             </span>
-            <span className="px-4 py-1.5 rounded-full bg-gray-100/80 dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize">
-              Topic {topic.replace(/-/g, ' ')}
-            </span>
+            {currentTopicName && (
+              <span className="px-4 py-1.5 rounded-full bg-gray-100/80 dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize">
+                Topic: {currentTopicName}
+              </span>
+            )}
             <span className="px-4 py-1.5 rounded-full bg-green-100/50 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-sm font-semibold capitalize">
                {currentQ.difficulty || 'Easy'}
             </span>
