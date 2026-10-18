@@ -17,6 +17,99 @@ import { jsonrepair } from 'jsonrepair';
 import { AI_CONFIG, createGoogleProvider } from '../config/ai.config';
 import { LlmProviderService } from './llm-provider.service';
 
+/**
+ * Strips raw LaTeX math notation and converts subscripts/superscripts to clean Unicode.
+ */
+export function cleanLatexNotation(text: string): string {
+  if (!text || typeof text !== 'string') return text;
+
+  let cleaned = text;
+
+  // Replace common LaTeX math commands
+  cleaned = cleaned
+    .replace(/\\cdot/g, ' · ')
+    .replace(/\\times/g, ' × ')
+    .replace(/\\oplus/g, ' ⊕ ')
+    .replace(/\\land/g, ' ∧ ')
+    .replace(/\\lor/g, ' ∨ ')
+    .replace(/\\neg/g, ' ¬ ')
+    .replace(/\\leq?/g, ' ≤ ')
+    .replace(/\\geq?/g, ' ≥ ')
+    .replace(/\\neq?/g, ' ≠ ')
+    .replace(/\\approx/g, ' ≈ ')
+    .replace(/\\overline{([A-Za-z0-9]+)}/g, "$1'");
+
+  // Replace LaTeX subscripts: e.g. (101100)_2 or 101100_{2} or $(101100)_2$
+  const subMap: Record<string, string> = {
+    '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+    '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+    'i': 'ᵢ', 'n': 'ₙ',
+  };
+  cleaned = cleaned.replace(/_\{?([0-9]+|[in])\}?/g, (_match, p1) => {
+    if (p1 === '10') return '₁₀';
+    if (p1 === '16') return '₁₆';
+    return p1.split('').map((c: string) => subMap[c] || c).join('');
+  });
+
+  // Replace LaTeX superscripts: e.g. 2^i, 2^n, 2^3, 2^{10}
+  const supMap: Record<string, string> = {
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+    '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+    '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾',
+    'i': 'ⁱ', 'n': 'ⁿ', 'x': 'ˣ', 'y': 'ʸ',
+  };
+  cleaned = cleaned.replace(/\^\{?([0-9]+|[inxy\+\-\=]+)\}?/g, (_match, p1) => {
+    return p1.split('').map((c: string) => supMap[c] || c).join('');
+  });
+
+  // Strip math delimiters: $...$
+  cleaned = cleaned.replace(/\$([^\$]+)\$/g, '$1');
+
+  // Strip any remaining lone $
+  cleaned = cleaned.replace(/\$/g, '');
+
+  return cleaned.trim();
+}
+
+/**
+ * Randomly shuffles the options of a question and re-assigns IDs
+ * opt_a, opt_b, opt_c, opt_d based on the shuffled order.
+ * This guarantees a mathematically uniform distribution of correct
+ * answers across positions A, B, C, and D.
+ */
+export function shuffleAndReassignOptions(options: any[]): {
+  shuffledOptions: any[];
+  correctOptionId: string;
+} {
+  if (!Array.isArray(options) || options.length === 0) {
+    return { shuffledOptions: [], correctOptionId: '' };
+  }
+
+  // Fisher-Yates shuffle
+  const shuffled = [...options];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const letters = ['a', 'b', 'c', 'd', 'e', 'f'];
+  let correctOptionId = '';
+
+  const reindexed = shuffled.map((opt, index) => {
+    const letter = letters[index] || `opt_${index}`;
+    const newId = `opt_${letter}`;
+    if (opt.isCorrect === true) {
+      correctOptionId = newId;
+    }
+    return {
+      ...opt,
+      id: newId,
+    };
+  });
+
+  return { shuffledOptions: reindexed, correctOptionId };
+}
+
 @Injectable()
 export class AssessmentService {
   constructor(
@@ -765,17 +858,32 @@ export class AssessmentService {
       );
       console.log(`Weakest topic: ${sortedByMastery[0].topicTitle}`);
 
-      // Distribute exactly 10 questions: 2 per topic, weakest gets 2 bonus questions.
+      // Distribute exactly 10 questions across topics, weighting toward the weakest topic.
+      const totalTopics = topicsWithMastery.length;
       const topicsForPrompt = topicsWithMastery.map((topic) => {
         const isWeakest = topic.topicId === weakestTopicId;
         const difficulty = getDifficultyFromMastery(topic.mastery);
+
+        let questionCount = 2;
+        if (totalTopics === 4) {
+          questionCount = isWeakest ? 4 : 2; // 4 + 2 + 2 + 2 = 10
+        } else if (totalTopics === 3) {
+          questionCount = isWeakest ? 4 : 3; // 4 + 3 + 3 = 10
+        } else if (totalTopics === 2) {
+          questionCount = isWeakest ? 6 : 4; // 6 + 4 = 10
+        } else if (totalTopics === 1) {
+          questionCount = 10;
+        } else {
+          // 5 or more topics: 2 per topic
+          questionCount = isWeakest ? Math.max(2, 10 - (totalTopics - 1) * 2) : 2;
+        }
 
         return {
           topicId: topic.topicId,
           topicTitle: topic.topicTitle,
           mastery: topic.mastery,
           difficulty,
-          questionCount: isWeakest ? 4 : 2,
+          questionCount,
           contentText: topic.contentText,
           tags: topic.tags,
         };
@@ -814,7 +922,7 @@ export class AssessmentService {
             `Generation attempt ${attempt} for lesson ${lessonId}...`,
           );
           const text = await this.llmProvider.generateStrict(generationPrompt, {
-            maxOutputTokens: 16384,
+            maxOutputTokens: 8192,
           });
           return await this.extractJsonArray(text);
         } catch (err) {
@@ -825,16 +933,23 @@ export class AssessmentService {
 
       let questions = await requestQuestions(prompt);
 
-      // The full prompt asks for lengthy explanations and can exceed the model's
-      // output budget. Retry with the compact schema before rejecting the attempt.
-      if (Array.isArray(questions) && questions.length < totalQuestions) {
+      // If attempt 1 returned fewer than 10 questions, request fallback to guarantee 10 questions
+      if (!Array.isArray(questions) || questions.length < 10) {
         console.warn(
-          `Only ${questions.length} questions returned, retrying with compact prompt...`,
+          `Attempt 1 returned ${questions?.length ?? 0} questions (10 required). Requesting fallback to reach 10 questions...`,
         );
-        questions = await requestQuestions(
+        const fallbackQuestions = await requestQuestions(
           buildFallbackLessonQuizPrompt(promptContext),
           2,
         );
+
+        if (Array.isArray(fallbackQuestions) && fallbackQuestions.length >= 10) {
+          questions = fallbackQuestions;
+        } else if (Array.isArray(questions) && Array.isArray(fallbackQuestions)) {
+          questions = [...questions, ...fallbackQuestions];
+        } else if (Array.isArray(fallbackQuestions)) {
+          questions = fallbackQuestions;
+        }
       }
 
       // Validate and clean questions
@@ -923,6 +1038,13 @@ export class AssessmentService {
             return null;
           }
 
+          // Randomize option order and reassign IDs (opt_a, opt_b, opt_c, opt_d)
+          // so correct answers are evenly distributed across A, B, C, and D
+          const { shuffledOptions, correctOptionId } =
+            shuffleAndReassignOptions(q.options);
+          q.options = shuffledOptions;
+          q.answerId = correctOptionId;
+
           // Validate topicId belongs to this lesson
           const validTopicIds = lesson.topics.map((t) => t.id);
           if (!validTopicIds.includes(q.topicId)) {
@@ -940,15 +1062,49 @@ export class AssessmentService {
             this.allowedTags.includes(tag),
           );
 
+          // Clean LaTeX from stem, options, and explanations
+          let cleanedStem = q.stem;
+          if (typeof cleanedStem === 'string') {
+            cleanedStem = cleanLatexNotation(cleanedStem);
+          } else if (
+            typeof cleanedStem === 'object' &&
+            cleanedStem !== null &&
+            cleanedStem.text
+          ) {
+            cleanedStem = {
+              ...cleanedStem,
+              text: cleanLatexNotation(cleanedStem.text),
+            };
+          }
+
+          const cleanedOptions = q.options.map((opt: any) => ({
+            ...opt,
+            text: cleanLatexNotation(opt.text || opt.label || ''),
+            rationale: opt.rationale
+              ? cleanLatexNotation(opt.rationale)
+              : undefined,
+          }));
+
+          const cleanedExplanation = q.explanation
+            ? cleanLatexNotation(q.explanation)
+            : undefined;
+
+          const cleanedSolutionSteps = Array.isArray(q.solutionSteps)
+            ? q.solutionSteps.map((s: string) => cleanLatexNotation(s))
+            : [
+                'Analyze the problem',
+                'Apply relevant concepts',
+                'Verify the answer',
+              ];
+
           return {
             ...q,
             id: q.id || `q-${Date.now()}-${index}`,
+            stem: cleanedStem,
+            options: cleanedOptions,
+            explanation: cleanedExplanation,
+            solutionSteps: cleanedSolutionSteps,
             questionType: q.questionType || 'multiple-choice',
-            solutionSteps: q.solutionSteps || [
-              'Analyze the problem',
-              'Apply relevant concepts',
-              'Verify the answer',
-            ],
           };
         })
         .filter((q: any) => {

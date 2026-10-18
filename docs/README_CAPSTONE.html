@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>README — Bitwise</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 22mm 20mm 22mm 20mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #111827;
+    background: #ffffff;
+    font-size: 10pt;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* RUNNING HEADERS */
+  .running-header {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 4pt;
+    margin-bottom: 16pt;
+  }
+
+  /* COVER PAGE */
+  .cover-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    padding-top: 40pt;
+    padding-bottom: 60pt;
+    page-break-after: always;
+  }
+  .inst-header {
+    margin-bottom: 120pt;
+  }
+  .inst-title {
+    font-size: 18pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin: 0 0 6pt 0;
+    text-transform: uppercase;
+  }
+  .inst-sub {
+    font-size: 14pt;
+    font-weight: 700;
+    font-style: italic;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .doc-title-block {
+    margin-bottom: 100pt;
+  }
+  .doc-title {
+    font-size: 22pt;
+    font-weight: 800;
+    margin: 0 0 8pt 0;
+  }
+  .doc-for {
+    font-size: 12pt;
+    font-style: italic;
+    margin: 0 0 6pt 0;
+  }
+  .doc-system {
+    font-size: 20pt;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .meta-block {
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+  .team-code {
+    font-weight: 700;
+    margin-bottom: 16pt;
+  }
+  .members-title {
+    font-weight: 700;
+    margin-bottom: 6pt;
+  }
+  .members-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .members-list li {
+    margin-bottom: 3pt;
+  }
+
+  /* HEADINGS & BLOCKS */
+  .system-banner {
+    background: #000000;
+    color: #ffffff;
+    font-size: 22pt;
+    font-weight: 800;
+    padding: 4pt 12pt;
+    display: inline-block;
+    margin-bottom: 10pt;
+    letter-spacing: -0.5px;
+  }
+  .tagline {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 8pt;
+  }
+  .pipeline-text {
+    font-size: 9.5pt;
+    color: #374151;
+    margin-bottom: 14pt;
+    line-height: 1.4;
+  }
+  .diagram-box {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 6pt;
+    padding: 12pt;
+    margin: 12pt 0;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+  .diagram-title {
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #64748b;
+    margin-top: 8pt;
+  }
+  .links-bar {
+    font-size: 9pt;
+    color: #4b5563;
+    margin: 10pt 0 6pt 0;
+    font-weight: 600;
+  }
+  .tech-bar {
+    font-size: 8.5pt;
+    color: #6b7280;
+    margin-bottom: 16pt;
+  }
+  h2.section-header {
+    background: #000000;
+    color: #ffffff;
+    font-size: 13pt;
+    font-weight: 800;
+    padding: 3pt 8pt;
+    margin: 18pt 0 8pt 0;
+    display: inline-block;
+  }
+  h3.sub-header {
+    font-size: 10.5pt;
+    font-weight: 700;
+    margin: 12pt 0 4pt 0;
+    color: #111827;
+  }
+  p {
+    margin: 0 0 8pt 0;
+    font-size: 9.5pt;
+    text-align: justify;
+  }
+  ul {
+    margin: 0 0 10pt 0;
+    padding-left: 16pt;
+  }
+  li {
+    font-size: 9.5pt;
+    margin-bottom: 4pt;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8pt 0 14pt 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #94a3b8;
+    padding: 5pt 6pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 8pt;
+    background-color: #f1f5f9;
+    padding: 1pt 3pt;
+    border-radius: 2px;
+  }
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 8pt 10pt;
+    border-radius: 4pt;
+    font-size: 8pt;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    margin: 6pt 0 10pt 0;
+    overflow-x: auto;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+  <!-- COVER PAGE -->
+  <div class="cover-page">
+    <div class="inst-header">
+      <div class="inst-title">Cebu Institute of Technology University</div>
+      <div class="inst-sub">College of Computer Studies</div>
+    </div>
+
+    <div class="doc-title-block">
+      <div class="doc-title">README</div>
+      <div class="doc-for">for</div>
+      <div class="doc-system">Bitwise (Bitwise V2)</div>
+    </div>
+
+    <div class="meta-block">
+      <div class="team-code">Team Code: 2627-sem1-it411-62</div>
+      <div class="members-title">Members:</div>
+      <ul class="members-list">
+        <li>Arpon, Joseph Cris E.</li>
+        <li>Arnejo, Ralph John R.</li>
+        <li>Cotiangco, James Gabriel F.</li>
+        <li>Lawas, Berchard Lawrence D.</li>
+        <li>Menez, John Joshua L.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="running-header">README — Bitwise</div>
+
+  <div class="system-banner">Bitwise</div>
+  <div class="tagline">An adaptive, AI-powered educational ecosystem for computer engineering and digital systems.</div>
+  <div class="pipeline-text">
+    Curriculum (11 Lessons) → Interactive Tools Workspace → Supabase PostgreSQL Cloud → Adaptive AI Assessment Engine (Gemini & Groq with BKT / EMA)
+  </div>
+
+  <div class="diagram-box">
+    <table style="border: none; margin: 0; background: transparent;">
+      <tr style="background: transparent;">
+        <td style="border: 1px solid #64748b; background: #ffffff; padding: 8pt; border-radius: 4pt; width: 25%;">
+          <strong>Learn Tier</strong><br>
+          <span style="font-size: 8pt; color: #475569;">11 Interactive Lessons<br>Scaffolding & Quizzes</span>
+        </td>
+        <td style="border: none; text-align: center; vertical-align: middle; font-size: 14pt;">→</td>
+        <td style="border: 1px solid #64748b; background: #ffffff; padding: 8pt; border-radius: 4pt; width: 25%;">
+          <strong>Tools Workbench</strong><br>
+          <span style="font-size: 8pt; color: #475569;">Calculators, Converters<br>Arithmetic & Codes</span>
+        </td>
+        <td style="border: none; text-align: center; vertical-align: middle; font-size: 14pt;">→</td>
+        <td style="border: 1px solid #64748b; background: #ffffff; padding: 8pt; border-radius: 4pt; width: 25%;">
+          <strong>Cloud Database</strong><br>
+          <span style="font-size: 8pt; color: #475569;">Supabase Tokyo RDS<br>PgBouncer Pooler</span>
+        </td>
+        <td style="border: none; text-align: center; vertical-align: middle; font-size: 14pt;">→</td>
+        <td style="border: 1px solid #64748b; background: #ffffff; padding: 8pt; border-radius: 4pt; width: 25%;">
+          <strong>AI Engine</strong><br>
+          <span style="font-size: 8pt; color: #475569;">Gemini & Groq APIs<br>Adaptive BKT & EMA</span>
+        </td>
+      </tr>
+    </table>
+    <div class="diagram-title">Figure 1. Bitwise pipeline from learning to multi-mode calculation and adaptive assessment</div>
+  </div>
+
+  <div class="links-bar">
+    bitwise.live · Features · Architecture · Run it locally · Team
+  </div>
+  <div class="tech-bar">
+    React 19 · TypeScript · Vite · Tailwind CSS · TanStack Router · NestJS 11 · Fastify · Prisma ORM · PostgreSQL · Google Gemini API · Groq Cloud · Traefik v2.11 · Docker · AWS EC2
+  </div>
+
+  <h2 class="section-header">Why Bitwise</h2>
+  <p>
+    Foundational courses in Computer Science and Computer Engineering—specifically Digital Logic Design, Discrete Mathematics, and Computer Architecture—have long suffered from two major learning bottlenecks:
+  </p>
+  <p>
+    Students struggle with abstract mental models: binary borrow cascades, two's complement sign wrapping, Gray code reflections, and Karnaugh map grouping rules are difficult to master on static presentation slides or textbooks. Furthermore, students spend hours verifying homework steps manually with no real-time diagnostics when a calculation errors out.
+  </p>
+  <p>
+    <strong>Bitwise</strong> addresses both ends of the educational pipeline. Learners interact with reactive digital representations (toggling bits directly, observing real-time ALU overflow flags, and watching mathematical division cascades), while the platform’s adaptive AI tracks concept mastery via <strong>Bayesian Knowledge Tracing (BKT)</strong> and <strong>Exponential Moving Average (EMA)</strong> to dynamically target problem areas.
+  </p>
+
+  <h3 class="sub-header">North-star outcomes</h3>
+  <ul>
+    <li><strong>Students:</strong> Intuitive conceptual mastery of digital logic and binary representations without rote memorization.</li>
+    <li><strong>Intermediate Step Verification:</strong> Instantaneous verification of mathematical traces (carries, borrows, parity syndromes) in sub-seconds.</li>
+    <li><strong>Self-Paced Mastery:</strong> Continuous progress tracking across 5 skill levels (Novice → Expert).</li>
+  </ul>
+
+  <!-- PAGE 3 -->
+  <div class="page-break"></div>
+  <div class="running-header">README — Bitwise</div>
+
+  <h2 class="section-header">Features</h2>
+
+  <h3 class="sub-header">1 · Educational Scaffolding (11 Structured Lessons)</h3>
+  <p>Structured interactive curriculum covering the complete digital logic syllabus:</p>
+  <ul>
+    <li><strong>Lessons 1–3:</strong> Number Systems, Digit Groupings (bits, nibbles, bytes), and Number System Conversions with focused practice challenges.</li>
+    <li><strong>Lesson 4:</strong> Binary Arithmetic Workspace: vertical notation, carry/borrow steps, multiplication, and long-division trainers.</li>
+    <li><strong>Lessons 5–7:</strong> 1's & 2's Complements, Signed/Unsigned Ranges, and Binary Codes (BCD, Gray Code, ASCII).</li>
+    <li><strong>Lessons 8–11:</strong> Boolean Algebra Explorer, Logic Gate Simulator, Truth Table Builder, and interactive 2-, 3-, 4-variable Karnaugh Maps (K-Maps).</li>
+  </ul>
+
+  <h3 class="sub-header">2 · Multi-Mode Calculation Laboratory</h3>
+  <p>Dynamic tools providing mathematical proof steps:</p>
+  <ul>
+    <li><strong>Universal Radix Converter:</strong> Translates between Binary, Octal, Decimal, Hexadecimal, and arbitrary bases (2–36) with algorithmic step cards.</li>
+    <li><strong>1's & 2's Complement Negation:</strong> Inversion visualizer, end-around carry cascade, and sign-magnitude comparative matrices.</li>
+    <li><strong>Hardware ALU Flags:</strong> Real-time detection of Carry (C), Overflow (V), Zero (Z), and Sign (S) flags.</li>
+  </ul>
+
+  <h3 class="sub-header">3 · Binary Codes & Error Correction</h3>
+  <p>Hands-on encoding schemes and error-detecting protocols:</p>
+  <ul>
+    <li><strong>Hamming(7,4) Code:</strong> Single-bit error detection and syndrome parity correction with interactive bit-flipping simulator.</li>
+    <li><strong>BCD & Gray Code:</strong> 4-bit decimal translation and single-bit transition encoder/decoder.</li>
+  </ul>
+
+  <h3 class="sub-header">4 · Adaptive AI Assessment & Ask AI Tutor</h3>
+  <p>Intelligent, personalized student evaluation:</p>
+  <ul>
+    <li><strong>Bayesian Knowledge Tracing (BKT):</strong> Dynamically calculates learner mastery probabilities based on previous attempts.</li>
+    <li><strong>Context-Aware AI Tutor:</strong> Socratic question-answering powered by Google Gemini and Groq API, providing step explanations without spoiling direct answers.</li>
+  </ul>
+
+  <h3 class="sub-header">Across the app</h3>
+  <ul>
+    <li><strong>Cohesive Dark Theme:</strong> Styled with tailored HSL tokens (<code>#090d18</code> and <code>#0c101d</code>) and purple/indigo accents.</li>
+    <li><strong>Zero Secret Exposure:</strong> All database credentials, LLM keys, and service tokens are kept securely server-side.</li>
+    <li><strong>Strict Type Safety:</strong> Validated with TypeScript <code>npx tsc -b</code> with 0 compile errors across frontend and backend.</li>
+  </ul>
+
+  <!-- PAGE 4 -->
+  <div class="page-break"></div>
+  <div class="running-header">README — Bitwise</div>
+
+  <h2 class="section-header">Architecture</h2>
+  
+  <div class="diagram-box">
+    <pre>
+                                  [ CLIENT TIER ]
+                         React 19 + TypeScript + Vite
+                       TanStack Router + Radix UI Engine
+                                         │
+                             HTTPS Port 443 (Let's Encrypt)
+                                         │
+                             [ REVERSE PROXY & SSL ]
+                              Traefik v2.11 (AWS EC2)
+                                         │
+                    ┌────────────────────┴────────────────────┐
+                    │                                         │
+             Path: / (Port 80)                       Path: /api (Port 3000)
+         [ FRONTEND CONTAINER ]                      [ BACKEND CONTAINER ]
+        Nginx Alpine Static Host                    NestJS 11 + Fastify Core
+                                                              │
+                                            ┌─────────────────┴─────────────────┐
+                                            │                                   │
+                                   [ DATABASE TIER ]                   [ AI SERVICES TIER ]
+                              Supabase PostgreSQL 16 (Tokyo)            Google Gemini API
+                               PgBouncer Pooler (:6543)                   Groq Cloud API
+    </pre>
+    <div class="diagram-title">Figure 2. Bitwise multi-tier cloud and microservice architecture</div>
+  </div>
+
+  <h3 class="sub-header">Module boundaries</h3>
+  <ul>
+    <li><strong>Frontend Independence:</strong> Client components interact strictly through the typed REST API; direct database connections from the browser are blocked.</li>
+    <li><strong>Stateless Calculation Engine:</strong> Core binary arithmetic and conversions run entirely as deterministic in-memory algorithms with sub-5ms latency.</li>
+    <li><strong>Connection Pooling:</strong> Database queries flow through Supabase's PgBouncer pooler on port 6543 to eliminate connection starvation during concurrent quizzes.</li>
+  </ul>
+
+  <!-- PAGE 5 -->
+  <div class="page-break"></div>
+  <div class="running-header">README — Bitwise</div>
+
+  <h2 class="section-header">Backend feature packages</h2>
+  <p><code>bitwise-server/src/*</code>, each owning its controller, service, entities, and DTOs:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Package</th>
+        <th style="width: 75%;">Responsibility</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>auth</code></td>
+        <td>Supabase JWT verification, role management, and Passport authentication strategies</td>
+      </tr>
+      <tr>
+        <td><code>calculator</code></td>
+        <td>Universal base conversions (2–36), multi-step paths, BCD, Gray code, and Hamming(7,4) code</td>
+      </tr>
+      <tr>
+        <td><code>assessment</code></td>
+        <td>Adaptive quiz generation, BKT probability estimation, and EMA mastery scoring</td>
+      </tr>
+      <tr>
+        <td><code>lessons</code></td>
+        <td>Curriculum retrieval, dynamic topic mapping, progress tracking, and completion validation</td>
+      </tr>
+      <tr>
+        <td><code>progress</code></td>
+        <td>User skill matrix, session attempt histories, and performance analytics</td>
+      </tr>
+      <tr>
+        <td><code>ai</code></td>
+        <td>Google Gemini API & Groq Cloud orchestration, Socratic prompt synthesis, and JSON response sanitization</td>
+      </tr>
+      <tr>
+        <td><code>common</code></td>
+        <td>Global error filters, Fastify security headers, and Zod validation pipes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-header">Tech stack</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 20%;">Product</th>
+        <th style="width: 55%;">Stack</th>
+        <th style="width: 25%;">Hosting</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend</strong> (<code>bitwise-ui/</code>)</td>
+        <td>React 19, TypeScript 5.8, Vite 6.4, Tailwind CSS, TanStack Router</td>
+        <td>AWS EC2 (Docker / Nginx)</td>
+      </tr>
+      <tr>
+        <td><strong>Backend</strong> (<code>bitwise-server/</code>)</td>
+        <td>NestJS 11, Fastify, TypeScript, Node.js 22 LTS, Prisma ORM 6.15</td>
+        <td>AWS EC2 (Docker)</td>
+      </tr>
+      <tr>
+        <td><strong>Database</strong></td>
+        <td>PostgreSQL 16 (PgBouncer connection pooler), Supabase Auth</td>
+        <td>Supabase Cloud (AWS Tokyo)</td>
+      </tr>
+      <tr>
+        <td><strong>AI Engine</strong></td>
+        <td>Google Gemini API, Groq Cloud API, Vercel AI SDK</td>
+        <td>Cloud APIs</td>
+      </tr>
+      <tr>
+        <td><strong>Reverse Proxy</strong></td>
+        <td>Traefik v2.11 with automatic Let's Encrypt SSL</td>
+        <td>AWS EC2 (Docker)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-header">Repository layout</h2>
+  <pre>
+bitwise/
+├── bitwise-deploy/aws/    # Production Docker Compose & deployment scripts
+├── bitwise-server/        # NestJS API, Prisma schema, and calculator engines
+├── bitwise-ui/            # React 19 single-page app, interactive lesson activities
+└── docs/                  # Capstone reports, SRS, SDD, and deployment guides
+  </pre>
+
+  <!-- PAGE 6 -->
+  <div class="page-break"></div>
+  <div class="running-header">README — Bitwise</div>
+
+  <h2 class="section-header">Run it locally</h2>
+
+  <h3 class="sub-header">Where the documentation lives</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 38%;">File</th>
+        <th style="width: 62%;">What it covers</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>docs/ARCHITECTURE.md</code></td>
+        <td>System architecture, data flow diagrams, ERD schema, and design specifications</td>
+      </tr>
+      <tr>
+        <td><code>docs/API_REFERENCE.md</code></td>
+        <td>Complete reference of all REST endpoints, request payloads, and status codes</td>
+      </tr>
+      <tr>
+        <td><code>docs/FEATURES.md</code></td>
+        <td>Functional module details, digital logic engines, and error correction algorithms</td>
+      </tr>
+      <tr>
+        <td><code>docs/DEPLOYMENT_GUIDE.md</code></td>
+        <td>Database migrations, service integrations, and verification checklists</td>
+      </tr>
+      <tr>
+        <td><code>docs/DEPLOYMENT_EVIDENCE.md</code></td>
+        <td>Capstone Deliverable 1: Live checks, cloud hostings, and operational evidence</td>
+      </tr>
+      <tr>
+        <td><code>docs/REFACTORING_EVIDENCE.md</code></td>
+        <td>Capstone Deliverable 1: Git commit history, structural refactoring, and code reduction</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub-header">Local setup: Bitwise</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 18%;">Module</th>
+        <th style="width: 25%;">Needs</th>
+        <th style="width: 57%;">Steps</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Backend</strong></td>
+        <td>Node.js 22, Prisma CLI</td>
+        <td>In <code>bitwise-server/</code>: <code>npm install</code>, verify <code>.env</code> database credentials, run <code>npx prisma migrate dev</code>, then <code>npm run start:dev</code>. API runs on <code>http://localhost:3000</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Frontend</strong></td>
+        <td>Node.js 22, npm</td>
+        <td>In <code>bitwise-ui/</code>: <code>npm install</code>, then <code>npm run dev</code>. The interactive application starts on <code>http://localhost:5173</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-header">Deployment</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30%;">Surface</th>
+        <th style="width: 35%;">URL</th>
+        <th style="width: 35%;">Platform</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Website (Frontend)</strong></td>
+        <td><code>https://bitwise.live</code></td>
+        <td>AWS EC2 — Docker (Nginx via Traefik)</td>
+      </tr>
+      <tr>
+        <td><strong>Backend API</strong></td>
+        <td><code>https://bitwise.live/api</code></td>
+        <td>AWS EC2 — Docker (NestJS via Traefik)</td>
+      </tr>
+      <tr>
+        <td><strong>Database</strong></td>
+        <td><code>aws-1-ap-northeast-1.pooler.supabase.com</code></td>
+        <td>Supabase Cloud (PostgreSQL 16)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PAGE 7 -->
+  <div class="page-break"></div>
+  <div class="running-header">README — Bitwise</div>
+
+  <h2 class="section-header">Principles the code holds to</h2>
+  <ul>
+    <li><strong>Strict Type Safety:</strong> Zero tolerance for loose <code>any</code> types in binary calculations to prevent floating-point inaccuracies.</li>
+    <li><strong>Deterministic Core:</strong> Calculation tools execute in local TypeScript algorithms; they never fail even if third-party AI APIs experience network downtime.</li>
+    <li><strong>Connection Pooling:</strong> Prisma strictly communicates through Supabase's PgBouncer pooler to prevent PostgreSQL thread exhaustion under concurrent classroom usage.</li>
+    <li><strong>Pedagogical Value:</strong> Intermediate mathematical steps (carries, borrows, parity syndromes) are always computed and returned in response payloads.</li>
+  </ul>
+
+  <h2 class="section-header">Licence</h2>
+  <p>Academic capstone project. All rights reserved.</p>
+  <p>
+    Copyright © 2026 Bitwise Team. This software and its source code are the proprietary property of the Bitwise capstone team and <strong>Cebu Institute of Technology – University</strong>. No part of this project may be copied, modified, distributed, or used in any form without explicit written permission from the authors.
+  </p>
+
+  <h2 class="section-header">Team</h2>
+  <p>Capstone project, IT411 Section 62, College of Computer Studies, Cebu Institute of Technology – University.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 40%;">Name</th>
+        <th style="width: 60%;">Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Menez, John Joshua L.</strong></td>
+        <td>Project Lead / Full-Stack & UI Systems Developer</td>
+      </tr>
+      <tr>
+        <td><strong>Arnejo, Ralph John R.</strong></td>
+        <td>Lead Frontend Developer / Interactive Lesson Architect</td>
+      </tr>
+      <tr>
+        <td><strong>Arpon, Joseph Cris E.</strong></td>
+        <td>Backend Developer / Database & Calculator Engine</td>
+      </tr>
+      <tr>
+        <td><strong>Cotiangco, James Gabriel F.</strong></td>
+        <td>AI Integration Engineer / Assessment & QA Lead</td>
+      </tr>
+      <tr>
+        <td><strong>Lawas, Berchard Lawrence D.</strong></td>
+        <td>DevOps & Systems Documentation Specialist</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top: 14pt;"><strong>Adviser:</strong> <em>(Add Adviser Name)</em></p>
+  <p><em>Built for students tired of confusing binary tables and educators seeking truly interactive digital logic learning.</em></p>
+
+</body>
+</html>

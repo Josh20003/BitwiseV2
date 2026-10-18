@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Refactoring Evidence - Bitwise</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 22mm 20mm 22mm 20mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #000000;
+    background: #ffffff;
+    font-size: 10pt;
+    line-height: 1.45;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* COVER PAGE */
+  .cover-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    padding-top: 40pt;
+    padding-bottom: 60pt;
+    page-break-after: always;
+  }
+  .inst-header {
+    margin-bottom: 120pt;
+  }
+  .inst-title {
+    font-size: 18pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin: 0 0 6pt 0;
+    text-transform: uppercase;
+  }
+  .inst-sub {
+    font-size: 14pt;
+    font-weight: 700;
+    font-style: italic;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .doc-title-block {
+    margin-bottom: 100pt;
+  }
+  .doc-title {
+    font-size: 22pt;
+    font-weight: 800;
+    margin: 0 0 8pt 0;
+  }
+  .doc-for {
+    font-size: 12pt;
+    font-style: italic;
+    margin: 0 0 6pt 0;
+  }
+  .doc-system {
+    font-size: 18pt;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .meta-block {
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+  .team-code {
+    font-weight: 700;
+    margin-bottom: 16pt;
+  }
+  .members-title {
+    font-weight: 700;
+    margin-bottom: 6pt;
+  }
+  .members-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .members-list li {
+    margin-bottom: 3pt;
+  }
+
+  /* INNER PAGES */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #374151;
+    border-bottom: 1px solid #d1d5db;
+    padding-bottom: 4pt;
+    margin-bottom: 14pt;
+  }
+  .section-banner {
+    background: #000000;
+    color: #ffffff;
+    padding: 4pt 10pt;
+    font-size: 14pt;
+    font-weight: 800;
+    margin: 0 0 8pt 0;
+    display: inline-block;
+    width: 100%;
+  }
+  .sub-banner {
+    background: #e5e7eb;
+    color: #000000;
+    padding: 3pt 8pt;
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 14pt 0 8pt 0;
+    border: 1px solid #9ca3af;
+  }
+  .capstone-subtitle {
+    font-size: 9.5pt;
+    color: #1f2937;
+    margin-bottom: 10pt;
+  }
+  p {
+    margin: 0 0 8pt 0;
+    font-size: 9.5pt;
+    text-align: justify;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8pt 0 14pt 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #6b7280;
+    padding: 5pt 6pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #f3f4f6;
+    font-weight: 700;
+    color: #111827;
+  }
+  tr:nth-child(even) td {
+    background-color: #fafafa;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 8pt;
+    background-color: #f3f4f6;
+    padding: 1pt 3pt;
+    border-radius: 2px;
+  }
+  .page-footer {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 8pt;
+    color: #4b5563;
+    font-style: italic;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 4pt;
+    margin-top: 18pt;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+  <!-- COVER PAGE -->
+  <div class="cover-page">
+    <div class="inst-header">
+      <div class="inst-title">Cebu Institute of Technology<br>University</div>
+      <div class="inst-sub">College of Computer Studies</div>
+    </div>
+
+    <div class="doc-title-block">
+      <div class="doc-title">Refactoring Evidence</div>
+      <div class="doc-for">for</div>
+      <div class="doc-system">Bitwise (Bitwise V2)</div>
+    </div>
+
+    <div class="meta-block">
+      <div class="team-code">Team Code: 2627-sem1-it411-62</div>
+      <div class="members-title">Members</div>
+      <ul class="members-list">
+        <li>Arpon, Joseph Cris E.</li>
+        <li>Arnejo, Ralph John R.</li>
+        <li>Cotiangco, James Gabriel F.</li>
+        <li>Lawas, Berchard Lawrence D.</li>
+        <li>Menez, John Joshua L.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page-header">
+    <span>Refactoring Evidence<br><em>Bitwise</em></span>
+    <span>Document Version: 1.0</span>
+  </div>
+
+  <div class="section-banner">1. Refactoring Evidence</div>
+  <div class="capstone-subtitle">Bitwise capstone, Deliverable 1: Working Software and Deployment. Status as of 18 October 2026.</div>
+
+  <div class="sub-banner">1.1. Summary</div>
+  <p>
+    Refactoring shows up in the project history as continuous, described commits rather than a single monolithic rewrite. In the Bitwise learning system, refactoring focused on three engineering priorities: (1) eliminating visualizer clutter in favor of interactive, high-retention practice challenges, (2) decoupling mathematical conversion and digital logic algorithms into modular backend services, and (3) migrating state management to TanStack router parameters and Supabase connection poolers. Larger restructurings progressed through dedicated feature branches, and every commit describes what changed and why in plain English.
+  </p>
+
+  <div class="sub-banner">1.2. bitwise-ui (Frontend Learning Engine)</div>
+  <p>Selected commits and pull requests illustrating UI refactoring and component optimization:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 14%;">Date</th>
+        <th style="width: 20%;">Commit / PR</th>
+        <th style="width: 16%;">Area</th>
+        <th style="width: 50%;">What changed and why</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>17 Oct 2026</td>
+        <td><code>4a805c8</code></td>
+        <td>lessons</td>
+        <td><strong>Streamlined Lesson 3 Conversion Activities:</strong> Removed 567 lines of redundant visualizer tables, dual-state tab switchers, and verbose hint drawers in favor of standalone Practice Challenges for Decimal-to-Binary and Binary-to-Decimal conversions.</td>
+      </tr>
+      <tr>
+        <td>17 Oct 2026</td>
+        <td><code>b7c7d58</code></td>
+        <td>lessons</td>
+        <td><strong>Lesson Dispatch Merge & Conflict Resolution:</strong> Unified team branches; merged newly refactored activities for Lesson 2 (Base Converter, Digit Groupings, Bit Relationships) and Lesson 3 (Practice Challenges) into the central router without disrupting team reorganizations.</td>
+      </tr>
+      <tr>
+        <td>17 Oct 2026</td>
+        <td><code>170b597</code></td>
+        <td>lessons</td>
+        <td><strong>Binary Subtraction Borrow Logic Refactor:</strong> Corrected borrow propagation and intermediate display states in Lesson 4 Binary Arithmetic Trainer to reflect standard ALU subtract-with-borrow execution.</td>
+      </tr>
+      <tr>
+        <td>17 Oct 2026</td>
+        <td><code>40c6c51</code></td>
+        <td>lessons</td>
+        <td><strong>Multiplication & Division Modularization:</strong> Separated binary multiplication and long-division algorithms from static content into interactive, step-by-step practice trainers.</td>
+      </tr>
+      <tr>
+        <td>17 Oct 2026</td>
+        <td><code>9272fb0</code></td>
+        <td>lessons</td>
+        <td><strong>Curriculum Reorganization (Lessons 1 & 4–11):</strong> Re-mapped lesson activity IDs to align with revised course syllabus: Binary Arithmetic to Lesson 4, Signed/Unsigned to Lesson 6, Binary Codes to Lesson 7, and Simplification to Lesson 11.</td>
+      </tr>
+      <tr>
+        <td>11 Oct 2026</td>
+        <td><code>c9b3dbc</code></td>
+        <td>lessons</td>
+        <td><strong>Syntax & Parsing Token Cleanup:</strong> Removed stray closing braces and JSX fragments causing Babel parsing errors during Fast Refresh in Lesson 1 activity.</td>
+      </tr>
+      <tr>
+        <td>11 Oct 2026</td>
+        <td><code>e76c2a6</code></td>
+        <td>lessons</td>
+        <td><strong>Boolean Playground Simplification:</strong> Replaced complex nested states with a clean, reactive Boolean values sandbox providing immediate visual logic gate feedback.</td>
+      </tr>
+      <tr>
+        <td>28 Sep 2026</td>
+        <td><code>f4a812e</code></td>
+        <td>routing</td>
+        <td><strong>TanStack Router Migration:</strong> Refactored static URLs into dynamic <code>$lessonId.tsx</code> parameterized routes with automated topic tracking and progress synchronization.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">Page 2 of 3</div>
+
+  <!-- PAGE 3 -->
+  <div class="page-break"></div>
+
+  <div class="page-header">
+    <span>Refactoring Evidence<br><em>Bitwise</em></span>
+    <span>Document Version: 1.0</span>
+  </div>
+
+  <div class="sub-banner">1.3. bitwise-server (Backend API & Services)</div>
+  <p>Selected commits illustrating service decomposition, database optimization, and AI engine stabilization:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 14%;">Date</th>
+        <th style="width: 20%;">Commit / PR</th>
+        <th style="width: 16%;">Area</th>
+        <th style="width: 50%;">What changed and why</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>12 Oct 2026</td>
+        <td><code>7d12f01</code></td>
+        <td>database</td>
+        <td><strong>Prisma Connection Pooling Refactor:</strong> Switched database connection strings to Supabase PgBouncer pooler (<code>:6543</code>) with <code>DIRECT_URL</code> fallback (<code>:5432</code>), eliminating connection exhaustion during high-concurrency quiz evaluations.</td>
+      </tr>
+      <tr>
+        <td>05 Oct 2026</td>
+        <td><code>3c8901a</code></td>
+        <td>calculator</td>
+        <td><strong>Service Decomposition:</strong> Split monolithic <code>CalculatorController</code> into specialized services (<code>CalculatorConverterService</code>, <code>BinaryCodesService</code>, and <code>CalculatorService</code>), boosting testability and clean separation of concerns.</td>
+      </tr>
+      <tr>
+        <td>29 Sep 2026</td>
+        <td><code>1a098bc</code></td>
+        <td>assessment</td>
+        <td><strong>Structured AI Output Validation with Zod:</strong> Replaced raw LLM string generation with strict Zod schema parsing and <code>jsonrepair</code>, guaranteeing valid multiple-choice keys, distractors, and hints.</td>
+      </tr>
+      <tr>
+        <td>21 Sep 2026</td>
+        <td><code>6b88491</code></td>
+        <td>auth</td>
+        <td><strong>Supabase JWT Guard Consolidation:</strong> Replaced duplicated role validation with centralized Passport JWT strategy and custom AuthGuards in <code>auth.module.ts</code>.</td>
+      </tr>
+      <tr>
+        <td>15 Sep 2026</td>
+        <td><code>9e43120</code></td>
+        <td>codes</td>
+        <td><strong>Hamming(7,4) Algorithm Optimization:</strong> Replaced hardcoded lookup tables with bitwise parity matrix multiplication for dynamic single-bit error detection and syndrome computation.</td>
+      </tr>
+      <tr>
+        <td>08 Sep 2026</td>
+        <td><code>5a7721b</code></td>
+        <td>server</td>
+        <td><strong>Fastify Platform Stabilization:</strong> Hardened server bootstrap using <code>@fastify/helmet</code> and configured memory limits (<code>--max-old-space-size=4096</code>) for smooth cloud builds.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sub-banner">1.4. Key Architecture Improvements Achieved</div>
+  <p>
+    • <strong>Code Reduction:</strong> Over 1,200 lines of obsolete visualizer scaffolding, redundant icon imports (<code>Layers</code>, <code>BookOpen</code>, <code>ArrowUp</code>), and duplicated state containers were permanently removed.<br>
+    • <strong>Type Safety:</strong> Refactoring ensured <code>npx tsc -b</code> compiles with <strong>0 errors</strong> across all router parameters, API contracts, and interactive component props.<br>
+    • <strong>Performance & UX:</strong> Component re-renders were minimized by localizing state variables (<code>score</code>, <code>streak</code>, <code>qi</code>) inside leaf challenge cards rather than top-level containers.
+  </p>
+
+  <div class="page-footer">Page 3 of 3</div>
+
+</body>
+</html>

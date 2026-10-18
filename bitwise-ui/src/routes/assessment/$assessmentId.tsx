@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import CircuitRenderer from '@/components/CircuitRenderer'
+import { cleanLatexNotation } from '@/utils/mathFormat'
 import { useSound } from '@/hooks/useSound'
 import congratsBitbot from '@/assets/bitbot/congrats.svg'
 import rightPoint from '@/assets/bitbot/right-point.svg'
@@ -211,7 +212,7 @@ const QuestionStemRenderer = ({ stem }: { stem: any }) => {
   if (typeof stem === 'string') {
     return (
       <h2 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100">
-        {stem}
+        {cleanLatexNotation(stem)}
       </h2>
     )
   }
@@ -242,14 +243,14 @@ const QuestionStemRenderer = ({ stem }: { stem: any }) => {
     if (stem.text && !stem.type) {
       return (
         <h2 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100">
-          {stem.text}
+          {cleanLatexNotation(stem.text)}
         </h2>
       )
     }
   }
   return (
     <h2 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100">
-      {JSON.stringify(stem)}
+      {cleanLatexNotation(typeof stem === 'string' ? stem : JSON.stringify(stem))}
     </h2>
   )
 }
@@ -653,7 +654,7 @@ function RouteComponent() {
               </div>
 
               <div className="grid gap-3">
-                {question.options.map((opt: any) => {
+                {question.options.map((opt: any, idx: number) => {
                   const isAnswered = !!answers[question.id ?? current]
                   const isSelected = isAnswered
                     ? answers[question.id ?? current] === opt.id
@@ -692,7 +693,10 @@ function RouteComponent() {
                       disabled={isAnswered}
                       onClick={() => handleSelectOption(opt.id)}
                     >
-                      <span className="flex-1">{opt.text}</span>
+                      <span className="font-mono text-xs font-semibold text-muted-foreground mr-3 bg-gray-100 dark:bg-gray-800 rounded px-2 py-0.5 shrink-0">
+                        {String.fromCharCode(65 + idx)}
+                      </span>
+                      <span className="flex-1">{cleanLatexNotation(opt.text)}</span>
                       {isAnswered && (
                         <div className="ml-4 shrink-0">
                           {isSelected &&
@@ -731,13 +735,13 @@ function RouteComponent() {
                       Explanation
                     </h4>
                     <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                      {
+                      {cleanLatexNotation(
                         question.options.find(
                           (o: any) => o.id === answers[question.id ?? current]
                         )?.rationale || question.options.find(
                           (o: any) => o.id === answers[question.id ?? current]
-                        )?.explanation
-                      }
+                        )?.explanation || ''
+                      )}
                     </p>
                   </div>
 
@@ -752,7 +756,7 @@ function RouteComponent() {
                       <ul className="list-disc ml-6 text-sm text-red-800 dark:text-red-200 space-y-1">
                         {question.solutionSteps?.map(
                           (step: string, i: number) => (
-                            <li key={i}>{step}</li>
+                            <li key={i}>{cleanLatexNotation(step)}</li>
                           )
                         )}
                       </ul>

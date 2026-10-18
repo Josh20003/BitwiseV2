@@ -344,32 +344,30 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
     "options": [
       {
         "id": "opt_a", 
-        "text": "First conceptually distinct distractor", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Point out the specific error or misconception."
+        "text": "First distinct option", 
+        "isCorrect": false
       },
       {
         "id": "opt_b", 
-        "text": "Correct Answer", 
-        "isCorrect": true, 
-        "rationale": "Comprehensive explanation why this is CORRECT. Justify with mathematical reasoning, show verification, and connect to concepts."
+        "text": "Second distinct option", 
+        "isCorrect": false
       },
       {
         "id": "opt_c", 
-        "text": "Second conceptually distinct distractor", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Identify the mistake made."
+        "text": "Third distinct option (Correct Answer)", 
+        "isCorrect": true, 
+        "rationale": "Clear explanation showing why this answer is correct."
       },
       {
         "id": "opt_d", 
-        "text": "Third conceptually distinct distractor", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Clarify the misconception."
+        "text": "Fourth distinct option", 
+        "isCorrect": false
       }
     ],
-    "answerId": "opt_b"
+    "answerId": "opt_c"
   }
 ]
+(NOTE: The correct option MUST vary across questions. Distribute correct answers across opt_a, opt_b, opt_c, and opt_d).
 `;
 
   const criticalRequirementsSection = isLogicVisualLesson
@@ -452,17 +450,9 @@ You MUST verify answers in "_reasoning" field:
 DO NOT HALLUCINATE. Verify before outputting.`;
 
   const correctOptionRationaleDesc = `
-**For rationale (ALL OPTIONS):**
-- **Correct option**: 3-4 sentences minimum
-  - Sentence 1: State why it's correct
-  - Sentence 2: Show mathematical verification
-  - Sentence 3: Connect to underlying concept/rule
-  - Sentence 4: Optional - relate to common applications
-
-- **Incorrect options**: 2-3 sentences minimum
-  - Sentence 1: Identify the specific error or misconception
-  - Sentence 2: Explain what would be needed for this to be correct
-  - Sentence 3: Optional - show correct calculation for comparison`;
+**For rationale:**
+- **Correct option**: 1-2 clear sentences explaining why this answer is correct and verified.
+- **Incorrect options**: Optional 1 concise sentence noting the misconception, keeping responses fast and complete.`;
 
   return `
 You are a distinguished University Professor of Digital Logic and Boolean Algebra. Your task is to generate a focused, high-quality **10-question** assessment for a single lesson.
@@ -500,6 +490,8 @@ ${difficultyGuidelines}
 3. **CORRECT TOPIC IDs**: Each question must have the correct topicId from above
 4. **NO MEMORIZATION**: Use "Calculate", "Analyze", "Design", "Simplify" - NOT "Define" or "What is"
 5. **ONE CORRECT ANSWER**: Exactly one option must be correct with clear mathematical justification
+6. **NO LATEX NOTATION**: Do NOT use LaTeX math syntax like $2^i$, $(101100)_2$, or $n$. Instead write plain text: 2^i, 101100 (base 2), n. All question text, options, explanations, rationales, and solutionSteps MUST use plain readable text only. Never wrap anything in dollar signs ($).
+7. **RANDOMIZE CORRECT OPTION (A, B, C, D)**: The correct option MUST NOT always be B or A! Across the ${context.totalQuestions} questions, evenly distribute correct answers: roughly 2-3 questions with opt_a correct, 2-3 with opt_b, 2-3 with opt_c, and 2-3 with opt_d. Set answerId to match the correct option's id.
 
 ${visualFormatsSection}
 
@@ -583,9 +575,11 @@ ${topicInstructions}
 
 ⚠️ CRITICAL RULES:
 1. NO VISUAL FORMATS (no circuits, no truth tables). Stems must be TEXT ONLY.
-2. Generate EXACTLY ${context.totalQuestions} questions.
+2. Generate EXACTLY ${context.totalQuestions} questions. The returned JSON array MUST have length ${context.totalQuestions}.
 3. Only the correct option should have a "rationale" string.
 4. Return ONLY raw JSON array.
+5. NO LATEX NOTATION: Do NOT use LaTeX like $2^i$ or $(101)_2$. Write plain text: 2^i, 101 (base 2).
+6. RANDOMIZE CORRECT OPTION (A, B, C, D): Evenly balance correct answers among opt_a, opt_b, opt_c, and opt_d across the questions. Do NOT make opt_b or opt_a always correct.
 
 ${outputFormatSection}
 `;

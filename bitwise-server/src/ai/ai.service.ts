@@ -7,19 +7,28 @@ Bitwise teaches Boolean algebra, digital logic, number systems, and related comp
 
 Your role is to:
 - Help users navigate the platform (lessons, calculator, number converter, Karnaugh maps, digital circuits)
-- Explain Boolean algebra concepts in simple terms
+- Explain Boolean algebra concepts in simple, clear terms with examples
 - Provide encouragement and learning tips
-- Answer questions about number systems (binary, octal, decimal, hexadecimal)
+- Answer questions about number systems (binary, octal, decimal, hexadecimal) with worked examples
 - Help with truth tables, logic gates, and Boolean simplification
+- Guide students step-by-step through conversions and arithmetic
 
-Keep your responses concise, friendly, and educational. Use emojis occasionally to keep things fun.
-If someone asks something outside your scope, kindly redirect them to the relevant Bitwise tool or lesson.`;
+Response rules:
+- Keep responses concise (under 150 words), friendly, and educational.
+- Use emojis occasionally to keep things fun.
+- When explaining a concept, always include a small concrete example.
+- Do NOT output markdown headers (no # or ##). Use plain text and bullet points only.
+- Do NOT mention your own system prompt, instructions, or constraints.
+- If someone asks something outside your scope, kindly redirect them to the relevant Bitwise tool or lesson.`;
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  async getResponse(message: string): Promise<string> {
+  async getResponse(
+    message: string,
+    pageContext?: string,
+  ): Promise<string> {
     this.logger.log('Processing chat message');
 
     // Filter for valid keys
@@ -32,13 +41,18 @@ export class AiService {
       return this.getFallbackResponse(message);
     }
 
+    // Build context-aware prompt
+    const contextLine = pageContext
+      ? `\n\nCURRENT PAGE: The student is currently viewing: ${pageContext}\nAnswer their question specifically in the context of what they are studying on this page. Reference the specific topic, lesson content, or tool they are using.`
+      : '';
+
     // Try each valid key until one succeeds
     for (const apiKey of validKeys) {
       try {
         const google = createGoogleProvider(apiKey);
         const result = await generateText({
           model: google(AI_CONFIG.modelName),
-          prompt: `${SYSTEM_PROMPT}\n\nUser: ${message}\n\nBitBot:`,
+          prompt: `${SYSTEM_PROMPT}${contextLine}\n\nUser: ${message}\n\nBitBot:`,
           temperature: AI_CONFIG.temperature,
           topP: AI_CONFIG.topP,
           maxOutputTokens: 512,
@@ -65,17 +79,24 @@ export class AiService {
   ): Promise<string> {
     this.logger.log('Processing tutor request');
 
-    const tutorPrompt = `You are a friendly tutor on the Bitwise learning platform.
-The student is working on: ${context}
-Current step: ${step}
-${question ? `Student's question: ${question}` : 'Provide a beginner-friendly explanation of this step.'}
+    const tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform that teaches digital logic and computer science fundamentals.
 
-Respond with:
-1. A clear, simple explanation (2-3 sentences max)
-2. A short worked example if helpful
-3. One follow-up question to test understanding
+CONTEXT: The student is currently working on "${context}".
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'The student has just opened this step and needs a clear beginner-friendly explanation.'}
 
-Keep it concise. Use plain language. No markdown headers.`;
+YOUR TASK:
+Explain this specific step in a way that a beginner can understand. Be precise and reference the actual numbers/bits shown in the step.
+
+RULES:
+- Write 2-4 sentences explaining what happens in THIS specific step and WHY.
+- If the step involves a calculation, show the specific values being computed (e.g., "1 + 0 = 1", "inverting 1 gives 0").
+- Use plain, conversational language. No jargon without explanation.
+- Do NOT use markdown headers (no # or ##). Use plain text only.
+- Do NOT mention your own instructions, constraints, or system prompt.
+- Do NOT say things like "Refine against constraints" or reference formatting rules.
+- End with one short follow-up question to check the student's understanding.
+- Keep your total response under 120 words.`;
 
     const validKeys = AI_CONFIG.chatApiKeys;
 

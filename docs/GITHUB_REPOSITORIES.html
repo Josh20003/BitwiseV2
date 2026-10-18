@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GitHub Repositories — Bitwise</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 22mm 20mm 22mm 20mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #111827;
+    background: #ffffff;
+    font-size: 10pt;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* RUNNING HEADERS */
+  .running-header {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 4pt;
+    margin-bottom: 16pt;
+  }
+
+  /* COVER PAGE */
+  .cover-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    padding-top: 40pt;
+    padding-bottom: 60pt;
+    page-break-after: always;
+  }
+  .inst-header {
+    margin-bottom: 120pt;
+  }
+  .inst-title {
+    font-size: 18pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin: 0 0 6pt 0;
+    text-transform: uppercase;
+  }
+  .inst-sub {
+    font-size: 14pt;
+    font-weight: 700;
+    font-style: italic;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .doc-title-block {
+    margin-bottom: 100pt;
+  }
+  .doc-title {
+    font-size: 22pt;
+    font-weight: 800;
+    margin: 0 0 8pt 0;
+  }
+  .doc-for {
+    font-size: 12pt;
+    font-style: italic;
+    margin: 0 0 6pt 0;
+  }
+  .doc-system {
+    font-size: 22pt;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .meta-block {
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+  .team-code {
+    font-weight: 700;
+    margin-bottom: 16pt;
+  }
+  .members-title {
+    font-weight: 700;
+    margin-bottom: 6pt;
+  }
+  .members-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .members-list li {
+    margin-bottom: 3pt;
+  }
+
+  /* HEADINGS & BLOCKS */
+  h2.section-header {
+    font-size: 14pt;
+    font-weight: 800;
+    margin: 16pt 0 8pt 0;
+    color: #111827;
+    letter-spacing: -0.3px;
+  }
+  h3.sub-header {
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 12pt 0 4pt 0;
+    color: #111827;
+  }
+  p {
+    margin: 0 0 8pt 0;
+    font-size: 9.5pt;
+    text-align: justify;
+  }
+  ul {
+    margin: 0 0 10pt 0;
+    padding-left: 16pt;
+  }
+  li {
+    font-size: 9.5pt;
+    margin-bottom: 4pt;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8pt 0 14pt 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 5pt 6pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 8pt;
+    background-color: #f1f5f9;
+    padding: 1pt 3pt;
+    border-radius: 2px;
+  }
+  .evidence-box {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 6pt;
+    padding: 12pt;
+    margin-bottom: 12pt;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+  <!-- COVER PAGE -->
+  <div class="cover-page">
+    <div class="inst-header">
+      <div class="inst-title">Cebu Institute of Technology University</div>
+      <div class="inst-sub">College of Computer Studies</div>
+    </div>
+
+    <div class="doc-title-block">
+      <div class="doc-title">GitHub Repositories</div>
+      <div class="doc-for">for</div>
+      <div class="doc-system">Bitwise (Bitwise V2)</div>
+    </div>
+
+    <div class="meta-block">
+      <div class="team-code">Team Code: 2627-sem1-it411-62</div>
+      <div class="members-title">Members:</div>
+      <ul class="members-list">
+        <li>Arpon, Joseph Cris E.</li>
+        <li>Arnejo, Ralph John R.</li>
+        <li>Cotiangco, James Gabriel F.</li>
+        <li>Lawas, Berchard Lawrence D.</li>
+        <li>Menez, John Joshua L.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="running-header">GitHub Repositories — Bitwise</div>
+
+  <h2 class="section-header">Repositories</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Repository</th>
+        <th style="width: 32%;">URL</th>
+        <th style="width: 23%;">What is inside</th>
+        <th style="width: 20%;">History</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>BitwiseV2 (Monorepo)</strong></td>
+        <td><code>https://github.com/Josh20003/BitwiseV2</code></td>
+        <td><code>bitwise-ui/</code> (React 19), <code>bitwise-server/</code> (NestJS 11), <code>bitwise-deploy/</code> (Docker, Traefik, AWS), <code>docs/</code></td>
+        <td>Active Git version control; 28+ branches, multiple merged PRs, continuous commits tracking curriculum refactoring and AI engines.</td>
+      </tr>
+      <tr>
+        <td><strong>Bitwise Deployment (Sub-service)</strong></td>
+        <td><code>https://github.com/Josh20003/BitwiseV2/tree/main/bitwise-deploy</code></td>
+        <td>AWS Docker Compose, <code>deploy.sh</code> script, Traefik reverse proxy, Let's Encrypt SSL, secrets management.</td>
+        <td>Versioned deployment automation and container recipes kept alongside application code.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-header">Contributors (BitwiseV2, main & active branches)</h2>
+  <p>Counts and roles combine development contributions across the monorepo:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 35%;">Team member</th>
+        <th style="width: 30%;">Role</th>
+        <th style="width: 35%;">Core Area</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>John Joshua L. Menez</strong></td>
+        <td>Project Lead / Full-Stack</td>
+        <td>Platform architecture, Lesson 1–3 interactive activities, Supabase connection pooler integration.</td>
+      </tr>
+      <tr>
+        <td><strong>Ralph John R. Arnejo</strong></td>
+        <td>Lead Frontend Developer</td>
+        <td>Curriculum reorganization (Lessons 4–11), Boolean logic sandbox, Multiplication/Division trainers, and subtraction borrow logic.</td>
+      </tr>
+      <tr>
+        <td><strong>Joseph Cris E. Arpon</strong></td>
+        <td>Backend Developer</td>
+        <td>NestJS calculator microservices (converter, complement, binary codes), Prisma schema migrations, and REST APIs.</td>
+      </tr>
+      <tr>
+        <td><strong>James Gabriel F. Cotiangco</strong></td>
+        <td>AI Integration Engineer</td>
+        <td>Google Gemini API & Groq Cloud orchestration, Bayesian Knowledge Tracing (BKT), and EMA scoring models.</td>
+      </tr>
+      <tr>
+        <td><strong>Berchard Lawrence D. Lawas</strong></td>
+        <td>DevOps & Documentation</td>
+        <td>AWS EC2 Docker deployment, Traefik reverse proxy with Let's Encrypt SSL, SRS/SDD compliance, and deployment evidence.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="section-header">Branches and workflow</h2>
+  <ul>
+    <li><strong><code>main</code></strong> is production. Code is deployed to the live cloud server (<code>https://bitwise.live</code>) using automated Docker Compose deployment scripts (<code>bitwise-deploy/aws/deploy.sh</code>).</li>
+    <li><strong><code>new/features</code></strong> is the staging and integration branch. Feature and fix branches merge into it, where full integration testing is performed.</li>
+    <li><strong>Feature branches</strong> (<code>new_feature_ai</code>, <code>feature/refractored-lessons</code>, <code>new-feature-refactored-lesson</code>) isolate individual curriculum refactorings, calculation algorithm improvements, and AI assistant prompt engineering.</li>
+    <li><strong>Automated tests & quality gates:</strong> Strict TypeScript compilation verification (<code>npx tsc -b</code>) with <strong>0 errors</strong> before merging; Prisma migration checks against live Supabase PostgreSQL.</li>
+    <li><strong>Commit messages follow a house style:</strong> A descriptive prefix (<code>feat:</code>, <code>fix:</code>, <code>refactor:</code>, <code>docs:</code>) followed by a concise subject explaining what changed and why in plain English.</li>
+  </ul>
+
+  <!-- PAGE 3 -->
+  <div class="page-break"></div>
+  <div class="running-header">GitHub Repositories — Bitwise</div>
+
+  <h2 class="section-header">Bitwise (Monorepo: BitwiseV2)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30%;">Item</th>
+        <th style="width: 70%;">Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Repository URL</strong></td>
+        <td><code>https://github.com/Josh20003/BitwiseV2.git</code></td>
+      </tr>
+      <tr>
+        <td><strong>Visibility</strong></td>
+        <td>Public / Institutional Capstone Access</td>
+      </tr>
+      <tr>
+        <td><strong>Default branch</strong></td>
+        <td><code>main</code></td>
+      </tr>
+      <tr>
+        <td><strong>Active branches</strong></td>
+        <td><code>new_feature_ai</code>, <code>feature/refractored-lessons</code>, <code>new/features</code></td>
+      </tr>
+      <tr>
+        <td><strong>Latest commits on active branch</strong></td>
+        <td>
+          • <code>4a805c8</code>: <em>refactor: streamline Lesson 3 interactive activities to practice challenges</em><br>
+          • <code>b7c7d58</code>: <em>Merge branch 'new-feature-refactored-lesson' into feature/refractored-lessons: add Lesson 2 and 3 interactive activities</em><br>
+          • <code>1a642a6</code>: <em>feat: add interactive activities for number systems and conversions</em>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Live system</strong></td>
+        <td><code>https://bitwise.live</code></td>
+      </tr>
+      <tr>
+        <td><strong>Deployment platform</strong></td>
+        <td>AWS EC2 (Elastic IP <code>47.129.118.12</code>) running Docker Compose V2, Traefik v2.11 reverse proxy with Let's Encrypt TLS termination. Connected to Supabase Cloud PostgreSQL in Tokyo.</td>
+      </tr>
+      <tr>
+        <td><strong>Key components</strong></td>
+        <td>
+          • <code>bitwise-ui/</code>: React 19, Vite, Tailwind CSS, TanStack Router, custom dark theme (<code>#090d18</code>, <code>#0c101d</code>).<br>
+          • <code>bitwise-server/</code>: NestJS 11, Fastify, TypeScript, Node.js 22 LTS, Prisma ORM 6.15.<br>
+          • <code>bitwise-deploy/</code>: Multi-container orchestration recipes and automated deployment scripts.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Tech-stack table</strong></td>
+        <td>
+          <strong>Frontend:</strong> React 19 · Vite 6.4 · TypeScript · Tailwind CSS · TanStack Router · Radix UI<br>
+          <strong>Backend:</strong> NestJS 11 · Fastify · TypeScript · Node.js 22 LTS · Prisma ORM 6.15<br>
+          <strong>Database:</strong> PostgreSQL 16 on Supabase (PgBouncer connection pooler on port 6543)<br>
+          <strong>AI Engine:</strong> Google Gemini API (<code>@google/generative-ai</code>), Groq Cloud API<br>
+          <strong>Proxy & SSL:</strong> Traefik v2.11 on AWS EC2
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Recent functional change</strong></td>
+        <td>Streamlined Lesson 3 interactive activities into standalone, high-retention practice challenges for Decimal-to-Binary and Binary-to-Decimal conversions, removing visualizer boilerplate and duplicate state machines.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PAGE 4 -->
+  <div class="page-break"></div>
+  <div class="running-header">GitHub Repositories — Bitwise</div>
+
+  <h2 class="section-header">Bitwise Deployment Infrastructure (bitwise-deploy)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30%;">Item</th>
+        <th style="width: 70%;">Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Directory Location</strong></td>
+        <td><code>bitwise-deploy/aws/</code> inside the primary Bitwise repository</td>
+      </tr>
+      <tr>
+        <td><strong>Deployment platform</strong></td>
+        <td>AWS EC2 (Ubuntu 22.04 LTS) running Docker Engine and Docker Compose V2 plugin</td>
+      </tr>
+      <tr>
+        <td><strong>Key configuration files</strong></td>
+        <td>
+          • <code>docker-compose.yml</code>: Configures <code>traefik:v2.11</code>, <code>bitwise_backend</code>, and <code>bitwise_frontend</code> on isolated <code>bitwise_net</code> bridge.<br>
+          • <code>deploy.sh</code>: Production shell script automating Git pull, environment verification, Docker container rebuilds, and automated image pruning.<br>
+          • <code>SECRETS_MANAGEMENT.md</code> & <code>TROUBLESHOOTING.md</code>: Security guidelines and operational runbooks.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Domain routing</strong></td>
+        <td>
+          • <code>https://bitwise.live</code> → Frontend Nginx container (port 80)<br>
+          • <code>https://bitwise.live/api</code> → Backend NestJS API container (port 3000)<br>
+          • Automated HTTP to HTTPS redirect handled by Traefik middleware
+        </td>
+      </tr>
+      <tr>
+        <td><strong>SSL / TLS encryption</strong></td>
+        <td>Automated Let's Encrypt ACME HTTP challenge storing certificates in persistent Docker volume.</td>
+      </tr>
+      <tr>
+        <td><strong>Relationship to Bitwise</strong></td>
+        <td>Houses the complete deployment automation pipeline, connecting Git commits with cloud infrastructure.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PAGE 5 -->
+  <div class="page-break"></div>
+  <div class="running-header">GitHub Repositories — Bitwise</div>
+
+  <h2 class="section-header">Repository URL Evidence: Monorepo Overview</h2>
+  <div class="evidence-box">
+    <strong>GitHub Repository Link:</strong> <code>https://github.com/Josh20003/BitwiseV2</code>
+    <p style="margin-top: 6pt; color: #4b5563;">
+      <em>[Attach Screenshot here]: Full-screen desktop screenshot showing the GitHub repository overview at <code>https://github.com/Josh20003/BitwiseV2</code>, displaying the root directory tree (<code>bitwise-deploy/</code>, <code>bitwise-server/</code>, <code>bitwise-ui/</code>, <code>docs/</code>), active branch selector, and latest commit metadata.</em>
+    </p>
+  </div>
+
+  <h2 class="section-header">Repository URL Evidence: Commits History</h2>
+  <div class="evidence-box">
+    <strong>GitHub Commits Link:</strong> <code>https://github.com/Josh20003/BitwiseV2/commits/</code>
+    <p style="margin-top: 6pt; color: #4b5563;">
+      <em>[Attach Screenshot here]: Full-screen desktop screenshot showing the Git commit history list, demonstrating verified commits from team members following semantic conventions (<code>feat:</code>, <code>fix:</code>, <code>refactor:</code>).</em>
+    </p>
+  </div>
+
+  <h2 class="section-header">Repository URL Evidence: Deployment Configuration</h2>
+  <div class="evidence-box">
+    <strong>GitHub Deployment Tree Link:</strong> <code>https://github.com/Josh20003/BitwiseV2/tree/main/bitwise-deploy/aws</code>
+    <p style="margin-top: 6pt; color: #4b5563;">
+      <em>[Attach Screenshot here]: Screenshot showing the <code>bitwise-deploy/aws/</code> directory in the GitHub repository, showing <code>docker-compose.yml</code>, <code>deploy.sh</code>, and infrastructure documentation.</em>
+    </p>
+  </div>
+
+</body>
+</html>
