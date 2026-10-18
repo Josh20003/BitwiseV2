@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Feature Completion Matrix — Bitwise</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 14mm 18mm 14mm 18mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: Arial, Helvetica, "Segoe UI", sans-serif;
+    color: #000000;
+    background: #ffffff;
+    font-size: 8.8pt;
+    line-height: 1.35;
+    margin: 0;
+    padding: 0;
+  }
+
+  .page-container {
+    width: 100%;
+    max-width: 740px;
+    margin: 0 auto;
+  }
+
+  /* PAGE BREAK MECHANISM */
+  .doc-page {
+    height: 269mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    page-break-after: always;
+    position: relative;
+  }
+  .doc-page.last-page {
+    page-break-after: avoid;
+  }
+
+  /* COVER PAGE */
+  .cover-page {
+    height: 269mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    padding-top: 35pt;
+    padding-bottom: 45pt;
+    page-break-after: always;
+    box-sizing: border-box;
+  }
+  .inst-header {
+    margin-top: 10pt;
+  }
+  .inst-line-1 {
+    font-size: 15pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin: 0 0 4pt 0;
+    text-transform: uppercase;
+  }
+  .inst-line-2 {
+    font-size: 13.5pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    margin: 0 0 24pt 0;
+    text-transform: uppercase;
+  }
+  .inst-dept {
+    font-size: 12.5pt;
+    font-weight: 700;
+    font-style: italic;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .doc-title-block {
+    margin: 40pt 0 50pt 0;
+  }
+  .doc-title {
+    font-size: 18pt;
+    font-weight: 800;
+    margin: 0 0 6pt 0;
+  }
+  .doc-for {
+    font-size: 11.5pt;
+    font-style: italic;
+    margin: 0 0 6pt 0;
+  }
+  .doc-system {
+    font-size: 16pt;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .meta-block {
+    font-size: 10pt;
+    line-height: 1.5;
+    margin-bottom: 20pt;
+  }
+  .team-code {
+    font-weight: 700;
+    margin-bottom: 12pt;
+    font-size: 10pt;
+  }
+  .members-title {
+    font-weight: 700;
+    margin-bottom: 5pt;
+    font-size: 10pt;
+  }
+  .members-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 9.5pt;
+  }
+  .members-list li {
+    margin-bottom: 2pt;
+  }
+
+  /* RUNNING HEADERS & FOOTERS */
+  .running-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 3.5pt;
+    margin-bottom: 7pt;
+    font-size: 8pt;
+  }
+  .rh-left {
+    text-align: left;
+  }
+  .rh-left-title {
+    font-style: italic;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  .rh-left-sub {
+    font-style: italic;
+    color: #374151;
+  }
+  .rh-right {
+    font-style: italic;
+    color: #374151;
+    text-align: right;
+  }
+  .running-footer {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 8pt;
+    font-style: italic;
+    color: #374151;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 4pt;
+    margin-top: 5pt;
+  }
+
+  /* SECTION BANNERS */
+  .section-banner-dark {
+    background-color: #000000;
+    color: #ffffff;
+    font-size: 12pt;
+    font-weight: 800;
+    font-style: italic;
+    padding: 3.5pt 8pt;
+    border-radius: 2px;
+    margin: 2pt 0 6pt 0;
+    letter-spacing: -0.2px;
+  }
+  .section-banner-light {
+    background-color: #e2e8f0;
+    color: #000000;
+    border: 1px solid #718096;
+    font-size: 10.5pt;
+    font-weight: 800;
+    font-style: italic;
+    padding: 3pt 6pt;
+    border-radius: 2px;
+    margin: 4pt 0 5pt 0;
+    letter-spacing: -0.1px;
+  }
+
+  .meta-lead {
+    font-size: 8.5pt;
+    line-height: 1.35;
+    margin: 0 0 5pt 0;
+    text-align: justify;
+  }
+  .meta-lead strong {
+    font-weight: 700;
+  }
+
+  /* TABLE */
+  table.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.7pt;
+    line-height: 1.25;
+    margin: 0 0 2pt 0;
+  }
+  table.matrix-table th, 
+  table.matrix-table td {
+    border: 1px solid #718096;
+    padding: 3pt 4.5pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.matrix-table th {
+    background-color: #ebf1f8;
+    font-weight: 700;
+    color: #000000;
+  }
+  table.matrix-table td {
+    background-color: #ffffff;
+    color: #000000;
+  }
+
+  .col-feature { width: 22%; font-weight: 500; }
+  .col-website { width: 11%; }
+  .col-mobile  { width: 11.5%; }
+  .col-backend { width: 11%; }
+  .col-desktop { width: 11%; }
+  .col-notes   { width: 33.5%; }
+
+  /* LIMITATIONS LIST */
+  ul.limitations-list {
+    margin: 3pt 0 0 0;
+    padding-left: 14pt;
+    list-style-type: disc;
+  }
+  ul.limitations-list li {
+    font-size: 8.3pt;
+    line-height: 1.35;
+    margin-bottom: 5.5pt;
+    text-align: justify;
+  }
+  ul.limitations-list li strong {
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-container">
+
+  <!-- ==================== PAGE 1: COVER PAGE ==================== -->
+  <div class="cover-page">
+    <div class="inst-header">
+      <div class="inst-line-1">Cebu Institute of Technology</div>
+      <div class="inst-line-2">University</div>
+      <div class="inst-dept">College of Computer Studies</div>
+    </div>
+
+    <div class="doc-title-block">
+      <div class="doc-title">Feature Completion Matrix</div>
+      <div class="doc-for">for</div>
+      <div class="doc-system">Bitwise</div>
+    </div>
+
+    <div class="meta-block">
+      <div class="team-code">Team Code: 2627-sem1-it411-62</div>
+      <div class="members-title">Members</div>
+      <ul class="members-list">
+        <li>Arpon, Joseph Cris E.</li>
+        <li>Arnejo, Ralph John R.</li>
+        <li>Cotiangco, James Gabriel F.</li>
+        <li>Lawas, Berchard Lawrence D.</li>
+        <li>Menez, John Joshua L.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 2: MATRIX PART 1 ==================== -->
+  <div class="doc-page">
+    <div>
+      <div class="running-header">
+        <div class="rh-left">
+          <div class="rh-left-title">Feature Completion Matrix</div>
+          <div class="rh-left-sub">Bitwise</div>
+        </div>
+        <div class="rh-right">Document Version:1.0</div>
+      </div>
+
+      <div class="section-banner-dark">1. Feature Completion Matrix</div>
+
+      <div class="meta-lead">
+        Bitwise capstone, Deliverable 1: Working Software and Deployment. Status as of 18 October 2026.
+      </div>
+      <div class="meta-lead" style="margin-bottom: 6pt;">
+        <strong>Implemented</strong> means built and switched on. <strong>Partial</strong> means built with a gap noted in the last column. <strong>N/A</strong> means the feature does not belong on that surface.
+      </div>
+
+      <div class="section-banner-light">1.1. Feature Matrix</div>
+
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th class="col-feature">Feature</th>
+            <th class="col-website">Website</th>
+            <th class="col-mobile">Mobile<br>(Android)</th>
+            <th class="col-backend">Backend</th>
+            <th class="col-desktop">Desktop</th>
+            <th class="col-notes">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-feature">Sign-up and login (email and password; student or educator)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Supabase JWT session persistence. Student registration is self-service; educator and admin roles are provisioned directly in the database.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Google sign-in (OAuth 2.0)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Partial</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Supabase OAuth integration. On mobile devices, redirect popups are blocked inside Facebook and Messenger in-app webviews.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Admin two-step login (authenticator app)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">N/A</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">N/A</td>
+            <td class="col-notes">Enforced on educator/admin roles via Supabase MFA TOTP challenge. Setup shows a base-32 security key; QR generation is active on web.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Password reset by email recovery link</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Sends time-limited recovery email leading to the secure reset password view.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Email verification</td>
+            <td class="col-website">Partial</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Partial</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">On the website, unverified accounts can access anonymous calculators, but persistent progress saving displays a verification reminder.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Educational scaffolding (11 structured lessons)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Complete curriculum covering number systems, arithmetic, complements, signed formats, codes, gates, truth tables, and K-maps.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Interactive bit-toggle & base builders</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Interactive 8-bit toggle builders, place-value weights, Nibble/Byte/Word groupings explorer, and real-time decimal recalculation.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">High-yield conversion challenges (Lesson 3)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Practice challenges for Decimal &harr; Binary and Hex &harr; Octal with real-time input checking, hints, streak badges, and answer validation.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Binary vertical arithmetic trainers (Lesson 4)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Interactive step navigation showing carries, borrows, and partial products for addition, subtraction, multiplication, and division.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">1's and 2's complement negation workbench</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Visualizes bitwise inversion, end-around carry addition, and two's complement sign extension for positive and negative numbers.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Signed representation & ALU hardware flags</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Real-time inspection of Zero (Z), Carry (C), Overflow (V), and Sign (S) ALU flags across 4-bit, 8-bit, and 16-bit word widths.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="running-footer">
+      Page 2 of 4
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 3: MATRIX PART 2 ==================== -->
+  <div class="doc-page">
+    <div>
+      <div class="running-header">
+        <div class="rh-left">
+          <div class="rh-left-title">Feature Completion Matrix</div>
+          <div class="rh-left-sub">Bitwise</div>
+        </div>
+        <div class="rh-right">Document Version:1.0</div>
+      </div>
+
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th class="col-feature">Feature</th>
+            <th class="col-website">Website</th>
+            <th class="col-mobile">Mobile<br>(Android)</th>
+            <th class="col-backend">Backend</th>
+            <th class="col-desktop">Desktop</th>
+            <th class="col-notes">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-feature">Binary codes translator (BCD, Gray, ASCII)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Bidirectional translation for 4-bit BCD, reflected Gray code single-bit transitions, and 7-bit ASCII lookup tables.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Hamming(7,4) error detection & correction</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Interactive parity generator (p1, p2, p4) with syndrome calculation matrix; detects and auto-corrects single-bit transmission errors.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Boolean algebra simplification & law matcher</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Step-by-step expression parser and simplifier applying De Morgan's, Idempotent, Absorption, and Distributive laws with proofs.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Dynamic truth table generator</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Evaluates arbitrary boolean expressions up to 5 variables (A, B, C, D, E); dynamically renders 2<sup>N</sup> row tables with sub-terms.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Karnaugh Map (K-Map) solver & loop visualizer</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Partial</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">2, 3, and 4-variable K-maps with Gray code cell numbering and minterm toggling (0/1/X). Mobile requires horizontal scroll on 16 cells.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Digital circuit simulator canvas</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Partial</td>
+            <td class="col-backend">N/A</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Drag-and-drop logic gates (AND, OR, NOT, NAND, NOR, XOR, XNOR), switches, and LEDs with live wire routing. Touch dragging is difficult on small screens.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Universal base converter (bases 2–36)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Converts between arbitrary radices 2 through 36 with algorithmic division table cards and positional expansion traces.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Multi-step base path conversions</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Routes arbitrary base conversions through an explicit intermediate decimal bridge (Base A &rarr; 10 &rarr; Base B) for pedagogical clarity.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Adaptive AI quiz generation (Groq & Gemini)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Dynamically generates 10-item adaptive quizzes partitioned into Easy/Medium/Hard based on user EMA; pre-compiled fallback on quota exhaustion.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Bayesian Knowledge Tracing (BKT) engine</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Probabilistic mastery model updating slip, guess, transition, and mastery probabilities after each attempt. Cold-start begins at P(L<sub>0</sub>) = 0.2.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Exponential Moving Average (EMA) scoring</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Computes running EMA score (&alpha; = 0.3) per topic, updating student competency tiers (Novice, Beginner, Intermediate, Advanced, Expert).</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Socratic AI tutor ("BitBot" Ask AI panel)</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Context-aware conversational tutor providing guided hints and misconception diagnostics without spoiling answers; multi-key rotation enabled.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Dynamic learning path recommendations</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Recommends prerequisite lesson reviews or advanced challenge sets based on the student's lowest EMA mastery scores via /adaptive/recommend.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Learner profile & mastery dashboard</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Visualizes EMA topic mastery scores across 5 competency tiers, completed lesson badges, and streak statistics.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Guest / anonymous practice mode</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Full access to all 11 lessons, calculators, converters, and circuit tools without login; learning progress is not saved to cloud.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Global interactive onboarding tour</td>
+            <td class="col-website">Implemented</td>
+            <td class="col-mobile">Implemented</td>
+            <td class="col-backend">N/A</td>
+            <td class="col-desktop">Implemented</td>
+            <td class="col-notes">Guided step-by-step spotlight tour introducing newcomers to curriculum navigation, toolbars, and AI tutor features; responsive touch tooltips.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Educator & cohort analytics telemetry</td>
+            <td class="col-website">Partial</td>
+            <td class="col-mobile">N/A</td>
+            <td class="col-backend">Implemented</td>
+            <td class="col-desktop">Partial</td>
+            <td class="col-notes">Backend endpoints provide cohort mastery distribution and API token usage; web frontend currently exposes learner-level progress views.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Offline desktop application</td>
+            <td class="col-website">N/A</td>
+            <td class="col-mobile">N/A</td>
+            <td class="col-backend">N/A</td>
+            <td class="col-desktop">Not implemented</td>
+            <td class="col-notes">Platform is served via desktop web browsers and local Vite/Node development server. Standalone offline Electron packaging is planned for future release.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Native mobile application (Google Play APK)</td>
+            <td class="col-website">N/A</td>
+            <td class="col-mobile">Not implemented</td>
+            <td class="col-backend">N/A</td>
+            <td class="col-desktop">N/A</td>
+            <td class="col-notes">Platform is delivered as a touch-optimized responsive web app (PWA); standalone native Android APK is not published to Google Play Store.</td>
+          </tr>
+          <tr>
+            <td class="col-feature">Account deletion (self-service data purge)</td>
+            <td class="col-website">Not implemented</td>
+            <td class="col-mobile">Not implemented</td>
+            <td class="col-backend">Partial</td>
+            <td class="col-desktop">Not implemented</td>
+            <td class="col-notes">Account deletion currently requires manual administrator database purge in Supabase; self-service delete button is not yet exposed in user UI.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="running-footer">
+      Page 3 of 4
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 4: KNOWN LIMITATIONS ==================== -->
+  <div class="doc-page last-page">
+    <div>
+      <div class="running-header">
+        <div class="rh-left">
+          <div class="rh-left-title">Feature Completion Matrix</div>
+          <div class="rh-left-sub">Bitwise</div>
+        </div>
+        <div class="rh-right">Document Version:1.0</div>
+      </div>
+
+      <div class="section-banner-light" style="margin-top: 2pt; margin-bottom: 7pt;">1.2. Known Limitations</div>
+
+      <ul class="limitations-list">
+        <li>
+          <strong>Platforms:</strong> the web platform is built with a responsive layout for mobile browsers (tested on Android Chrome and iOS Safari) and progressive web app (PWA) usage; there is no native Google Play APK or iOS app yet. Standalone desktop packaging (Electron) is not yet released; desktop access is via web browser or local Node/Vite development server.
+        </li>
+        <li>
+          <strong>Circuit simulator on touchscreens:</strong> the digital circuit simulator canvas is fully interactive on desktop and tablet viewports, but gate dragging, precise wire routing between small pin terminals, and multi-select deletion are constrained on compact mobile phone screens (&lt; 600px width).
+        </li>
+        <li>
+          <strong>Karnaugh Map variable limits:</strong> the K-Map minimization engine supports 2-variable (4 cells), 3-variable (8 cells), and 4-variable (16 cells) grids with Gray code cell mapping. 5-variable (32 cells) and 6-variable (64 cells) 3D hyper-cube maps are not implemented in the current release.
+        </li>
+        <li>
+          <strong>AI engine &amp; rate limits:</strong> dynamic quiz generation and BitBot Socratic tutoring rely on Google Gemini API (<code>gemini-1.5-flash</code>) and Groq Cloud. When external API rate limits are exceeded or network connectivity drops, the service gracefully falls back to pre-compiled static question banks and rule-based pedagogical hints.
+        </li>
+        <li>
+          <strong>Bayesian Knowledge Tracing (BKT) cold-start:</strong> the BKT probabilistic engine initializes student mastery at a prior of P(L<sub>0</sub>) = 0.2. For learners with zero historical quiz attempts, the initial question difficulty spread requires 3 to 5 submitted items before accurately reflecting individual ability.
+        </li>
+        <li>
+          <strong>Base converter numeric precision:</strong> the universal base converter supports arbitrary bases 2 through 36 for integer values up to 64-bit precision. Floating-point conversions (radix point) are supported for standard fractions; recurring fractional base expansions are rounded and truncated to 8 fractional places.
+        </li>
+        <li>
+          <strong>Hamming(7,4) error boundary:</strong> the error-correcting codes module implements standard Hamming(7,4) single-error correction (SEC). Double-bit errors are detected as parity syndrome anomalies but cannot be automatically corrected without Hamming(8,4) SEC-DED extensions.
+        </li>
+        <li>
+          <strong>Production deployment checks:</strong> the release on 18 October 2026 was validated end-to-end on AWS EC2 (<code>https://bitwise.live</code>) and Supabase PostgreSQL. Multi-key AI rotation and session restoration were verified on production, while heavy concurrent quiz stress tests were executed on local staging.
+        </li>
+        <li>
+          <strong>Guest vs. authenticated persistence:</strong> guests can freely execute all interactive lessons, calculators, converters, and circuit tools without credentials. However, persistent progress saving, streak telemetry, and EMA mastery records require an authenticated Supabase account.
+        </li>
+        <li>
+          <strong>Accounts and admin provisioning:</strong> user registration and password recovery are self-service via Supabase Auth. Google OAuth sign-in requires popup permissions and may fail inside embedded social webviews (e.g., Messenger or Instagram in-app browsers). The educator/admin role cannot be self-assigned in the client and must be provisioned directly in the database.
+        </li>
+        <li>
+          <strong>Not built from the original vision:</strong> standalone native mobile APK/iOS apps, real-time multi-user collaborative circuit breadboards, automated hardware HDL/Verilog synthesis export, and automated educator LMS (Canvas/Moodle) gradebook synchronization.
+        </li>
+      </ul>
+    </div>
+
+    <div class="running-footer">
+      Page 4 of 4
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

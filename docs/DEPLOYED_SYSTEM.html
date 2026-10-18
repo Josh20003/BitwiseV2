@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bitwise: Deployed System</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 22mm 22mm 22mm 22mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: Arial, Helvetica, "Segoe UI", sans-serif;
+    color: #000000;
+    background: #ffffff;
+    font-size: 10pt;
+    line-height: 1.45;
+    margin: 0;
+    padding: 0;
+  }
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0;
+  }
+  h1 {
+    font-size: 22pt;
+    font-weight: 800;
+    margin: 0 0 6pt 0;
+    color: #000000;
+    letter-spacing: -0.3px;
+  }
+  .capstone-subtitle {
+    font-size: 9.5pt;
+    color: #000000;
+    font-style: italic;
+    margin-bottom: 8pt;
+    line-height: 1.35;
+  }
+  .lead-text {
+    font-size: 9.5pt;
+    color: #000000;
+    margin-bottom: 14pt;
+    line-height: 1.45;
+    text-align: justify;
+  }
+  h2 {
+    font-size: 14.5pt;
+    font-weight: 800;
+    margin: 14pt 0 7pt 0;
+    color: #000000;
+    letter-spacing: -0.2px;
+  }
+  p {
+    margin: 0 0 7pt 0;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    text-align: justify;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6pt 0 12pt 0;
+    font-size: 8.5pt;
+    line-height: 1.35;
+  }
+  th, td {
+    border: 1px solid #a0aec0;
+    padding: 5.5pt 7pt;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #ebf1f8;
+    font-weight: 700;
+    color: #000000;
+  }
+  td {
+    background-color: #ffffff;
+    color: #000000;
+  }
+  a {
+    color: #0000ee;
+    text-decoration: underline;
+    word-break: break-all;
+  }
+  ul {
+    margin: 4pt 0 12pt 0;
+    padding-left: 18pt;
+    list-style-type: disc;
+  }
+  li {
+    font-size: 9.5pt;
+    margin-bottom: 7pt;
+    line-height: 1.45;
+    text-align: justify;
+    color: #000000;
+  }
+  li strong {
+    font-weight: 700;
+  }
+  .page-break {
+    page-break-before: always;
+    break-before: page;
+    margin-top: 24pt;
+    padding-top: 6pt;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <!-- PAGE 1 -->
+  <h1>Bitwise: Deployed System</h1>
+  <div class="capstone-subtitle">
+    Bitwise capstone, deliverable 1: Working Software and Deployment. Status as of 18 October 2026.
+  </div>
+  
+  <div class="lead-text">
+    Bitwise is deployed and running in production. Students, educators, and evaluators use the web platform at bitwise.live, served by one backend API at bitwise.live/api. Cloud database storage and user authentication are powered by Supabase PostgreSQL in the Tokyo region. The adaptive assessment engine integrates Google Gemini and Groq Cloud. Every public service below answered normally when checked on 18 October 2026.
+  </div>
+
+  <h2>Live URLs</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 26%;">Component</th>
+        <th style="width: 28%;">URL</th>
+        <th style="width: 26%;">Hosted on</th>
+        <th style="width: 20%;">Status (18 Oct 2026)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Bitwise website<br>(students, educators, admins)</td>
+        <td><a href="https://bitwise.live">https://bitwise.live</a></td>
+        <td>AWS EC2 (Docker, Nginx via Traefik, Elastic IP 47.129.118.12)</td>
+        <td>Online</td>
+      </tr>
+      <tr>
+        <td>Bitwise backend API</td>
+        <td><a href="https://bitwise.live/api">https://bitwise.live/api</a><br>(health check: /api/calculator/convert)</td>
+        <td>AWS EC2 (Docker, NestJS 11, Node.js 22 LTS), behind Cloudflare</td>
+        <td>Online, health check reports UP</td>
+      </tr>
+      <tr>
+        <td>Cloud Database & Auth</td>
+        <td><a href="https://fqueemuseyjgwsssgbvi.supabase.co">https://fqueemuseyjgwsssgbvi.supabase.co</a></td>
+        <td>Supabase Cloud (PostgreSQL 16, Tokyo ap-northeast-1)</td>
+        <td>Online, transaction pooler active</td>
+      </tr>
+      <tr>
+        <td>Number System Converter API</td>
+        <td><a href="https://bitwise.live/api/calculator/number-systems">https://bitwise.live/api/calculator/number-systems</a></td>
+        <td>AWS EC2 (NestJS)</td>
+        <td>Online</td>
+      </tr>
+      <tr>
+        <td>Adaptive AI assessment service</td>
+        <td><a href="https://bitwise.live/api/ai/chat">https://bitwise.live/api/ai/chat</a></td>
+        <td>Google Cloud (Gemini API) & Groq Cloud</td>
+        <td>Online, readiness check reports ready</td>
+      </tr>
+      <tr>
+        <td>Local staging environment</td>
+        <td>http://localhost:5173 (UI)<br>http://localhost:3000 (API)</td>
+        <td>Local workstation (Docker / Node.js 22)</td>
+        <td>Online, verified operational</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Demo accounts</h2>
+  <p>
+    Production has no pre-loaded demo accounts, so evaluators either use the accounts the team prepares for the panel (fill in the table before submission) or create their own student account, which takes about a minute.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 17%;">Role</th>
+        <th style="width: 26%;">What the role can do</th>
+        <th style="width: 14%;">Email</th>
+        <th style="width: 14%;">Password</th>
+        <th style="width: 29%;">How to get this role yourself</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Student (learner)</td>
+        <td>Complete 11 structured lessons, solve interactive practice challenges, take AI-generated adaptive quizzes, track mastery progress</td>
+        <td>[to fill in]</td>
+        <td>[to fill in]</td>
+        <td>Sign up at <a href="https://bitwise.live/register">https://bitwise.live/register</a> with email and password or Google, and choose Student. Enter the code sent by email to verify.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PAGE 2 -->
+  <div class="page-break"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 17%;">Role</th>
+        <th style="width: 26%;">What the role can do</th>
+        <th style="width: 14%;">Email</th>
+        <th style="width: 14%;">Password</th>
+        <th style="width: 29%;">How to get this role yourself</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Educator / Instructor</td>
+        <td>Inspect class cohort mastery distributions, oversee lesson progression, review quiz telemetry, assign remedial practice modules</td>
+        <td>[to fill in]</td>
+        <td>[to fill in]</td>
+        <td>Sign up and choose Educator, then complete institutional verification. An admin approves the account at /admin/verifications.</td>
+      </tr>
+      <tr>
+        <td>Admin</td>
+        <td>Approve educators, manage system settings, review AI token usage, inspect database health and audit logs</td>
+        <td>[to fill in]</td>
+        <td>[to fill in]</td>
+        <td>Not self-service. Admin accounts are created on the server, so the team supplies one.</td>
+      </tr>
+      <tr>
+        <td>Guest user</td>
+        <td>Freely access all multi-mode calculators (Boolean Algebra, Binary Arithmetic, Complements) and base converters without saving progress</td>
+        <td>[to fill in]</td>
+        <td>[to fill in]</td>
+        <td>Open <a href="https://bitwise.live">https://bitwise.live</a> or <a href="https://bitwise.live/lessons">https://bitwise.live/lessons</a> directly; no account registration required.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Access notes</h2>
+  <ul>
+    <li><strong>Website:</strong> open <a href="https://bitwise.live">https://bitwise.live</a> and log in at /login. Admins and educators land on their respective consoles at /admin.</li>
+    <li><strong>Interactive lessons & scaffolding:</strong> navigate to /lessons to access all 11 digital logic and computer organization modules. Interactive practice activities (such as Decimal-to-Binary in Lesson 3) provide real-time input verification and mathematical feedback.</li>
+    <li><strong>Multi-mode calculators:</strong> available publicly at /calculator and /converter. Evaluators can perform arbitrary base conversions (bases 2–36) and vertical binary arithmetic with step-by-step mathematical proof traces without creating an account.</li>
+    <li><strong>Adaptive AI quizzes:</strong> when taking quizzes, the engine dynamically calculates Bayesian Knowledge Tracing (BKT) probabilities and Exponential Moving Average (EMA) scores. Socratic hints are generated via Google Gemini / Groq without revealing direct answers.</li>
+    <li><strong>Staging / offline presentation:</strong> for panel demonstrations during network constraints, the full stack can be run locally using the local dev servers (bitwise-ui on port 5173, bitwise-server on port 3000) with identical feature parity.</li>
+  </ul>
+</div>
+
+</body>
+</html>

@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
 import { AI_CONFIG, createGoogleProvider } from '../config/ai.config';
+import { cleanLatexNotation } from './assessment.service';
 
 export interface QuizQuestion {
   id: string;
@@ -145,6 +146,7 @@ STRICT SCOPE BOUNDARIES:
 3. Verify Knowledge, Not Trivia: Generate specific questions that test application or recall of the permitted concepts. Do not ask meta-questions (e.g., "What did we learn in Lesson 8?").
 4. Options: Create exactly 4 plausible options. The incorrect options must be common mistakes related ONLY to the permitted scope. Never include labels like "Option A" or "(Correct)" in the text.
 5. Output format: Return STRICTLY as a raw JSON object matching the exact schema below. No markdown formatting, backticks, or conversational text.
+6. NO LATEX NOTATION: Do NOT use LaTeX math syntax like $2^i$, $(101)_2$, or $n$. Write plain text instead: 2^i, 101 (base 2), n. Never wrap text in dollar signs ($).
 
 🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
 - "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
@@ -253,13 +255,25 @@ Ensure the questions strictly honor these boundaries and return the exact JSON a
           q.correctOptionIndex <= 3
           ? q.correctOptionIndex
           : 0;
+      const cleanedOptions = (q.options || []).map((opt: string) =>
+        cleanLatexNotation(opt),
+      );
+      const correctAnswer = cleanedOptions[idx] || '';
+
+      // Randomize option order so correct answers are balanced across A, B, C, D
+      const shuffled = [...cleanedOptions];
+      for (let s = shuffled.length - 1; s > 0; s--) {
+        const j = Math.floor(Math.random() * (s + 1));
+        [shuffled[s], shuffled[j]] = [shuffled[j], shuffled[s]];
+      }
+
       return {
         id: `q-${Date.now()}-${i}`,
         topic,
-        question: q.question,
-        options: q.options,
-        correctAnswer: q.options[idx],
-        explanation: q.stepByStepDerivation,
+        question: cleanLatexNotation(q.question),
+        options: shuffled,
+        correctAnswer: correctAnswer,
+        explanation: cleanLatexNotation(q.stepByStepDerivation || q.explanation || ''),
       };
     });
 

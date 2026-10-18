@@ -21,7 +21,47 @@ const QUICK_ACTIONS = [
   { label: 'Restart Tour', action: 'tour', to: '' },
 ]
 
-export default function GlobalAiBot() {
+// Maps route paths to human-readable page context for BitBot
+const LESSON_CONTEXT: Record<string, string> = {
+  '1': 'Lesson 1: Introduction to Digital Logic — covers what digital logic is, why computers use binary (0s and 1s), and the difference between analog and digital signals.',
+  '2': 'Lesson 2: Types of Number Systems — covers Binary (base-2), Octal (base-8), Decimal (base-10), and Hexadecimal (base-16), their digit sets, and positional notation.',
+  '3': 'Lesson 3: Number System Conversions — covers converting between binary, octal, decimal, and hexadecimal using division-remainder, multiplication, and grouping methods.',
+  '4': 'Lesson 4: Binary Arithmetic — covers binary addition (with carry), subtraction (with borrow), multiplication (shift-and-add), and division.',
+  '5': "Lesson 5: Complements — covers 1's complement (bit inversion) and 2's complement (invert + add 1), used for representing negative numbers in binary.",
+  '6': 'Lesson 6: Introduction to Boolean Algebra — covers Boolean values (True/False, 1/0), basic Boolean operations, and their applications in digital circuit design.',
+  '7': 'Lesson 7: Logic Gates — covers AND, OR, NOT, NAND, NOR, XOR, and XNOR gates, their symbols, truth tables, and behavior.',
+  '8': 'Lesson 8: Truth Tables — covers constructing truth tables for logic expressions, reading input/output combinations, and evaluating Boolean expressions.',
+  '9': "Lesson 9: Simplification & Karnaugh Maps — covers Boolean algebra laws (De Morgan's, Commutative, Associative, Distributive) and K-Map grouping for simplification.",
+  '10': 'Lesson 10: Digital Circuit Design — covers combinational circuits, multiplexers, decoders, encoders, and how logic gates combine to build functional circuits.',
+  '11': 'Lesson 11: Sequential Logic — covers flip-flops (SR, D, JK, T), latches, registers, and counters for circuits with memory.',
+}
+
+function getPageContext(path: string): string {
+  // Lesson pages: /lesson/3, /lesson/7, etc.
+  const lessonMatch = path.match(/^\/lesson\/(\d+)/)
+  if (lessonMatch) {
+    const lessonId = lessonMatch[1]
+    return LESSON_CONTEXT[lessonId] || `Lesson ${lessonId}`
+  }
+
+  // Tool/feature pages
+  if (path.startsWith('/calculator')) return 'The Calculator page — tools for Boolean algebra simplification, truth table generation, binary arithmetic (addition, subtraction, multiplication, division), and 1\'s & 2\'s complement calculations.'
+  if (path.startsWith('/converter')) return 'The Number System Converter page — converts values between binary, octal, decimal, hexadecimal, and arbitrary bases (2–36) with step-by-step conversion traces.'
+  if (path.startsWith('/karnaughMaps') || path.startsWith('/karnaugh')) return 'The Karnaugh Map page — interactive K-Map tool for simplifying Boolean expressions using visual grouping.'
+  if (path.startsWith('/digitalCircuit')) return 'The Digital Circuit Simulator page — build and simulate logic circuits using AND, OR, NOT, NAND, NOR, XOR, and XNOR gates.'
+  if (path.startsWith('/binary-codes')) return 'The Binary Codes page — covers BCD (Binary-Coded Decimal), Gray Code, and Hamming Code encoding/decoding.'
+  if (path.startsWith('/roadmap')) return 'The Learning Roadmap page — overview of all 11 lessons in the digital logic curriculum with progress tracking.'
+  if (path.startsWith('/quiz') || path.startsWith('/assessment')) return 'The AI Adaptive Assessment page — AI-generated quizzes that adapt to the student\'s mastery level using Bayesian Knowledge Tracing (BKT).'
+  if (path === '/') return 'The Bitwise Homepage — the main landing page of the platform.'
+
+  return 'Browsing the Bitwise platform.'
+}
+
+interface GlobalAiBotProps {
+  currentPath?: string
+}
+
+export default function GlobalAiBot({ currentPath = '/' }: GlobalAiBotProps) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -53,8 +93,10 @@ export default function GlobalAiBot() {
     setLoading(true)
 
     try {
+      const pageContext = getPageContext(currentPath)
       const data = await apiService.post<{ response: string }>('/ai/chat', {
         message: userMsg.content,
+        pageContext,
       })
       setMessages((prev) => [
         ...prev,

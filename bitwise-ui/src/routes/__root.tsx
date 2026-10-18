@@ -21,7 +21,7 @@ function RootComponent() {
       {!isAuth && (
         <>
           <GlobalOnboardingTour />
-          <GlobalAiBot />
+          <GlobalAiBot currentPath={location.pathname} />
         </>
       )}
     </>

@@ -17,14 +17,16 @@ export class AiController {
   constructor(private readonly aiService: AiService) {}
 
   @Post('chat')
-  @UseGuards(JwtAuthGuard)
-  async chat(@Body() body: { message: string }) {
+  async chat(@Body() body: { message: string; pageContext?: string }) {
     if (!body.message) {
       throw new HttpException('Message is required', HttpStatus.BAD_REQUEST);
     }
 
     try {
-      const response = await this.aiService.getResponse(body.message);
+      const response = await this.aiService.getResponse(
+        body.message,
+        body.pageContext,
+      );
       return { response };
     } catch (error) {
       this.logger.error('AI chat error:', error);

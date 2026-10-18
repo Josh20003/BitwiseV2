@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { supabase } from '@/utils/supabase';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import CircuitRenderer from '@/components/CircuitRenderer';
+import { cleanLatexNotation } from '@/utils/mathFormat';
 import confetti from 'canvas-confetti';
 
 interface QuizQuestion {
@@ -155,12 +157,12 @@ const QuestionStemRenderer = ({ stem }: { stem: any }) => {
   if (typeof stem === 'string') {
     return (
       <h2 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100 leading-relaxed">
-        {stem}
+        {cleanLatexNotation(stem)}
       </h2>
     );
   }
   if (typeof stem === 'object' && stem !== null) {
-    const titleText = stem.text || '';
+    const titleText = cleanLatexNotation(stem.text || '');
     return (
       <div>
         {titleText && (
@@ -210,17 +212,27 @@ export function QuizSessionManager({
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+  const getAuthHeaders = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }, []);
+
   const startQuiz = async () => {
     setLoading(true);
     setError(null);
     try {
       if (lessonId) {
         // Use the premium lesson practice route (with BKT + visuals)
+        const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE}/assessment/start-lesson-practice`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ uid: userId, lessonId }),
-          signal: AbortSignal.timeout(60000), // 60s for Groq visual question generation
+          signal: AbortSignal.timeout(120000),
         });
         const data = await res.json();
         if (data.success && data.data && data.data.questions.length > 0) {
@@ -236,8 +248,10 @@ export function QuizSessionManager({
         }
       } else {
         // Fallback for direct url navigation (without lessonId)
+        const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE}/assessment/ai-quiz/${userId}/${topic}`, {
-          signal: AbortSignal.timeout(60000),
+          headers,
+          signal: AbortSignal.timeout(120000),
         });
         const data = await res.json();
         if (data.success && data.data.length > 0) {
@@ -281,13 +295,13 @@ export function QuizSessionManager({
   };
 
   // Helper getters
-  const getOptionText = (opt: any) => (typeof opt === 'string' ? opt : opt.text);
+  const getOptionText = (opt: any) => cleanLatexNotation(typeof opt === 'string' ? opt : opt.text);
   const getOptionId = (opt: any) => (typeof opt === 'string' ? opt : opt.id);
   
   const getCorrectAnswerText = (currentQ: QuizQuestion) => {
-    if (currentQ.correctAnswer) return currentQ.correctAnswer;
+    if (currentQ.correctAnswer) return cleanLatexNotation(currentQ.correctAnswer);
     const correctOpt = currentQ.options.find(o => o.isCorrect === true);
-    return correctOpt ? correctOpt.text : '';
+    return correctOpt ? cleanLatexNotation(correctOpt.text) : '';
   };
 
   const submitQuiz = async () => {
@@ -295,9 +309,10 @@ export function QuizSessionManager({
     try {
       if (attemptId) {
         // Submit using adaptive practice endpoint (BKT updates)
+        const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE}/assessment/submit-adaptive-practice`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             attemptId,
             responses: selectedAnswers
@@ -342,9 +357,10 @@ export function QuizSessionManager({
         });
         const finalScore = correctCount / questions.length;
 
+        const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE}/assessment/ai-quiz/submit`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             userId,
             topic,
@@ -665,9 +681,11 @@ export function QuizSessionManager({
                 Explanation
               </h4>
               <p className="text-blue-800 dark:text-blue-200 leading-relaxed font-medium">
-                {isRichFormat 
-                  ? (currentQ.options.find(o => o.id === selected)?.rationale || currentQ.options.find(o => o.isCorrect)?.rationale || currentQ.explanation) 
-                  : (currentQ.explanation || 'Option evaluated successfully.')}
+                {cleanLatexNotation(
+                  isRichFormat 
+                    ? (currentQ.options.find(o => o.id === selected)?.rationale || currentQ.options.find(o => o.isCorrect)?.rationale || currentQ.explanation || '') 
+                    : (currentQ.explanation || 'Option evaluated successfully.')
+                )}
               </p>
             </div>
 
@@ -680,7 +698,7 @@ export function QuizSessionManager({
                 </h4>
                 <ol className="list-decimal ml-4 space-y-1.5 text-purple-800 dark:text-purple-300 font-medium">
                   {currentQ.solutionSteps.map((step, idx) => (
-                    <li key={idx} className="pl-1 leading-relaxed">{step}</li>
+                    <li key={idx} className="pl-1 leading-relaxed">{cleanLatexNotation(step)}</li>
                   ))}
                 </ol>
               </div>
