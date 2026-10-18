@@ -1323,8 +1323,14 @@ function RouteComponent() {
                     {/* Question Distribution Info */}
                     <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                       <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500">
-                        <TrendingUp className="w-3 h-3" />
-                        <span>3 questions per topic • Weakest topic gets +1 bonus</span>
+                        <TrendingUp className="w-3 h-3 shrink-0" />
+                        <span>
+                          {lesson.topics.length === 3
+                            ? '3 questions per topic • Weakest gets +1 bonus'
+                            : lesson.topics.length === 4
+                              ? '2 questions per topic • Weakest gets +2 bonus'
+                              : '10 questions • Weakest topic gets bonus practice'}
+                        </span>
                       </div>
                     </div>
                   </div>
