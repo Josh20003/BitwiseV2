@@ -116,6 +116,8 @@ function RouteComponent() {
   const [finished, setFinished] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
   const [completionError, setCompletionError] = useState<string | null>(null)
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
+  const bottomSentinelRef = useRef<HTMLDivElement | null>(null)
   const confettiRef = useRef<ConfettiRef>(null)
 
   // Progress tracking mutations
@@ -242,6 +244,69 @@ function RouteComponent() {
   useEffect(() => {
     scrollToTop()
   }, [topicIdx])
+
+  // Track scroll position to ensure user scrolls to the bottom before unlocking Next
+  useEffect(() => {
+    setHasScrolledToBottom(false)
+
+    const checkScrollPosition = () => {
+      const windowHeight = window.innerHeight
+      const documentHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight
+      )
+      const scrollTop =
+        window.scrollY ||
+        document.documentElement.scrollTop ||
+        document.body.scrollTop ||
+        0
+
+      // If content is short enough that no scrolling is needed to see it all
+      if (documentHeight <= windowHeight + 60) {
+        setHasScrolledToBottom(true)
+        return
+      }
+
+      // If user has scrolled near the bottom (within 80px)
+      if (windowHeight + scrollTop >= documentHeight - 80) {
+        setHasScrolledToBottom(true)
+      }
+    }
+
+    // Check after rendering/images load
+    const timer = setTimeout(checkScrollPosition, 250)
+
+    window.addEventListener('scroll', checkScrollPosition, { passive: true })
+    window.addEventListener('resize', checkScrollPosition, { passive: true })
+
+    // IntersectionObserver on bottom sentinel
+    let observer: IntersectionObserver | null = null
+    const sentinelEl = bottomSentinelRef.current
+    if (typeof IntersectionObserver !== 'undefined' && sentinelEl) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting) {
+            setHasScrolledToBottom(true)
+          }
+        },
+        {
+          root: null,
+          rootMargin: '0px 0px 80px 0px',
+          threshold: 0.1,
+        }
+      )
+      observer.observe(sentinelEl)
+    }
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('scroll', checkScrollPosition)
+      window.removeEventListener('resize', checkScrollPosition)
+      if (observer) {
+        observer.disconnect()
+      }
+    }
+  }, [topicIdx, lesson?.id])
 
   if (isLoading) {
     return (
@@ -401,7 +466,7 @@ function RouteComponent() {
       <LessonHeader progress={calculateProgress()} title={lesson.title} />
       <div className="pt-24 max-w-4xl mx-auto flex flex-col">
         {!finished ? (
-          <div className="w-full p-6 pb-20 flex flex-col relative">
+          <div className="w-full p-6 pb-32 flex flex-col relative">
             <BitBotGuide
               message={`Let's learn about ${topic.title}!`}
               emotion="pointing-left"
@@ -473,6 +538,9 @@ function RouteComponent() {
             />
 
             {toolToSpotlight && <ToolSpotlight tool={toolToSpotlight as any} />}
+
+            {/* Bottom sentinel for scroll-to-bottom detection */}
+            <div ref={bottomSentinelRef} className="h-6 w-full" aria-hidden="true" />
           </div>
         ) : (
           <div className="w-full p-6 pt-16 flex flex-col items-center justify-between min-h-[600px] relative">
@@ -570,25 +638,33 @@ function RouteComponent() {
               {topicIdx + 1} / {lesson.topics?.length || 0}
             </div>
 
-            <div>
+            <div className="flex items-center gap-3">
+              {!hasScrolledToBottom && (
+                <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2.5 py-1 rounded-full animate-pulse">
+                  <span>Scroll down to continue</span>
+                  <span className="text-sm">↓</span>
+                </span>
+              )}
               {topicIdx < (lesson.topics?.length || 0) - 1 ? (
                 <Button
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 transition-all duration-200"
                   onClick={() => {
                     void handleNextTopic()
                   }}
-                  disabled={isCompleting}
+                  disabled={isCompleting || !hasScrolledToBottom}
+                  title={!hasScrolledToBottom ? 'Scroll down to the bottom of the lesson to unlock Next' : undefined}
                 >
                   <span>{isCompleting ? 'Saving...' : 'Next'}</span>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
                 <Button
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 transition-all duration-200"
                   onClick={() => {
                     void handleFinishLesson()
                   }}
-                  disabled={isCompleting}
+                  disabled={isCompleting || !hasScrolledToBottom}
+                  title={!hasScrolledToBottom ? 'Scroll down to the bottom of the lesson to unlock Finish' : undefined}
                 >
                   <span>{isCompleting ? 'Saving...' : 'Finish'}</span>
                   <Check className="w-4 h-4" />
