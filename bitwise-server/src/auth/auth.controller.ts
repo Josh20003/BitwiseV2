@@ -1,4 +1,4 @@
-import { Controller, Post, Get, UseGuards, Body } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Body, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -6,6 +6,15 @@ import { CurrentUser } from './decorators/current-user.decorator';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get('status')
+  async checkStatus(@Query('email') email: string) {
+    if (!email) {
+      return { confirmed: false };
+    }
+    const confirmed = await this.authService.isEmailConfirmed(email);
+    return { email, confirmed };
+  }
 
   @Post('signup')
   signup(@Body() signupDto: any) {
