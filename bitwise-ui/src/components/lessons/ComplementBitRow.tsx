@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { AskAiTutor } from '@/components/AskAiTutor';
+import { StepExplanationCard } from '@/components/common/StepExplanationCard';
+import { buildComplementTraceSteps } from '@/utils/stepTraceHelpers';
 
 interface ComplementResult {
   originalValue: string;
@@ -329,105 +330,26 @@ export function ComplementBitRow() {
               </div>
             </div>
 
-            {/* Right Column: Calculation Trace with Accordion Steps matching Binary Arithmetic */}
-            <div className="lg:col-span-6 xl:col-span-6 space-y-3">
-              <h4 className="font-semibold text-sm sm:text-base text-foreground tracking-tight mb-2">
-                Calculation Trace
-              </h4>
-              <div className="space-y-2.5">
-                {/* Step 1 Card */}
-                {currentTraceStep === 0 ? (
-                  <div className="p-4 rounded-xl border border-blue-500/40 bg-[#0c101d] transition-all shadow-sm">
-                    <AskAiTutor
-                      context={`1's & 2's Complement calculation of ${originalVal}`}
-                      stepDescription={`Find 1's Complement: invert each bit of original ${originalVal} to get ${onesComp}. Bit-by-bit: ${originalVal.split('').map((b, i) => `${b}→${onesComp[i]}`).join(', ')}`}
-                    >
-                      <div>
-                        <span className="font-bold text-xs sm:text-sm block mb-1 text-foreground">
-                          Step 1: Find 1's Complement (invert each bit)
-                        </span>
-                        <div className="text-xs font-mono text-muted-foreground mt-1.5 space-y-1">
-                          <div>Original: <span className="text-foreground">{originalVal}</span></div>
-                          <div className="text-[11px] text-muted-foreground/90">
-                            Invert each bit: <span className="text-blue-300">{originalVal.split('').map((b, i) => `${b}→${onesComp[i]}`).join(', ')}</span>
-                          </div>
-                          <div>1's Complement: <span className="text-blue-400 font-semibold">{onesComp}</span></div>
-                        </div>
-                      </div>
-                    </AskAiTutor>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => setCurrentTraceStep(0)}
-                    className="p-3 px-4 rounded-xl border border-border/70 bg-[#0a0d18] flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-border cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-foreground">Step 1</span>
-                      <span className="text-muted-foreground/80 font-normal">
-                        • Find 1's Complement: {onesComp}
-                      </span>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                )}
-
-                {/* Step 2 Card */}
-                {currentTraceStep === 1 ? (
-                  <div className="p-4 rounded-xl border border-blue-500/40 bg-[#0c101d] transition-all shadow-sm">
-                    <AskAiTutor
-                      context={`1's & 2's Complement calculation of ${originalVal}`}
-                      stepDescription={`Add 1 to get 2's Complement: 1's complement ${onesComp} + 1 = ${twosComp}.${resultData?.cascadeSteps ? ' Columns: ' + resultData.cascadeSteps.map((s: { description: string }) => s.description).join('; ') : ''}`}
-                    >
-                      <div>
-                        <span className="font-bold text-xs sm:text-sm block mb-1 text-foreground">
-                          Step 2: Add 1 to get 2's Complement
-                        </span>
-                        <div className="text-xs font-mono text-muted-foreground mt-1.5 space-y-0.5">
-                          <div>1's Complement: {onesComp}</div>
-                          <div>+ 1</div>
-                          <div className="border-t border-border/60 pt-0.5 font-bold text-emerald-400">
-                            2's Complement: {twosComp}
-                          </div>
-                        </div>
-
-                        {resultData?.cascadeSteps && resultData.cascadeSteps.length > 0 && (
-                          <div className="mt-2.5 pt-2 border-t border-border/50 text-[11px] font-mono text-muted-foreground space-y-1 bg-[#080c16] p-2.5 rounded-lg border border-border/40">
-                            <div className="text-blue-400 font-sans font-semibold text-[10px] uppercase tracking-wider">
-                              Bit Addition & Carry Cascade
-                            </div>
-                            {resultData.cascadeSteps.map((step: { description: string }, i: number) => (
-                              <div key={i} className="text-xs text-foreground/90">
-                                • {step.description}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </AskAiTutor>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => setCurrentTraceStep(1)}
-                    className="p-3 px-4 rounded-xl border border-border/70 bg-[#0a0d18] flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-border cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-foreground">Step 2</span>
-                      <span className="text-muted-foreground/80 font-normal">
-                        • Add 1 to get 2's Complement: {twosComp}
-                      </span>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                )}
-
-                {/* Calculation Complete Banner matching Screenshot 3 */}
-                <div className="p-3 bg-emerald-500/15 border border-emerald-500/40 rounded-xl text-emerald-400 font-bold text-xs mt-3 flex items-center justify-between">
-                  <span>Calculation Complete</span>
-                  <span className="font-mono text-sm">
-                    Result: {twosComp}
-                  </span>
-                </div>
-              </div>
+            {/* Right Column: Calculation Trace with StepExplanationCard */}
+            <div className="lg:col-span-6 xl:col-span-6">
+              <StepExplanationCard
+                title="Complement Calculation Trace"
+                badgeText="Signed Arithmetic"
+                context={`1's & 2's Complement calculation of binary ${originalVal}`}
+                steps={buildComplementTraceSteps({
+                  originalValue: originalVal,
+                  onesComplement: onesComp,
+                  twosComplement: twosComp,
+                  cascadeSteps: resultData?.cascadeSteps,
+                })}
+                currentStepIndex={currentTraceStep}
+                onStepChange={setCurrentTraceStep}
+                resultSummary={{
+                  label: '2\'s Complement Complete',
+                  value: twosComp,
+                  sublabel: `Original: ${originalVal} | 1's: ${onesComp}`,
+                }}
+              />
             </div>
           </div>
 

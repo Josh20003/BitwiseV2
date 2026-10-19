@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { apiService } from '@/services/api.service';
-import { AskAiTutor } from '@/components/AskAiTutor';
+import { StepExplanationCard } from '@/components/common/StepExplanationCard';
+import { buildArithmeticTraceSteps } from '@/utils/stepTraceHelpers';
 
 interface ArithmeticTraceStep {
   id: string;
@@ -444,64 +445,21 @@ export function BinaryArithmeticWorkspace() {
                 </div>
               </div>
 
-              {/* Right Column: Calculation Trace with Accordion Steps */}
-              <div className="lg:col-span-6 space-y-3">
-                <h4 className="font-semibold text-sm sm:text-base text-foreground tracking-tight mb-2">
-                  Calculation Trace
-                </h4>
-                <div className="space-y-2.5">
-                  {resultData.traceSteps.map((step, idx) => {
-                    const isCurrent = idx === currentStepIndex;
-
-                    if (isCurrent) {
-                      return (
-                        <div
-                          key={step.id}
-                          className="p-4 rounded-xl border border-blue-500/40 bg-[#0c101d] transition-all shadow-sm"
-                        >
-                          <AskAiTutor
-                            context={`Binary Arithmetic: ${operand1} ${operation} ${operand2}`}
-                            stepDescription={`Step ${idx + 1}: ${step.description}`}
-                          >
-                            <div>
-                              <span className="font-bold text-xs sm:text-sm block mb-1 text-foreground">
-                                Step {idx + 1}
-                              </span>
-                              <span className="font-mono text-xs text-muted-foreground block leading-relaxed">
-                                {step.description}
-                              </span>
-                            </div>
-                          </AskAiTutor>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div
-                        key={step.id}
-                        onClick={() => setCurrentStepIndex(idx)}
-                        className="p-3 px-4 rounded-xl border border-border/70 bg-[#0a0d18] flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-border cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-bold text-foreground shrink-0">Step {idx + 1}</span>
-                          <span className="text-muted-foreground font-normal truncate">
-                            • {step.description}
-                          </span>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                      </div>
-                    );
-                  })}
-
-                  {currentStepIndex >= resultData.traceSteps.length - 1 && (
-                    <div className="p-3 bg-emerald-500/15 border border-emerald-500/40 rounded-xl text-emerald-400 font-bold text-xs mt-3 flex items-center justify-between">
-                      <span>Calculation Complete</span>
-                      <span className="font-mono text-sm">
-                        Result: {resultData.result}
-                      </span>
-                    </div>
-                  )}
-                </div>
+              {/* Right Column: Calculation Trace with StepExplanationCard */}
+              <div className="lg:col-span-6">
+                <StepExplanationCard
+                  title={`Binary ${operation === '+' ? 'Addition' : operation === '-' ? 'Subtraction' : operation === '*' ? 'Multiplication' : 'Division'} Trace`}
+                  badgeText="Bit-Level Trace"
+                  context={`Binary Arithmetic: ${operand1} ${operation} ${operand2} = ${resultData.result}`}
+                  steps={buildArithmeticTraceSteps(resultData)}
+                  currentStepIndex={currentStepIndex}
+                  onStepChange={setCurrentStepIndex}
+                  resultSummary={{
+                    label: 'Calculation Complete',
+                    value: resultData.result,
+                    sublabel: `${operand1} ${operation} ${operand2}`,
+                  }}
+                />
               </div>
             </div>
           )}

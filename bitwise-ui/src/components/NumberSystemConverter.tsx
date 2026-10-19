@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { apiService } from '@/services/api.service';
-import { AskAiTutor } from '@/components/AskAiTutor';
+import { StepExplanationCard } from '@/components/common/StepExplanationCard';
+import { buildConverterTraceSteps } from '@/utils/stepTraceHelpers';
 
 export function NumberSystemConverter() {
   const [sourceValue, setSourceValue] = useState('123');
@@ -194,83 +195,19 @@ export function NumberSystemConverter() {
 
             {/* Calculation Trace */}
             {result.steps && result.steps.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="font-semibold text-sm sm:text-base text-foreground tracking-tight mb-2">
-                  Calculation Trace
-                </h4>
-                <div className="space-y-2.5">
-                  {result.steps.map((step: any, idx: number) => {
-                    const isCurrent = idx === currentTraceStep;
-
-                    if (isCurrent) {
-                      return (
-                        <div
-                          key={idx}
-                          className="p-4 rounded-xl border border-blue-500/40 bg-[#0c101d] transition-all shadow-sm"
-                        >
-                          <AskAiTutor
-                            context={`Number conversion from base ${result.sourceBase} to base ${result.targetBase}: ${result.sourceValue}`}
-                            stepDescription={`${step.description}: ${step.operation || ''} = ${step.result}${step.substeps ? ' | Details: ' + step.substeps.join('; ') : ''}`}
-                            subtitle="Answers based on this conversion step"
-                          >
-                            <div>
-                              <span className="font-bold text-xs sm:text-sm block mb-1 text-foreground">
-                                Step {idx + 1}: {step.description}
-                              </span>
-                              {step.operation && (
-                                <div className="text-xs font-mono text-muted-foreground mt-1">
-                                  {step.operation}
-                                </div>
-                              )}
-                              <div className="text-base sm:text-lg font-mono font-bold text-foreground mt-1">
-                                {step.result}
-                              </div>
-
-                              {step.substeps && step.substeps.length > 0 && (
-                                <div className="mt-3 pt-2.5 border-t border-border/60 space-y-1.5 bg-[#080c16] p-3 rounded-lg border border-border/50">
-                                  <div className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider">
-                                    Calculation Breakdown
-                                  </div>
-                                  <div className="font-mono text-xs text-foreground/90 space-y-1">
-                                    {step.substeps.map((sub: string, sIdx: number) => (
-                                      <div key={sIdx} className="leading-relaxed whitespace-pre-wrap">
-                                        {sub}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </AskAiTutor>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => setCurrentTraceStep(idx)}
-                        className="p-3 px-4 rounded-xl border border-border/70 bg-[#0a0d18] flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-border cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-foreground">Step {idx + 1}</span>
-                          <span className="text-muted-foreground font-normal">
-                            • {step.description} → {step.result}
-                          </span>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    );
-                  })}
-
-                  <div className="p-3 bg-emerald-500/15 border border-emerald-500/40 rounded-xl text-emerald-400 font-bold text-xs mt-3 flex items-center justify-between">
-                    <span>Calculation Complete</span>
-                    <span className="font-mono text-sm">
-                      Result: {result.targetValue} (base {result.targetBase})
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <StepExplanationCard
+                title="Conversion Step-by-Step Trace"
+                badgeText="Radix Transformation"
+                context={`Number conversion from base ${result.sourceBase} (${result.sourceValue}) to base ${result.targetBase}`}
+                steps={buildConverterTraceSteps(result)}
+                currentStepIndex={currentTraceStep}
+                onStepChange={setCurrentTraceStep}
+                resultSummary={{
+                  label: 'Conversion Complete',
+                  value: `${result.targetValue} (base ${result.targetBase})`,
+                  sublabel: `From ${result.sourceValue} (base ${result.sourceBase})`,
+                }}
+              />
             )}
 
             {/* Explanation if available */}

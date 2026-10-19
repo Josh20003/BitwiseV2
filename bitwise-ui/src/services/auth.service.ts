@@ -53,7 +53,7 @@ export function formatAuthError(error: any): string {
   }
 
   if (message.includes('Error sending confirmation email')) {
-    return 'Could not send confirmation email. Resend test mode only delivers to your account owner email (johnjoshmenez@gmail.com). To send to all users, verify a custom domain in Resend.'
+    return 'Could not send confirmation email. If using Resend test mode, emails can only be delivered to the verified account owner. To send to all users, verify a custom domain in your email provider.'
   }
 
   return message

@@ -257,6 +257,120 @@ RULES:
 - Never use dollar signs ($) or raw LaTeX math code.
 - Never give generic answers: use the actual bits (${binaryStepInfo.bit1}, ${binaryStepInfo.bit2}, carry-in ${binaryStepInfo.carryIn}, result ${binaryStepInfo.resultBit}, carry-out ${binaryStepInfo.carryOut}).
 - Always complete all sentences.`;
+    } else if (context.toLowerCase().includes('subtraction') || step.toLowerCase().includes('borrow')) {
+      tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform.
+CONTEXT: The student is working on Binary Subtraction (${context}).
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'Explain this binary subtraction step simply and clearly.'}
+
+YOUR TASK:
+Explain what is happening in this specific column subtraction.
+1. Explain the inputs (Minuend top bit, Subtrahend bottom bit, and incoming borrow).
+2. Explain the subtraction: If borrowing is needed, explain that borrowing from the next column brings in a value of 2 (base 2), turning the calculation into (Top Bit + 2 - Borrow In - Bottom Bit).
+3. State why the resulting bit and borrow-out are correct.
+4. Explain how this connects to the next column on the left.
+
+RULES:
+- Keep it encouraging, crystal-clear, and beginner-friendly.
+- Never use dollar signs ($) or raw LaTeX math code.
+- Always use the actual numbers and bits from the step.
+- Finish all sentences completely.`;
+    } else if (context.toLowerCase().includes('multiplication') || step.toLowerCase().includes('partial product')) {
+      tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform.
+CONTEXT: The student is working on Binary Multiplication (${context}).
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'Explain this binary multiplication step simply and clearly.'}
+
+YOUR TASK:
+Explain how this partial product is formed and shifted:
+1. When multiplying by 1, the multiplicand is copied and shifted left by the bit position (adding trailing zeros).
+2. When multiplying by 0, the row is all zeros.
+3. Explain how this partial product contributes to the running total.
+
+RULES:
+- Keep it encouraging, clear, and beginner-friendly.
+- Never use dollar signs ($) or raw LaTeX math code.
+- Finish all sentences completely.`;
+    } else if (context.toLowerCase().includes('division') || step.toLowerCase().includes('quotient')) {
+      tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform.
+CONTEXT: The student is working on Binary Long Division (${context}).
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'Explain this binary division step simply and clearly.'}
+
+YOUR TASK:
+Explain what is happening in this division step:
+1. Explain the current dividend slice brought down versus the divisor.
+2. If current dividend >= divisor, explain why the quotient bit is 1 and subtract the divisor to get the remainder.
+3. If current dividend < divisor, explain why the quotient bit is 0 and bring down the next bit.
+
+RULES:
+- Keep it beginner-friendly.
+- Never use dollar signs ($) or raw LaTeX math code.
+- Finish all sentences completely.`;
+    } else if (context.toLowerCase().includes('complement') || step.toLowerCase().includes('complement')) {
+      tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform.
+CONTEXT: The student is working on 1's & 2's Complements (${context}).
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'Explain this complement transformation step clearly.'}
+
+YOUR TASK:
+1. If this step is 1's Complement: explain bit inversion (every 0 becomes 1, every 1 becomes 0).
+2. If this step is 2's Complement: explain why we add 1 to the 1's complement and how the carry cascades across the bits.
+3. Explain why 2's complement is fundamental in computers (representing negative signed integers with unified addition hardware).
+
+RULES:
+- Keep it encouraging, clear, and beginner-friendly.
+- Never use dollar signs ($) or raw LaTeX math code.
+- Finish all sentences completely.`;
+    } else if (context.toLowerCase().includes('karnaugh') || context.toLowerCase().includes('k-map')) {
+      tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform.
+CONTEXT: The student is working on Karnaugh Maps (K-Maps) (${context}).
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'Explain this K-Map simplification step clearly.'}
+
+YOUR TASK:
+Explain this K-Map minimization step:
+1. Explain how minterms/maxterms are placed or grouped into adjacent rectangular power-of-2 groups (size 1, 2, 4, 8).
+2. Explain the Gray code adjacency rule: adjacent cells differ by only one variable, allowing complemented variables (X and X') to cancel out.
+3. Explain the resulting simplified prime implicant term.
+
+RULES:
+- Keep it beginner-friendly with concrete references to the variables and groups.
+- Never use dollar signs ($) or raw LaTeX math code.
+- Finish all sentences completely.`;
+    } else if (context.toLowerCase().includes('boolean') || step.toLowerCase().includes('law')) {
+      tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform.
+CONTEXT: The student is working on Boolean Algebra Simplification (${context}).
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'Explain this Boolean simplification step clearly.'}
+
+YOUR TASK:
+Explain this algebraic transformation:
+1. Identify which Boolean law is applied (e.g., De Morgan's, Distributive, Absorption, Idempotent, Identity).
+2. Explain WHY this law applies to these specific terms.
+3. Show how the expression changes before and after the rule.
+4. Explain what student should observe (e.g. fewer literals, simplified logic gate implementation).
+
+RULES:
+- Keep it beginner-friendly.
+- Never use dollar signs ($) or raw LaTeX math code.
+- Finish all sentences completely.`;
+    } else if (context.toLowerCase().includes('gate') || context.toLowerCase().includes('circuit') || context.toLowerCase().includes('truth table')) {
+      tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform.
+CONTEXT: The student is working on Logic Gates & Digital Circuits (${context}).
+CURRENT STEP: ${step}
+${question ? `STUDENT'S QUESTION: "${question}"` : 'Explain this logic gate / truth table step clearly.'}
+
+YOUR TASK:
+Explain this digital logic evaluation:
+1. Identify the input values (HIGH/1, LOW/0).
+2. Explain the logic gate operation (e.g. AND outputs 1 only when all inputs are 1; XOR outputs 1 when inputs differ).
+3. Explain why the resulting output bit is generated.
+
+RULES:
+- Keep it beginner-friendly and concise.
+- Never use dollar signs ($) or raw LaTeX math code.
+- Finish all sentences completely.`;
     } else {
       tutorPrompt = `You are BitBot, a friendly and knowledgeable tutor on the Bitwise learning platform that teaches digital logic and computer science fundamentals.
 
@@ -282,7 +396,7 @@ RULES:
 
     if (validKeys.length === 0) {
       this.logger.warn('No API keys for tutor. Using fallback.');
-      return this.getTutorFallback(step, question);
+      return this.getTutorFallback(context, step, question);
     }
 
     for (const apiKey of validKeys) {
@@ -305,19 +419,54 @@ RULES:
     }
 
     this.logger.error('All API keys failed for tutor.');
-    return this.getTutorFallback(step, question);
+    return this.getTutorFallback(context, step, question);
   }
 
-  private getTutorFallback(step: string, question: string): string {
+  private getTutorFallback(context: string, step: string, question: string): string {
     const binaryStepInfo = parseBinaryAdditionStep(step);
     if (binaryStepInfo) {
       return generateBinaryAdditionExplanation(binaryStepInfo, question);
     }
 
-    if (question) {
-      return `Great question! The step "${step}" works by applying the fundamental positional weights and arithmetic rules of digital number systems. Each digit corresponds to a power of its base. Breaking it down term by term makes the pattern clear! 💡`;
+    const cLower = (context || '').toLowerCase();
+    const sLower = (step || '').toLowerCase();
+
+    if (cLower.includes('subtraction') || sLower.includes('borrow')) {
+      return `In binary subtraction, we subtract column by column from right to left (LSB to MSB). If the top bit is smaller than the bottom bit (0 - 1), we borrow 2 from the next column to the left. 2 - 1 = 1 with a borrow-out of 1. If no borrow is needed (1 - 0 = 1, 1 - 1 = 0, 0 - 0 = 0), the borrow-out is 0. 💡`;
     }
-    return `In this step ("${step}"), values are processed according to standard number system rules. For base conversions, each digit is scaled by its positional power of the base. For complements, each bit is inverted or incremented with cascading carries. Take a look at each column to follow the step-by-step arithmetic! 💡`;
+
+    if (cLower.includes('multiplication') || sLower.includes('partial product')) {
+      return `In binary multiplication, each row represents a partial product formed by multiplying the top number by one bit of the multiplier. When the multiplier bit is 1, we copy the multiplicand and shift it left by the bit's position. When the bit is 0, the row is all zeros. Finally, all shifted rows are added together! 💡`;
+    }
+
+    if (cLower.includes('division') || sLower.includes('quotient')) {
+      return `In binary long division, we compare the current slice of the dividend with the divisor. If the slice is greater than or equal to the divisor, the quotient bit is 1, and we subtract the divisor. If the slice is smaller, the quotient bit is 0. Then we bring down the next bit and repeat! 💡`;
+    }
+
+    if (cLower.includes('complement') || sLower.includes('complement')) {
+      return `For 1's complement, every bit is flipped (0 becomes 1, 1 becomes 0). For 2's complement, we add 1 to the 1's complement and cascade any carries. In modern computer hardware, 2's complement allows signed negative numbers to be added using the exact same digital circuits as positive numbers! 💡`;
+    }
+
+    if (cLower.includes('karnaugh') || cLower.includes('k-map')) {
+      return `In Karnaugh Maps (K-Maps), cells are arranged in Gray code order so that adjacent cells differ by only one variable. Grouping adjacent 1s in powers of 2 (size 1, 2, 4, 8) eliminates the variables that change, producing the most simplified Boolean expression! 💡`;
+    }
+
+    if (cLower.includes('boolean') || sLower.includes('law')) {
+      return `Boolean algebra simplifies digital logic expressions using standard algebraic laws (Identity, Complement, De Morgan's, Distributive, Absorption). Applying these laws reduces the number of gates and inputs required to implement the circuit in hardware! 💡`;
+    }
+
+    if (cLower.includes('gate') || cLower.includes('circuit') || cLower.includes('truth table')) {
+      return `Logic gates are the elementary building blocks of digital circuits. AND outputs 1 only when all inputs are 1; OR outputs 1 when at least one input is 1; NOT inverts its input; and XOR outputs 1 when inputs differ. A truth table exhaustively maps every input combination to its corresponding output! 💡`;
+    }
+
+    if (cLower.includes('conversion') || sLower.includes('base')) {
+      return `To convert from any base to decimal, multiply each digit by its base raised to its position power (e.g., d × base^position). To convert from decimal to any base, repeatedly divide by the target base and collect the remainders in reverse order (bottom to top)! 💡`;
+    }
+
+    if (question) {
+      return `Great question! The step "${step}" works by applying the fundamental positional weights and arithmetic rules of digital number systems. Breaking it down term by term makes the pattern clear! 💡`;
+    }
+    return `In this step ("${step}"), values are processed according to standard digital system rules. Follow the input values, intermediate transformations, and results carefully to master the concept! 💡`;
   }
 
   private getFallbackResponse(message: string): string {
