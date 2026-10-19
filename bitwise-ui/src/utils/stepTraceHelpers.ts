@@ -161,8 +161,8 @@ export function buildArithmeticTraceSteps(
           { label: `Col ${step.column} Bottom Bit`, value: bot, color: 'purple' },
           { label: 'Carry In', value: cIn, color: 'cyan' },
         ];
-        opFormula = `Sum = ${top} + ${bot} + ${cIn} (Carry In) = ${Number(top) + Number(bot) + Number(cIn)}`;
         const totalSum = Number(top) + Number(bot) + Number(cIn);
+        opFormula = `Col ${step.column}: ${top} + ${bot} + ${cIn} = ${totalSum} → Result ${res}, Carry Out ${cOut}`;
 
         simpleExplanation = `Adding the two column bits (${top} and ${bot}) plus incoming carry (${cIn}) yields a total sum of ${totalSum}. Because binary is base 2, the result bit is ${totalSum % 2} and the carry out is ${Math.floor(totalSum / 2)}.`;
         whyItWorks = totalSum === 0

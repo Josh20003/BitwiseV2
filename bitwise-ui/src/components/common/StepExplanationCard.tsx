@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Sparkles, CheckCircle2, Lightbulb, ArrowRight, Layers } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, CheckCircle2, Lightbulb, Layers } from 'lucide-react';
 import { AskAiTutor } from '@/components/AskAiTutor';
 import { Button } from '@/components/ui/button';
 

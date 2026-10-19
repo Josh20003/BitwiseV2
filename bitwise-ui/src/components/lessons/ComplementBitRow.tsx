@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, RotateCcw, ChevronDown } from 'lucide-react';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 import { apiService } from '@/services/api.service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

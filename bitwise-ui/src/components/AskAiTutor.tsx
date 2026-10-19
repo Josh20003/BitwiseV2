@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Send, Loader2 } from 'lucide-react';
 import { apiService } from '@/services/api.service';
 import { cleanLatexNotation } from '@/utils/mathFormat';

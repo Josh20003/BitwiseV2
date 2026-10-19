@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { apiService } from '@/services/api.service';
 import { StepExplanationCard } from '@/components/common/StepExplanationCard';
 import { buildArithmeticTraceSteps } from '@/utils/stepTraceHelpers';

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeftRight, ChevronDown } from 'lucide-react';
+import { ArrowLeftRight } from 'lucide-react';
 import {
   Select,
   SelectContent,

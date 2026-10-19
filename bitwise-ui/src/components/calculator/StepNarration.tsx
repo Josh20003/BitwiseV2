@@ -4,8 +4,7 @@ import { getLawExplanation } from '@/constants/lawExplanations';
 import type { ScriptStep } from '../FactoringDemo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Lightbulb, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { AskAiTutor } from '@/components/AskAiTutor';
 
 interface StepNarrationProps {

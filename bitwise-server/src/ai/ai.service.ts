@@ -422,7 +422,25 @@ RULES:
     return this.getTutorFallback(context, step, question);
   }
 
-  private getTutorFallback(context: string, step: string, question: string): string {
+  private getTutorFallback(
+    contextOrStep: string,
+    stepOrQuestion?: string,
+    maybeQuestion?: string,
+  ): string {
+    let context = '';
+    let step = '';
+    let question = '';
+
+    if (maybeQuestion !== undefined) {
+      context = contextOrStep || '';
+      step = stepOrQuestion || '';
+      question = maybeQuestion || '';
+    } else {
+      context = '';
+      step = contextOrStep || '';
+      question = stepOrQuestion || '';
+    }
+
     const binaryStepInfo = parseBinaryAdditionStep(step);
     if (binaryStepInfo) {
       return generateBinaryAdditionExplanation(binaryStepInfo, question);
