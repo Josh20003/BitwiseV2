@@ -1,4 +1,4 @@
-import { useAuthContext } from '../contexts/AuthContext'
+import { useAuthContext } from '@/contexts/AuthContext'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, type ReactNode } from 'react'
 

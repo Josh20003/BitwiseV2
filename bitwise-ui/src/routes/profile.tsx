@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ProtectedRoute } from '../components/ProtectedRoute'
-import { useAuthContext } from '../contexts/AuthContext'
+import { useAuthContext } from '@/contexts/AuthContext'
 import { useBackendProfile } from '../hooks/useAuthQueries'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import RadarChartDashboard from '@/components/dashboard/RadarChartDashboard'

@@ -34,6 +34,20 @@ export class AuthService {
     return { message: 'Signin endpoint' };
   }
 
+  // Check if an email is already confirmed in Supabase Auth
+  async isEmailConfirmed(email: string): Promise<boolean> {
+    try {
+      const { data, error } = await this.supabase.auth.admin.listUsers();
+      if (error || !data?.users) return false;
+      const user = data.users.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase(),
+      );
+      return !!(user && user.email_confirmed_at);
+    } catch {
+      return false;
+    }
+  }
+
   // Validate token from frontend
   async validateToken(token: string) {
     try {

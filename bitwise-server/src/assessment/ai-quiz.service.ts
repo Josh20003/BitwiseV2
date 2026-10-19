@@ -149,9 +149,9 @@ STRICT SCOPE BOUNDARIES:
 6. NO LATEX NOTATION: Do NOT use LaTeX math syntax like $2^i$, $(101)_2$, or $n$. Write plain text instead: 2^i, 101 (base 2), n. Never wrap text in dollar signs ($).
 
 🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
-- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
-- "Medium": Requires combining 2 or more concepts or multi-step execution.
-- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting.
+- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps strictly within the permitted scope. Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
+- "Medium": Requires combining 2 or more concepts or multi-step execution strictly within the permitted scope.
+- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting strictly within the permitted scope.
 
 🛑 STRICT OPTION UNIQUENESS & INTEGRITY CONSTRAINTS:
 - Each of the 4 choices generated must be completely distinct in both text and conceptual meaning. Under no circumstances may two options evaluate to or display the same value.

@@ -157,14 +157,25 @@ function RouteComponent() {
           ? Math.round(progress.masteryScore * 100)
           : null
 
+      // Check if previous lesson is completed AND its AI quiz has been taken
       const previousLessonProgress =
         lessonId > 1
           ? lessonProgress.find((p: LessonProgress) => p.lessonId === lessonId - 1)
           : null
       const isPreviousLessonCompleted =
-        lessonId === 1 ||
         previousLessonProgress?.status === 'completed' ||
         (previousLessonProgress?.progress || 0) >= 1
+
+      // Check if previous lesson's AI quiz was taken (at least one topic with attempts > 0)
+      const prevLessonMastery = lessonId > 1
+        ? (topicMastery[lessonId - 1] as TopicMastery[] | undefined)
+        : undefined
+      const hasPrevQuizAttempts = prevLessonMastery?.some((topic: TopicMastery) => (topic.attempts || 0) > 0) ?? false
+
+      // Lesson 1 is always unlocked. For others, require both lesson completion AND quiz taken.
+      const isLocked = lessonId === 1
+        ? false
+        : !(isPreviousLessonCompleted && hasPrevQuizAttempts)
 
       return {
         status: isCompleted
@@ -174,7 +185,7 @@ function RouteComponent() {
             : 'not-started',
         progress: Math.round((progress?.progress || 0) * 100),
         masteryScore,
-        isLocked: !isPreviousLessonCompleted,
+        isLocked,
       } as const
     },
     [lessonProgress, topicMastery]

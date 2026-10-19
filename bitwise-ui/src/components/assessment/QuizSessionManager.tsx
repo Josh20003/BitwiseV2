@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Loader2,
   Volume2,
+  Lock,
 } from 'lucide-react';
 import CircuitRenderer from '@/components/CircuitRenderer';
 import { cleanLatexNotation } from '@/utils/mathFormat';
@@ -187,6 +188,53 @@ const QuestionStemRenderer = ({ stem }: { stem: any }) => {
   return null;
 };
 
+const LESSON_METADATA: Record<number, { title: string; topics: string[] }> = {
+  1: {
+    title: 'Introduction to Number Systems',
+    topics: ['Binary', 'Decimal', 'Octal', 'Hexadecimal'],
+  },
+  2: {
+    title: 'Types of Number Systems',
+    topics: ['Binary ↔ Decimal', 'Binary ↔ Hex', 'Digit Groupings'],
+  },
+  3: {
+    title: 'Conversion of Number Systems',
+    topics: ['Decimal to Binary', 'Binary to Decimal', 'Hex Conversion'],
+  },
+  4: {
+    title: 'Binary Arithmetic',
+    topics: ['Binary Addition', 'Subtraction', 'Multiplication', 'Division'],
+  },
+  5: {
+    title: 'Complements',
+    topics: ["1's Complement", "2's Complement", 'Bit Inversion'],
+  },
+  6: {
+    title: 'Signed and Unsigned Numbers',
+    topics: ['MSB', 'Signed Representation', 'Unsigned Representation'],
+  },
+  7: {
+    title: 'Binary Codes (BCD & ASCII)',
+    topics: ['BCD Encoding', 'ASCII Conversion', 'Character-to-Binary'],
+  },
+  8: {
+    title: 'Intro to Boolean Algebra',
+    topics: ['What is Boolean Algebra?', 'Boolean Values', 'Applications'],
+  },
+  9: {
+    title: 'Logic Gates',
+    topics: ['AND, OR, NOT', 'NAND, NOR', 'XOR, XNOR'],
+  },
+  10: {
+    title: 'Truth Tables',
+    topics: ['Constructing Truth Tables', 'Reading Truth Tables', 'Truth Tables for Gates'],
+  },
+  11: {
+    title: 'Simplification & Karnaugh Maps',
+    topics: ['Boolean Laws', 'Karnaugh Maps', 'Practical Examples'],
+  },
+};
+
 export function QuizSessionManager({
   userId,
   topic,
@@ -209,6 +257,17 @@ export function QuizSessionManager({
   const [error, setError] = useState<string | null>(null);
   const [submittedQuestion, setSubmittedQuestion] = useState<string | null>(null);
   const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [lessonInfo, setLessonInfo] = useState<{
+    lessonId: number;
+    lessonTitle: string;
+    topicMasteries?: Array<{
+      topicId: number;
+      topicTitle: string;
+      mastery: number;
+      difficulty: string;
+      questionCount: number;
+    }>;
+  } | null>(null);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -238,6 +297,9 @@ export function QuizSessionManager({
         if (data.success && data.data && data.data.questions.length > 0) {
           setQuestions(data.data.questions);
           setAttemptId(data.data.attemptId);
+          if (data.data.lessonInfo) {
+            setLessonInfo(data.data.lessonInfo);
+          }
           setQuizState('IN_PROGRESS');
           setCurrentIndex(0);
           setSelectedAnswers({});
@@ -339,7 +401,7 @@ export function QuizSessionManager({
             selectedAnswers,
           });
 
-          if (score === 1.0) {
+          if (score >= 0.8) {
             confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
           }
 
@@ -380,7 +442,7 @@ export function QuizSessionManager({
             selectedAnswers,
           });
 
-          if (finalScore === 1.0) {
+          if (finalScore >= 0.8) {
             confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
           }
 
@@ -398,6 +460,8 @@ export function QuizSessionManager({
   };
 
   if (quizState === 'IDLE') {
+    const currentLesson = lessonId ? LESSON_METADATA[lessonId] : null;
+
     return (
       <Card className="max-w-2xl mx-auto text-center py-10 px-6 border border-gray-200 dark:border-gray-800 shadow-md">
         <CardHeader>
@@ -406,19 +470,30 @@ export function QuizSessionManager({
               <Brain className="w-8 h-8" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">AI Adaptive Assessment</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {currentLesson
+              ? `Lesson ${lessonId}: ${currentLesson.title}`
+              : 'AI Adaptive Assessment'}
+          </CardTitle>
           <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            Test your knowledge on <span className="font-semibold text-foreground capitalize">{topic.replace(/-/g, ' ')}</span>.
-            {lessonId ? (
+            {currentLesson ? (
               <>
-                {['boolean-algebra', 'logic-gates', 'truth-tables', 'karnaugh-maps'].includes(topic) ? (
-                  <> The questions will feature real-time visual diagrams (truth tables, circuits, or Karnaugh maps) and adaptively align to your personal BKT mastery skill level.</>
-                ) : (
-                  <> The questions will feature customized computational problems (base conversions, positional values, arithmetic, or complements) and adaptively align to your personal BKT mastery skill level.</>
-                )}
+                Focused practice session exclusively for{' '}
+                <span className="font-semibold text-foreground">{currentLesson.title}</span>.
+                Questions are 100% focused on{' '}
+                <span className="font-semibold text-foreground">
+                  {currentLesson.topics.join(', ')}
+                </span>{' '}
+                and dynamically adapt to your personal mastery skill level.
               </>
             ) : (
-              <> The difficulty will dynamically adjust based on your historical Exponential Moving Average (EMA) mastery scores.</>
+              <>
+                Test your knowledge on{' '}
+                <span className="font-semibold text-foreground capitalize">
+                  {topic.replace(/-/g, ' ')}
+                </span>
+                . The difficulty will dynamically adjust based on your mastery level.
+              </>
             )}
           </p>
         </CardHeader>
@@ -429,35 +504,30 @@ export function QuizSessionManager({
               <span>{error}</span>
             </div>
           )}
-          <Button size="lg" onClick={startQuiz} disabled={loading} className="mt-4 px-8 bg-purple-600 hover:bg-purple-700 text-white font-semibold">
+          <Button
+            size="lg"
+            onClick={startQuiz}
+            disabled={loading}
+            className="mt-4 px-8 bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+          >
             {loading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {['boolean-algebra', 'logic-gates', 'truth-tables', 'karnaugh-maps'].includes(topic)
-                  ? 'Generating Visual Assessment...'
+                {currentLesson
+                  ? `Generating Lesson ${lessonId} Assessment...`
                   : 'Generating Assessment...'}
               </span>
+            ) : currentLesson ? (
+              `Start Lesson ${lessonId} Practice`
             ) : (
               'Start Assessment'
             )}
           </Button>
           {loading && (
             <p className="text-xs text-muted-foreground mt-4 animate-pulse">
-              {(() => {
-                if (['boolean-algebra', 'logic-gates', 'truth-tables', 'karnaugh-maps'].includes(topic)) {
-                  return 'Please wait: Groq AI is engineering customized truth tables, circuits, and questions for your current mastery...';
-                }
-                if (topic === 'number-systems') {
-                  return 'Please wait: Groq AI is preparing customized number bases, positional structures, and conversion puzzles for your current mastery...';
-                }
-                if (topic === 'binary-arithmetic') {
-                  return 'Please wait: Groq AI is calculating binary arithmetic drills, carry-bit challenges, and solutions for your current mastery...';
-                }
-                if (topic === 'complements') {
-                  return 'Please wait: Groq AI is structuring complement problems, signed representations, and subtraction drills for your current mastery...';
-                }
-                return 'Please wait: Groq AI is crafting customized practice questions and step-by-step explanations for your current mastery...';
-              })()}
+              {currentLesson
+                ? `Please wait: AI is generating 10 questions focused exclusively on ${currentLesson.title}...`
+                : 'Please wait: AI is engineering customized practice questions for your current mastery...'}
             </p>
           )}
         </CardContent>
@@ -466,19 +536,51 @@ export function QuizSessionManager({
   }
 
   if (quizState === 'COMPLETED') {
+    const percent = Math.round(scoreData.score * 100);
+    const isPassed = percent >= 80;
+
     return (
       <Card className="max-w-2xl mx-auto border border-gray-200 dark:border-gray-800 shadow-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Assessment Complete!</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-center justify-center p-8 bg-purple-500/5 rounded-2xl border border-purple-500/10">
-            <div className="text-5xl font-extrabold font-mono text-purple-600 dark:text-purple-400 mb-2">
-              {Math.round(scoreData.score * 100)}%
+          <div className={`flex flex-col items-center justify-center p-8 rounded-2xl border ${
+            isPassed 
+              ? 'bg-emerald-500/10 border-emerald-500/20' 
+              : 'bg-amber-500/10 border-amber-500/20'
+          }`}>
+            <div className={`text-5xl font-extrabold font-mono mb-2 ${
+              isPassed 
+                ? 'text-emerald-600 dark:text-emerald-400' 
+                : 'text-amber-600 dark:text-amber-400'
+            }`}>
+              {percent}%
             </div>
             <div className="text-sm font-semibold text-muted-foreground">
               {scoreData.correct} out of {scoreData.total} correct
             </div>
+
+            {/* 80% Passing threshold indicator */}
+            <div className="mt-4">
+              {isPassed ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Passed (80% Passing Mark Reached)</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-semibold text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Passing Mark Not Met (80% Required to Continue)</span>
+                </div>
+              )}
+            </div>
+
+            {!isPassed && nextLessonId && (
+              <p className="text-xs text-amber-700 dark:text-amber-300 text-center mt-3 max-w-md">
+                You need at least 80% (8 out of 10) on this quiz to unlock and continue to Lesson {nextLessonId}. Review the explanations below and try again!
+              </p>
+            )}
           </div>
           
           {scoreData.emaData && (
@@ -546,17 +648,27 @@ export function QuizSessionManager({
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-            <Button variant="outline" onClick={() => setQuizState('IDLE')} className="gap-2 font-medium">
+            <Button
+              variant={isPassed ? "outline" : "default"}
+              onClick={() => setQuizState('IDLE')}
+              className={`gap-2 font-medium ${!isPassed ? 'bg-purple-600 hover:bg-purple-700 text-white font-semibold' : ''}`}
+            >
               <RotateCcw className="w-4 h-4" />
-              Take Again
+              {isPassed ? 'Take Again' : 'Try Again to Pass (80%)'}
             </Button>
-            {nextLessonId && (
+            {nextLessonId && isPassed && (
               <Link to="/lesson/$lessonId" params={{ lessonId: String(nextLessonId) }} search={{ topicId: undefined }}>
-                <Button className="gap-2 bg-purple-600 hover:bg-purple-700 text-white w-full font-semibold">
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full font-semibold">
                   Continue to Lesson {nextLessonId}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </Link>
+            )}
+            {nextLessonId && !isPassed && (
+              <Button disabled variant="outline" className="gap-2 opacity-50 cursor-not-allowed w-full">
+                <Lock className="w-4 h-4" />
+                Lesson {nextLessonId} Locked (Requires 80%)
+              </Button>
             )}
             <Link to="/roadmap">
               <Button variant="ghost" className="gap-2 text-muted-foreground w-full">
@@ -577,6 +689,24 @@ export function QuizSessionManager({
 
   // Determine if it is rich question object format
   const isRichFormat = currentQ.answerId !== undefined;
+
+  const currentTopicName = (() => {
+    if (lessonInfo?.topicMasteries && currentQ.topicId) {
+      const match = lessonInfo.topicMasteries.find(
+        (t) => t.topicId === currentQ.topicId,
+      );
+      if (match) return match.topicTitle;
+    }
+    if (currentQ.topic) {
+      return currentQ.topic.replace(/-/g, ' ');
+    }
+    return null;
+  })();
+
+  const currentLessonTitle =
+    lessonInfo?.lessonTitle ||
+    (lessonId && LESSON_METADATA[lessonId]?.title) ||
+    null;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -610,12 +740,14 @@ export function QuizSessionManager({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="px-4 py-1.5 rounded-full bg-gray-100/80 dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Lesson {lessonId || '1'}
+            <span className="px-4 py-1.5 rounded-full bg-blue-100/80 dark:bg-blue-900/40 text-sm font-semibold text-blue-800 dark:text-blue-300">
+              Lesson {lessonId || '1'}{currentLessonTitle ? `: ${currentLessonTitle}` : ''}
             </span>
-            <span className="px-4 py-1.5 rounded-full bg-gray-100/80 dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize">
-              Topic {topic.replace(/-/g, ' ')}
-            </span>
+            {currentTopicName && (
+              <span className="px-4 py-1.5 rounded-full bg-gray-100/80 dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize">
+                Topic: {currentTopicName}
+              </span>
+            )}
             <span className="px-4 py-1.5 rounded-full bg-green-100/50 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-sm font-semibold capitalize">
                {currentQ.difficulty || 'Easy'}
             </span>

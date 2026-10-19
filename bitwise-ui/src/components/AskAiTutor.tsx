@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Sparkles, Send, Loader2, ChevronUp } from 'lucide-react';
 import { apiService } from '@/services/api.service';
+import { cleanLatexNotation } from '@/utils/mathFormat';
 
 export interface AskAiTutorProps {
   /** What tool/page is being used, e.g. "Number Converter" */
   context: string;
   /** Description of the current step the user is on */
   stepDescription: string;
-  /** Optional suggested questions to show as quick-pick chips */
-  suggestedQuestions?: string[];
   /** Optional content to place to the left of the Ask AI button */
   children?: React.ReactNode;
   /** Custom badge text in header, default "AI-Powered" */
@@ -27,7 +26,6 @@ interface TutorMessage {
 export function AskAiTutor({
   context,
   stepDescription,
-  suggestedQuestions,
   children,
   badgeText = 'AI-Powered',
   subtitle,
@@ -85,11 +83,6 @@ export function AskAiTutor({
     await askTutor(q);
   };
 
-  const handleSuggested = async (q: string) => {
-    if (loading) return;
-    await askTutor(q);
-  };
-
   return (
     <div className={`w-full ${className}`}>
       {/* Header row: optional children on left, Ask AI button on right */}
@@ -136,27 +129,6 @@ export function AskAiTutor({
             </button>
           </div>
 
-          {/* Suggested question chips */}
-          {suggestedQuestions &&
-            suggestedQuestions.length > 0 &&
-            messages.length <= 1 && (
-              <div className="px-4 pt-3 flex flex-wrap gap-1.5">
-                {suggestedQuestions.map((q, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => handleSuggested(q)}
-                    disabled={loading}
-                    className="text-[11px] px-3 py-1.5 rounded-full border border-blue-500/30
-                      bg-blue-950/40 text-blue-200 hover:bg-blue-900/50 hover:border-blue-400/50
-                      transition-colors disabled:opacity-50 cursor-pointer"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
-
           {/* Chat messages */}
           <div className="px-4 py-3 space-y-3 max-h-[300px] overflow-y-auto">
             {messages.map((msg, i) => (
@@ -165,12 +137,12 @@ export function AskAiTutor({
                 className={msg.role === 'user' ? 'flex justify-end' : ''}
               >
                 {msg.role === 'user' ? (
-                  <div className="bg-primary/20 text-primary-foreground border border-primary/30 text-xs px-3 py-2 rounded-lg rounded-br-sm max-w-[85%] font-medium">
+                  <div className="bg-purple-600/30 text-white border border-purple-500/40 text-xs px-3 py-2 rounded-lg rounded-br-sm max-w-[85%] font-medium">
                     {msg.text}
                   </div>
                 ) : (
                   <div className="bg-[#0f1422] border border-border/70 text-foreground text-xs p-3.5 rounded-lg rounded-bl-sm leading-relaxed whitespace-pre-wrap font-sans">
-                    {msg.text}
+                    {cleanLatexNotation(msg.text)}
                   </div>
                 )}
               </div>

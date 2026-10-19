@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Link, useNavigate } from '@tanstack/react-router'
 import logoArrow from '@/assets/icons/outline-logo.svg'
-import { useSignIn, useSignInWithGoogle } from '@/hooks/useAuthQueries'
+import { useSignIn, useSignInWithGoogle, useResendVerification } from '@/hooks/useAuthQueries'
+import { authService } from '@/services/auth.service'
+import { supabase } from '@/utils/supabase'
+import { toast } from 'sonner'
 import { FcGoogle } from 'react-icons/fc'
 import * as z from 'zod'
 import { useForm } from 'react-hook-form'
@@ -23,8 +26,78 @@ export function LoginForm({
 }: React.ComponentProps<'div'>) {
   const signInMutation = useSignIn()
   const logInWithGoogleMutation = useSignInWithGoogle()
+  const resendVerificationMutation = useResendVerification()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+
+  // 30-second cooldown timer
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = setInterval(() => {
+      setCooldown((prev) => Math.max(0, prev - 1))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldown])
+
+  // Listen for session established via email confirmation link
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+        toast.success('Email confirmed! Welcome back.')
+        navigate({ to: '/' })
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [navigate])
+
+  // When email is unconfirmed, poll to check if user clicks confirmation link
+  useEffect(() => {
+    if (!unconfirmedEmail) return
+
+    let isMounted = true
+    const checkStatus = async () => {
+      try {
+        const confirmed = await authService.checkEmailConfirmed(unconfirmedEmail)
+        if (confirmed && isMounted) {
+          setUnconfirmedEmail(null)
+          setEmailVerified(true)
+          toast.success('Email confirmed! You can now log in.')
+        }
+      } catch {
+        // ignore errors
+      }
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 3000)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkStatus()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleVisibility)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleVisibility)
+    }
+  }, [unconfirmedEmail])
+
+  useEffect(() => {
+    if (signInMutation.isSuccess) {
+      navigate({ to: '/' })
+    }
+  }, [signInMutation.isSuccess, navigate])
 
   const {
     register,
@@ -34,14 +107,32 @@ export function LoginForm({
     resolver: zodResolver(signInSchema),
   })
 
-  useEffect(() => {
-    if (signInMutation.isSuccess) {
-      navigate({ to: '/' })
-    }
-  }, [signInMutation.isSuccess, navigate])
-
   const onSubmit = (data: z.infer<typeof signInSchema>) => {
-    signInMutation.mutate({ email: data.email, password: data.password })
+    setUnconfirmedEmail(null)
+    setEmailVerified(false)
+    signInMutation.mutate(
+      { email: data.email, password: data.password },
+      {
+        onError: (err) => {
+          if (
+            err.message.toLowerCase().includes('not confirmed') ||
+            err.message.toLowerCase().includes('verification link') ||
+            err.message.toLowerCase().includes('check your inbox')
+          ) {
+            setUnconfirmedEmail(data.email)
+          }
+        },
+      }
+    )
+  }
+
+  const handleResend = () => {
+    if (!unconfirmedEmail || cooldown > 0 || resendVerificationMutation.isPending) return
+    resendVerificationMutation.mutate(unconfirmedEmail, {
+      onSuccess: () => {
+        setCooldown(30)
+      },
+    })
   }
 
   return (
@@ -61,6 +152,49 @@ export function LoginForm({
             <p className="text-3xl font-bold">Welcome back!</p>
           </div>
           <div className="flex flex-col gap-6">
+            {emailVerified && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 p-3.5 rounded-lg text-sm flex items-start gap-2.5 animate-in fade-in">
+                <CheckCircle2 className="size-5 shrink-0 mt-0.5 text-emerald-500" />
+                <div>
+                  <p className="font-medium text-foreground">Email verified!</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Your email address has been verified. You can now log in below.
+                  </p>
+                </div>
+              </div>
+            )}
+            {unconfirmedEmail && (
+              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-500 p-3.5 rounded-lg text-sm flex flex-col gap-2">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="size-5 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-foreground">Email not verified yet</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Your account requires email verification before logging in.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResend}
+                  disabled={cooldown > 0 || resendVerificationMutation.isPending}
+                  className="w-full text-xs h-8 border-amber-500/30 hover:bg-amber-500/10"
+                >
+                  {resendVerificationMutation.isPending ? (
+                    <span className="flex items-center gap-1.5">
+                      <RefreshCw className="size-3.5 animate-spin" />
+                      Resending...
+                    </span>
+                  ) : cooldown > 0 ? (
+                    `Resend verification email (${cooldown}s)`
+                  ) : (
+                    'Resend verification email'
+                  )}
+                </Button>
+              </div>
+            )}
             <div className="grid gap-3">
               <Label htmlFor="email">Email</Label>
               <Input

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Mail, ArrowLeft, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Link, useNavigate } from '@tanstack/react-router'
 import logoArrow from '@/assets/icons/outline-logo.svg'
-import { useSignInWithGoogle, useSignUp } from '@/hooks/useAuthQueries'
+import { useSignInWithGoogle, useSignUp, useResendVerification } from '@/hooks/useAuthQueries'
+import { authService } from '@/services/auth.service'
 import { FcGoogle } from 'react-icons/fc'
 import * as z from 'zod'
 import { useForm } from 'react-hook-form'
@@ -31,33 +32,75 @@ export function SignUpForm({
   ...props
 }: React.ComponentProps<'div'>) {
   const signUpMutation = useSignUp()
+  const resendVerificationMutation = useResendVerification()
   const signInWithGoogleMutation = useSignInWithGoogle()
   const navigate = useNavigate()
 
-  // State to hold credentials for polling cross-device confirmation
-  const [pollCredentials, setPollCredentials] = useState<{email: string, password: string} | null>(null)
-  
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null)
+  const [isConfirmed, setIsConfirmed] = useState(false)
+  const [cooldown, setCooldown] = useState<number>(0)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
+  // 30-second cooldown countdown timer
   useEffect(() => {
-    if (!pollCredentials) return
+    if (cooldown <= 0) return
+    const timer = setInterval(() => {
+      setCooldown((prev) => Math.max(0, prev - 1))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldown])
 
-    const intervalId = setInterval(async () => {
-      const { data } = await supabase.auth.signInWithPassword(pollCredentials)
-      
-      // If we got a session, they confirmed the email on another device!
-      if (data.session) {
-        setPollCredentials(null) // Stop polling
-        clearInterval(intervalId)
-        toast.success('Email confirmed! Logging you in...')
+  // Check verification status periodically and on tab focus
+  useEffect(() => {
+    if (!submittedEmail || isConfirmed) return
+
+    let isMounted = true
+    const checkStatus = async () => {
+      try {
+        const confirmed = await authService.checkEmailConfirmed(submittedEmail)
+        if (confirmed && isMounted) {
+          setIsConfirmed(true)
+          toast.success('Email confirmed! Your account is active.')
+        }
+      } catch {
+        // ignore errors
+      }
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 3000)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkStatus()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleVisibility)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleVisibility)
+    }
+  }, [submittedEmail, isConfirmed])
+
+  // Listen to Supabase auth state change (e.g. user confirmed email in another tab)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+        setIsConfirmed(true)
+        toast.success('Email confirmed! Welcome to Bitwise.')
         navigate({ to: '/' })
       }
-      // If error (like "Email not confirmed"), just ignore and keep polling
-    }, 3000)
+    })
 
-    return () => clearInterval(intervalId)
-  }, [pollCredentials, navigate])
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [navigate])
 
   const {
     register,
@@ -68,17 +111,134 @@ export function SignUpForm({
   })
 
   const onSubmit = (data: z.infer<typeof SignUpSchema>) => {
-    toast.info('Initiating signup... Please wait.')
     signUpMutation.mutate({
       email: data.email,
       username: data.username,
       password: data.password,
     }, {
-      onSuccess: () => {
-        // Start polling immediately after successful signup API call
-        setPollCredentials({ email: data.email, password: data.password })
+      onSuccess: (res) => {
+        if (res.session) {
+          navigate({ to: '/' })
+        } else {
+          setSubmittedEmail(data.email)
+          setIsConfirmed(false)
+          setCooldown(30)
+        }
       }
     })
+  }
+
+  const handleResend = () => {
+    if (!submittedEmail || cooldown > 0 || resendVerificationMutation.isPending) return
+    resendVerificationMutation.mutate(submittedEmail, {
+      onSuccess: () => {
+        setCooldown(30)
+      }
+    })
+  }
+
+  if (submittedEmail) {
+    if (isConfirmed) {
+      return (
+        <div className={cn('flex flex-col gap-6 text-center animate-in fade-in zoom-in-95 duration-300', className)} {...props}>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 mb-2">
+              <CheckCircle2 className="size-8 text-emerald-500" />
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Email Confirmed!</h2>
+            <p className="text-muted-foreground text-sm max-w-sm">
+              Your email <span className="font-semibold text-foreground">{submittedEmail}</span> has been verified. Your account is now active!
+            </p>
+          </div>
+
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-xs text-emerald-500 text-left flex items-start gap-2.5">
+            <CheckCircle2 className="size-4 shrink-0 mt-0.5 text-emerald-500" />
+            <span>Verification complete. You can now log in to access your Bitwise roadmap and lessons.</span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button
+              variant="bluez"
+              size="lg"
+              type="button"
+              onClick={() => navigate({ to: '/login' })}
+              className="w-full"
+            >
+              Log in to your account
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className={cn('flex flex-col gap-6 text-center', className)} {...props}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500 mb-2">
+            <Mail className="size-7" />
+          </div>
+          <h2 className="text-3xl font-bold tracking-tight">Check your email</h2>
+          <p className="text-muted-foreground text-sm max-w-sm">
+            We sent a verification link to{' '}
+            <span className="font-semibold text-foreground">{submittedEmail}</span>.
+            Please verify your email to activate your account.
+          </p>
+        </div>
+
+        <div className="bg-muted/50 border rounded-lg p-4 text-xs text-muted-foreground text-left flex flex-col gap-2">
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />
+            <span>Click the verification link sent to your inbox.</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="size-4 shrink-0 font-bold text-center leading-none text-muted-foreground">•</span>
+            <span>If you don&apos;t see it within a minute, check your Spam or Junk folder.</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Button
+            variant="bluez"
+            size="lg"
+            type="button"
+            onClick={handleResend}
+            disabled={cooldown > 0 || resendVerificationMutation.isPending}
+            className="w-full"
+          >
+            {resendVerificationMutation.isPending ? (
+              <span className="flex items-center gap-2">
+                <RefreshCw className="size-4 animate-spin" />
+                Resending...
+              </span>
+            ) : cooldown > 0 ? (
+              `Resend email (${cooldown}s)`
+            ) : (
+              'Resend verification email'
+            )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            onClick={() => setSubmittedEmail(null)}
+            className="text-muted-foreground"
+          >
+            <ArrowLeft className="size-4 mr-1.5" />
+            Use a different email
+          </Button>
+        </div>
+
+        <div className="text-center text-sm border-t pt-4">
+          Already confirmed?{' '}
+          <Link to="/login" className="underline underline-offset-4">
+            <Button variant="link" className="p-0">
+              Log in
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

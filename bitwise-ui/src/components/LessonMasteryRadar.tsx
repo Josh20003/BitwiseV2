@@ -27,7 +27,12 @@ interface LessonMasteryRadarProps {
     skillsByLesson?: Array<{
       lessonId: number
       lessonTitle: string
-      skills: Array<{ mastery: number }>
+      skills: Array<{
+        topicId?: number
+        topicTitle?: string
+        mastery: number
+        attempts?: number
+      }>
     }>
   } | null
   lessonProgress?: LessonProgressItem[]
@@ -35,64 +40,65 @@ interface LessonMasteryRadarProps {
 }
 
 const lessonShortNames: Record<number, string> = {
-  1: 'Intro',
-  2: 'Logic',
-  3: 'Truth',
-  4: 'Simplify',
-  5: 'Numbers',
-  6: 'Types',
-  7: 'Convert',
-  8: 'Arith',
-  9: 'Compl',
-  10: 'Sign',
-  11: 'BCD',
+  1: 'Intro',     // Introduction to Number Systems
+  2: 'Types',     // Types of Number Systems
+  3: 'Convert',   // Conversion of Number Systems
+  4: 'Arith',     // Binary Arithmetic
+  5: 'Compl',     // Complements
+  6: 'Sign',      // Signed and Unsigned Numbers
+  7: 'BCD',       // Binary Codes (BCD & ASCII)
+  8: 'Boolean',   // Intro to Boolean Algebra
+  9: 'Gates',     // Logic Gates
+  10: 'Truth',    // Truth Tables
+  11: 'Simplify', // Simplification & K-Maps
 }
 
 const chartConfig = {
   mastery: {
-    label: 'Progress(%)',
-    
+    label: 'Mastery(%)',
   },
 } satisfies ChartConfig
 
 export function LessonMasteryRadar({ analytics, lessonProgress = [] }: LessonMasteryRadarProps) {
-  // Prepare data for radar chart - all 5 lessons
-  // Uses assessment mastery if available, otherwise falls back to lesson completion progress
+  // Prepare data for radar chart - all 11 lessons
+  // Mastery progresses ONLY from quizzes taken in Adaptive AI Practice
   const radarData = useMemo(() => {
     const lessonIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     return lessonIds.map((lessonId) => {
-      // First try assessment mastery data
+      const shortName = lessonShortNames[lessonId] || `L${lessonId}`
+
+      // Check if UserLesson has assessment-based masteryScore from adaptive practice
+      const progressData = lessonProgress.find((p) => p.lessonId === lessonId)
+      if (progressData?.masteryScore != null) {
+        return {
+          lesson: shortName,
+          mastery: Math.round(progressData.masteryScore * 100),
+        }
+      }
+
+      // Check assessment skills data from adaptive analytics
       const lessonData = analytics?.skillsByLesson?.find(
         (l) => l.lessonId === lessonId
       )
-      
+
       if (lessonData?.skills?.length) {
-        const mastery = lessonData.skills.reduce((sum, s) => sum + s.mastery, 0) /
-          lessonData.skills.length
-        return {
-          lesson: lessonShortNames[lessonId],
-          mastery: Math.round(mastery * 100),
+        const attemptedSkills = lessonData.skills.filter(
+          (s) => (s.attempts ?? 0) > 0
+        )
+        // Only show mastery if user has actually attempted questions for this lesson
+        if (attemptedSkills.length > 0) {
+          const totalMastery = attemptedSkills.reduce((sum, s) => sum + s.mastery, 0)
+          const mastery = totalMastery / lessonData.skills.length
+          return {
+            lesson: shortName,
+            mastery: Math.round(mastery * 100),
+          }
         }
       }
 
-      // Fallback to lesson completion progress
-      const progressData = lessonProgress.find(
-        (p) => p.lessonId === lessonId
-      )
-      
-      if (progressData) {
-        // Use masteryScore if available, otherwise use progress percentage
-        const value = progressData.masteryScore != null
-          ? Math.round(progressData.masteryScore * 100)
-          : Math.round(progressData.progress * 100)
-        return {
-          lesson: lessonShortNames[lessonId],
-          mastery: value,
-        }
-      }
-
+      // If no adaptive practice quizzes have been taken for this lesson, mastery is strictly 0%
       return {
-        lesson: lessonShortNames[lessonId],
+        lesson: shortName,
         mastery: 0,
       }
     })

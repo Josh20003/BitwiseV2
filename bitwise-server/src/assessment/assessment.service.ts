@@ -1464,17 +1464,17 @@ export class AssessmentService {
 
     // Map lesson ID → topic slug (same as in frontend)
     const lessonToTopicSlug: Record<number, string> = {
-      1: 'boolean-algebra',
-      2: 'logic-gates',
-      3: 'truth-tables',
-      4: 'karnaugh-maps',
-      5: 'number-systems',
+      1: 'number-systems',
+      2: 'number-systems',
+      3: 'number-systems',
+      4: 'binary-arithmetic',
+      5: 'complements',
       6: 'number-systems',
       7: 'number-systems',
-      8: 'binary-arithmetic',
-      9: 'complements',
-      10: 'number-systems',
-      11: 'number-systems',
+      8: 'boolean-algebra',
+      9: 'logic-gates',
+      10: 'truth-tables',
+      11: 'karnaugh-maps',
     };
 
     let finalEmaData: any = null;

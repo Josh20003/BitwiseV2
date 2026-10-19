@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authService, type AuthCredentials } from '../services/auth.service'
-import { useAuthContext } from '../contexts/AuthContext'
+import { useAuthContext } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
 
 export const AUTH_QUERY_KEYS = {
@@ -16,6 +16,18 @@ export function useSignUp() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Signup failed')
+    },
+  })
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: (email: string) => authService.resendVerification(email),
+    onSuccess: () => {
+      toast.success('Verification email sent! Please check your inbox.')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to resend verification email')
     },
   })
 }
