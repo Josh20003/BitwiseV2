@@ -61,12 +61,13 @@ export function formatAuthError(error: any): string {
 
 export const authService = {
   async signUp(credentials: AuthCredentials): Promise<AuthResponse> {
+    const redirectUrl = `${import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin}/login`
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password!,
       options: {
         data: { display_name: credentials.username },
-        emailRedirectTo: window.location.origin + '/',
+        emailRedirectTo: redirectUrl,
       },
     })
 
