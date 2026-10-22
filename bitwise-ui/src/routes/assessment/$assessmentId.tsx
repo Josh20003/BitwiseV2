@@ -32,9 +32,12 @@ import correctSound from '@/assets/audio/correct.mp3'
 import incorrectSound from '@/assets/audio/incorrect.mp3'
 import celebrationSound from '@/assets/audio/partypopper.mp3'
 
+const rawApiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE = rawApiBase.replace(/\/+$/, '');
+
 async function fetchAttempt(attemptId: number) {
   const response = await fetch(
-    `${import.meta.env.VITE_API_BASE_URL}/assessment/attempt/${attemptId}`
+    `${API_BASE}/assessment/attempt/${attemptId}`
   )
   const result = await response.json()
   if (!result.success)
@@ -461,7 +464,7 @@ function RouteComponent() {
         ? 'submit-adaptive-practice'
         : 'submit-practice'
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/assessment/${endpoint}`,
+        `${API_BASE}/assessment/${endpoint}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

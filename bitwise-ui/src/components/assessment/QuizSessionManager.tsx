@@ -269,7 +269,8 @@ export function QuizSessionManager({
     }>;
   } | null>(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+  const rawApiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+  const API_BASE = rawApiBase.replace(/\/+$/, '');
 
   const getAuthHeaders = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -293,8 +294,12 @@ export function QuizSessionManager({
           body: JSON.stringify({ uid: userId, lessonId }),
           signal: AbortSignal.timeout(120000),
         });
-        const data = await res.json();
-        if (data.success && data.data && data.data.questions.length > 0) {
+        const data = await res.json().catch(() => ({ success: false, error: `Server returned HTTP ${res.status}` }));
+        if (!res.ok) {
+          setError(data.message || data.error || `Server error (${res.status}). Please check your connection or login session.`);
+          return;
+        }
+        if (data.success && data.data && data.data.questions?.length > 0) {
           setQuestions(data.data.questions);
           setAttemptId(data.data.attemptId);
           if (data.data.lessonInfo) {
@@ -315,8 +320,12 @@ export function QuizSessionManager({
           headers,
           signal: AbortSignal.timeout(120000),
         });
-        const data = await res.json();
-        if (data.success && data.data.length > 0) {
+        const data = await res.json().catch(() => ({ success: false, error: `Server returned HTTP ${res.status}` }));
+        if (!res.ok) {
+          setError(data.message || data.error || `Server error (${res.status}). Please check your connection or login session.`);
+          return;
+        }
+        if (data.success && data.data && data.data.length > 0) {
           setQuestions(data.data);
           setAttemptId(null);
           setQuizState('IN_PROGRESS');
@@ -329,7 +338,7 @@ export function QuizSessionManager({
         }
       }
     } catch (e: any) {
-      setError(e.name === 'TimeoutError' ? 'Quiz generation timed out. Please try again.' : 'Failed to connect to server.');
+      setError(e.name === 'TimeoutError' ? 'Quiz generation timed out. Please try again.' : (e.message || 'Failed to connect to server.'));
       console.error(e);
     } finally {
       setLoading(false);
