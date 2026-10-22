@@ -87,14 +87,14 @@ function RouteComponent() {
         {activeMode === 'boolean' && <FactoringDemo />}
         {activeMode === 'arithmetic' && (
           <div className="p-4 md:p-8">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <BinaryArithmeticWorkspace />
             </div>
           </div>
         )}
         {activeMode === 'complements' && (
           <div className="p-4 md:p-8">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <ComplementBitRow />
             </div>
           </div>

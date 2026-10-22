@@ -10,4 +10,4 @@ import { CalculatorModule } from '../calculator/calculator.module';
   providers: [ExamplesService],
   exports: [ExamplesService],
 })
-export class ExamplesModule {}
+export class ExamplesModule { }

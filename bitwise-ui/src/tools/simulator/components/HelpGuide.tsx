@@ -54,7 +54,7 @@ export const HelpGuide: React.FC<HelpGuideProps> = ({ onStartTour }) => {
           intro: baseIntro('Adjust component settings and view information about selected components here.'),
         },
         {
-          title: '🚀 Ready to Start!',
+          title: 'Ready to Start!',
           intro: baseIntro('Try creating your first circuit:<br/>1. Select an input switch<br/>2. Add a logic gate<br/>3. Connect them with wires<br/>4. Add an LED output<br/><br/>Have fun learning!'),
         }
       ],
@@ -64,7 +64,7 @@ export const HelpGuide: React.FC<HelpGuideProps> = ({ onStartTour }) => {
       exitOnEsc: true,
       nextLabel: 'Next',
       prevLabel: 'Back',
-      doneLabel: 'Start Building! 🎉',
+      doneLabel: 'Start Building!',
       skipLabel: 'Skip',
     });
 
@@ -79,6 +79,32 @@ export const HelpGuide: React.FC<HelpGuideProps> = ({ onStartTour }) => {
       return true; // Continue to next step
     });
 
+    // Dynamically reposition BitBot to face the highlighted element
+    const updateBitbotPosition = () => {
+      requestAnimationFrame(() => {
+        const tooltip = document.querySelector('.introjs-tooltip') as HTMLElement
+        if (!tooltip) return
+
+        const arrow = tooltip.querySelector('.introjs-arrow') as HTMLElement
+        let pos = 'floating'
+
+        if (arrow) {
+          const arrowClasses = arrow.className
+          const arrowDisplay = window.getComputedStyle(arrow).display
+          if (arrowDisplay !== 'none') {
+            if (arrowClasses.includes('top')) pos = 'top'
+            else if (arrowClasses.includes('bottom')) pos = 'bottom'
+            else if (arrowClasses.includes('left')) pos = 'left'
+            else if (arrowClasses.includes('right')) pos = 'right'
+          }
+        }
+
+        tooltip.setAttribute('data-bitbot-pos', pos)
+      })
+    }
+
+    intro.onafterchange(updateBitbotPosition)
+
     intro.oncomplete(() => {
       localStorage.setItem('circuit-simulator-tour-seen', 'true');
       setIsRunning(false);
@@ -91,6 +117,8 @@ export const HelpGuide: React.FC<HelpGuideProps> = ({ onStartTour }) => {
     });
 
     intro.start();
+    // Set initial position for the first step
+    setTimeout(updateBitbotPosition, 150)
   };
 
   // Auto-start tour for first-time users

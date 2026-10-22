@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router'
+import { supabase } from '@/utils/supabase'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useRoadmapData } from '@/hooks/useRoadmapData'
 import { apiService } from '@/services/api.service'
@@ -13,6 +14,7 @@ import {
   LessonListItem,
   LessonDetailsDialog,
   LessonsFilter,
+  AiGuide,
   lessons,
   lessonImages,
   csQuotes,
@@ -24,6 +26,14 @@ import {
 } from '@/components/roadmap'
 
 export const Route = createFileRoute('/roadmap/refactored')({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw redirect({
+        to: '/login',
+      })
+    }
+  },
   component: RouteComponent,
 })
 
@@ -147,6 +157,26 @@ function RouteComponent() {
           ? Math.round(progress.masteryScore * 100)
           : null
 
+      // Check if previous lesson is completed AND its AI quiz has been taken
+      const previousLessonProgress =
+        lessonId > 1
+          ? lessonProgress.find((p: LessonProgress) => p.lessonId === lessonId - 1)
+          : null
+      const isPreviousLessonCompleted =
+        previousLessonProgress?.status === 'completed' ||
+        (previousLessonProgress?.progress || 0) >= 1
+
+      // Check if previous lesson's AI quiz was taken (at least one topic with attempts > 0)
+      const prevLessonMastery = lessonId > 1
+        ? (topicMastery[lessonId - 1] as TopicMastery[] | undefined)
+        : undefined
+      const hasPrevQuizAttempts = prevLessonMastery?.some((topic: TopicMastery) => (topic.attempts || 0) > 0) ?? false
+
+      // Lesson 1 is always unlocked. For others, require both lesson completion AND quiz taken.
+      const isLocked = lessonId === 1
+        ? false
+        : !(isPreviousLessonCompleted && hasPrevQuizAttempts)
+
       return {
         status: isCompleted
           ? 'completed'
@@ -155,7 +185,7 @@ function RouteComponent() {
             : 'not-started',
         progress: Math.round((progress?.progress || 0) * 100),
         masteryScore,
-        isLocked: false,
+        isLocked,
       } as const
     },
     [lessonProgress, topicMastery]
@@ -229,32 +259,42 @@ function RouteComponent() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-20 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8 mt-5">
         {/* Top Section: Adaptive & Analytics */}
+        <div className="flex justify-end mb-2">
+          <AiGuide />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <AdaptivePracticeCard
-            recommendedDifficulty={recommendedDifficulty}
-            loadingAssessment={loadingAssessment}
-            onStartAssessment={handleStartAdaptiveAssessment}
-          />
-          <AnalyticsCard
-            totalAttempts={totalAdaptiveAttempts}
-            focusTopics={focusTopics}
-            overallMastery={analytics?.overallMastery ?? null}
-          />
+          <div id="adaptive-practice-card">
+            <AdaptivePracticeCard
+              recommendedDifficulty={recommendedDifficulty}
+              loadingAssessment={loadingAssessment}
+              onStartAssessment={handleStartAdaptiveAssessment}
+            />
+          </div>
+          <div id="analytics-card">
+            <AnalyticsCard
+              totalAttempts={totalAdaptiveAttempts}
+              focusTopics={focusTopics}
+              overallMastery={analytics?.overallMastery ?? null}
+            />
+          </div>
         </div>
 
         {/* Lessons Section */}
         <div className="space-y-6">
-          <LessonsFilter
-            totalCount={filteredLessons.length}
-            statusFilter={statusFilter}
-            viewMode={viewMode}
-            onStatusFilterChange={setStatusFilter}
-            onViewModeChange={setViewMode}
-          />
+          <div id="lessons-filter">
+            <LessonsFilter
+              totalCount={filteredLessons.length}
+              statusFilter={statusFilter}
+              viewMode={viewMode}
+              onStatusFilterChange={setStatusFilter}
+              onViewModeChange={setViewMode}
+            />
+          </div>
 
           {/* Lessons Grid/List */}
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div id="lesson-list">
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredLessons.map((lesson) => (
                 <LessonCard
                   key={lesson.id}
@@ -277,7 +317,8 @@ function RouteComponent() {
                 />
               ))}
             </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

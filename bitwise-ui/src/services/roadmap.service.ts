@@ -72,7 +72,7 @@ async function getTopicsProgressSnapshot(lessonIds: number[]): Promise<TopicsPro
 async function getAdaptiveAnalytics(userId: string | undefined) {
   if (!userId) return null
   try {
-    const response = await apiService.get(`/adaptive/analytics/${userId}`)
+    const response = await apiService.get(`/adaptive/analytics/${userId}`, true)
     if ((response as any).success !== undefined) {
       return (response as any).success ? (response as any).data : null
     }
@@ -86,7 +86,7 @@ async function getAdaptiveAnalytics(userId: string | undefined) {
 async function getAssessmentStats(userId: string | undefined) {
   if (!userId) return null
   try {
-    const response = await apiService.get(`/assessment/statistics/${userId}`)
+    const response = await apiService.get(`/assessment/statistics/${userId}`, true)
     if ((response as any).success !== undefined) {
       return (response as any).success ? (response as any).data : null
     }

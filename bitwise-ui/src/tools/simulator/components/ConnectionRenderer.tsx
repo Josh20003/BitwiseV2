@@ -110,16 +110,15 @@ export const ConnectionRenderer: React.FC<ConnectionRendererProps> = React.memo(
       }
     }, [isSelected])
 
-    if (connection.path.length < 2) return null
-
-    const startPoint = connection.path[0]
-    const endPoint = connection.path[connection.path.length - 1]
+    const hasValidPath = connection.path.length >= 2
 
     // Calculate bounding box for the SVG with padding
-    const minX = Math.min(...connection.path.map((p) => p.x)) - 15
-    const maxX = Math.max(...connection.path.map((p) => p.x)) + 15
-    const minY = Math.min(...connection.path.map((p) => p.y)) - 15
-    const maxY = Math.max(...connection.path.map((p) => p.y)) + 15
+    const pathXs = hasValidPath ? connection.path.map((p) => p.x) : [0]
+    const pathYs = hasValidPath ? connection.path.map((p) => p.y) : [0]
+    const minX = Math.min(...pathXs) - 15
+    const maxX = Math.max(...pathXs) + 15
+    const minY = Math.min(...pathYs) - 15
+    const maxY = Math.max(...pathYs) + 15
 
     const width = maxX - minX
     const height = maxY - minY
@@ -209,6 +208,8 @@ export const ConnectionRenderer: React.FC<ConnectionRendererProps> = React.memo(
 
     // Create smooth orthogonal path
     const createSmoothPath = () => {
+      if (!hasValidPath) return ''
+
       if (connection.path.length === 2) {
         const start = connection.path[0]
         const end = connection.path[1]
@@ -290,6 +291,11 @@ export const ConnectionRenderer: React.FC<ConnectionRendererProps> = React.memo(
 
     const colors = getWireColor()
     const isPathDragging = dragState?.type === 'path'
+
+    if (!hasValidPath) return null
+
+    const startPoint = connection.path[0]
+    const endPoint = connection.path[connection.path.length - 1]
 
     return (
       <>

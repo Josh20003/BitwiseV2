@@ -1,22 +1,25 @@
 import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router'
 import { supabase } from '@/utils/supabase'
 import { useState, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import LessonHeader from '@/components/LessonHeader'
 import { useGetLesson } from '@/hooks/useLesson'
 import {
   useMarkTopicViewed,
   useMarkTopicCompleted,
   useTopicsForLesson,
+  useLessonProgress,
 } from '@/hooks/useUserProgress'
 import { useAuthContext } from '@/contexts/AuthContext'
 
 import { Button } from '@/components/ui/button'
-import { ChevronRight, ChevronLeft, Check, Brain } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Brain, Lock } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { Confetti, type ConfettiRef } from '@/components/magicui/confetti'
 import BitBotGuide from '@/components/BitBotGuide'
 import ToolSpotlight from '@/components/ToolSpotlight'
 import ContentDisplay from '@/components/ContentDisplay'
+import { LessonInteractiveActivity } from '@/components/lessons/LessonInteractiveActivity'
 
 // Local content types (keeps file self-contained)
 interface ContentBlock {
@@ -99,6 +102,21 @@ export const Route = createFileRoute('/lesson/$lessonId')({
   component: RouteComponent,
 })
 
+// Map lesson ID to AI quiz topic slug
+const lessonToQuizTopic: Record<number, string> = {
+  1: 'number-systems',
+  2: 'number-systems',
+  3: 'number-systems',
+  4: 'binary-arithmetic',
+  5: 'complements',
+  6: 'number-systems',
+  7: 'number-systems',
+  8: 'boolean-algebra',
+  9: 'logic-gates',
+  10: 'truth-tables',
+  11: 'boolean-algebra',
+}
+
 function RouteComponent() {
   const { lessonId } = Route.useParams()
   const { topicId: initialTopicId } = Route.useSearch()
@@ -110,6 +128,25 @@ function RouteComponent() {
   const { data: lesson, isLoading, error } = useGetLesson(lessonIdNum)
 
   const { data: lessonTopicsProgress } = useTopicsForLesson(lessonIdNum, !!user)
+  const { data: prevLessonProgress, isLoading: isPrevProgressLoading } = useLessonProgress(
+    lessonIdNum && lessonIdNum > 1 ? lessonIdNum - 1 : undefined,
+    !!user
+  )
+
+  const isPrevCompleted =
+    prevLessonProgress?.status === 'completed' ||
+    (prevLessonProgress?.progress || 0) >= 1
+  const prevMasteryRaw = prevLessonProgress?.masteryScore ?? 0
+  const prevMasteryPercent =
+    prevMasteryRaw > 1 ? prevMasteryRaw : prevMasteryRaw * 100
+  const isPrevQuizPassed = prevMasteryPercent >= 80
+
+  const isCurrentLessonLocked =
+    lessonIdNum &&
+    lessonIdNum > 1 &&
+    !!user &&
+    !isPrevProgressLoading &&
+    !(isPrevCompleted && isPrevQuizPassed)
 
   const [topicIdx, setTopicIdx] = useState(0)
   const [finished, setFinished] = useState(false)
@@ -242,6 +279,8 @@ function RouteComponent() {
     scrollToTop()
   }, [topicIdx])
 
+
+
   if (isLoading) {
     return (
       <div className="pt-36 max-w-4xl mx-auto flex flex-col items-center">
@@ -259,6 +298,39 @@ function RouteComponent() {
         <p className="text-lg text-gray-500 dark:text-gray-400">
           {error ? (error as Error).message : 'Lesson not found.'}
         </p>
+      </div>
+    )
+  }
+
+  if (isCurrentLessonLocked) {
+    const prevLessonId = (lessonIdNum ?? 2) - 1
+    const prevTopic = lessonToQuizTopic[prevLessonId] || 'number-systems'
+
+    return (
+      <div className="pt-36 max-w-xl mx-auto px-4 flex flex-col items-center text-center">
+        <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-6">
+          <Lock className="w-10 h-10 text-amber-600 dark:text-amber-500" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          Lesson {lessonIdNum} is Locked
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+          You must complete Lesson {prevLessonId} and score at least <strong>80%</strong> on its Adaptive AI Quiz to unlock this lesson.
+        </p>
+        <div className="flex gap-4">
+          <Link to="/roadmap">
+            <Button variant="outline">Back to Roadmap</Button>
+          </Link>
+          <Link
+            to="/quiz/$topic"
+            params={{ topic: prevTopic }}
+            search={{ lessonId: prevLessonId }}
+          >
+            <Button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold">
+              Take Lesson {prevLessonId} Quiz
+            </Button>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -377,20 +449,6 @@ function RouteComponent() {
     }
   }
 
-  // Map lesson ID to AI quiz topic slug
-  const lessonToQuizTopic: Record<number, string> = {
-    1: 'number-systems',
-    2: 'number-systems',
-    3: 'number-systems',
-    4: 'binary-arithmetic',
-    5: 'complements',
-    6: 'number-systems',
-    7: 'number-systems',
-    8: 'boolean-algebra',
-    9: 'logic-gates',
-    10: 'truth-tables',
-    11: 'boolean-algebra',
-  }
   const quizTopic = lesson ? lessonToQuizTopic[lesson.id] : null
 
   const toolToSpotlight = lesson ? getToolForLesson(lesson.id) : null
@@ -400,7 +458,7 @@ function RouteComponent() {
       <LessonHeader progress={calculateProgress()} title={lesson.title} />
       <div className="pt-24 max-w-4xl mx-auto flex flex-col">
         {!finished ? (
-          <div className="w-full p-6 pb-20 flex flex-col relative">
+          <div className="w-full p-6 pb-32 flex flex-col relative">
             <BitBotGuide
               message={`Let's learn about ${topic.title}!`}
               emotion="pointing-left"
@@ -464,6 +522,13 @@ function RouteComponent() {
               </div>
             )}
 
+            {/* Topic-specific Interactive Activity */}
+            <LessonInteractiveActivity
+              lessonId={lesson.id}
+              topicTitle={topic.title}
+              topicTags={topic.tags}
+            />
+
             {toolToSpotlight && <ToolSpotlight tool={toolToSpotlight as any} />}
           </div>
         ) : (
@@ -506,33 +571,43 @@ function RouteComponent() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 relative z-10 items-center">
-              <Button
-                variant="outline"
-                className="w-40"
-                onClick={() => {
-                  setTopicIdx(0)
-                  setFinished(false)
-                }}
-              >
-                Restart Lesson
-              </Button>
-              {user && quizTopic && (
+            <div className="flex flex-col gap-4 relative z-10 items-center">
+              <p className="text-sm text-amber-500 dark:text-amber-400 font-medium">
+                ⚠️ You must complete the AI Quiz and score at least 80% to unlock the next lesson.
+              </p>
+              {user && quizTopic ? (
                 <Link to="/quiz/$topic" params={{ topic: quizTopic }} search={{ lessonId: lesson.id }}>
-                  <Button className="w-52 gap-2 bg-purple-600 hover:bg-purple-700 text-white">
-                    <Brain className="w-4 h-4" />
+                  <Button className="w-60 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-lg py-5 font-semibold">
+                    <Brain className="w-5 h-5" />
                     Take AI Quiz
                   </Button>
                 </Link>
+              ) : (
+                <Button
+                  className="w-60 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-lg py-5 font-semibold"
+                  onClick={() => {
+                    if (!user) {
+                      toast.error('Please log in to take the quiz.')
+                      navigate({ to: '/login' })
+                    }
+                  }}
+                >
+                  <Brain className="w-5 h-5" />
+                  Take AI Quiz
+                </Button>
               )}
-              <Button
-                className="w-40"
-                onClick={() => {
-                  navigate({ to: '/roadmap' })
-                }}
-              >
-                Back to Dashboard
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground"
+                  onClick={() => {
+                    setTopicIdx(0)
+                    setFinished(false)
+                  }}
+                >
+                  Restart Lesson
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -562,10 +637,10 @@ function RouteComponent() {
               {topicIdx + 1} / {lesson.topics?.length || 0}
             </div>
 
-            <div>
+            <div className="flex items-center gap-3">
               {topicIdx < (lesson.topics?.length || 0) - 1 ? (
                 <Button
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 transition-all duration-200"
                   onClick={() => {
                     void handleNextTopic()
                   }}
@@ -576,7 +651,7 @@ function RouteComponent() {
                 </Button>
               ) : (
                 <Button
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 transition-all duration-200"
                   onClick={() => {
                     void handleFinishLesson()
                   }}

@@ -10,7 +10,7 @@ export class ExamplesService {
   private cachedExamples: any[] = [];
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Get all examples with optional filtering

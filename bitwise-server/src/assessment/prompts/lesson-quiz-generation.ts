@@ -37,113 +37,273 @@ export function getDifficultyFromMastery(
 function getLessonGuidelines(lessonId: number): string {
   const guidelines: Record<number, string> = {
     1: `**LESSON 1: Introduction to Number Systems**
-- Focus: Base-2, base-8, base-10, base-16; positional values; digit representation
-- Question Types: Text-based conceptual questions, positional value calculations
-- Visual Requirement: 10-20% (mostly text-based)
-- EASY: Identify the base/radix of a number, count digits in a base
-- MEDIUM: Positional value of a digit, largest digit allowed in a base
-- HARD: Compare values across bases, identify the number of symbols in a base
-- DO NOT ask about converting between bases (that is Lesson 3)`,
+- Topics in this lesson: Binary (Base-2), Decimal (Base-10), Octal (Base-8), Hexadecimal (Base-16)
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Radix/base definitions and how many unique symbols/digits exist in each base (base 2 has 2: {0,1}; base 8 has 8: {0-7}; base 10 has 10: {0-9}; base 16 has 16: {0-9, A-F}).
+  * Identifying invalid digits for a base (e.g., digit '8' is illegal in octal; 'G' is illegal in hex).
+  * Positional values and weights: powers of the base (e.g., in binary: 2^0, 2^1, 2^2, 2^3; in octal: 8^0, 8^1, 8^2; in hex: 16^0, 16^1; in decimal: 10^0, 10^1).
+  * Finding the positional value or weight of a specific digit in a number (e.g., "In the octal number 357_8, what is the weight/place value of the digit '5'? Answer: 5 × 8^1 = 40").
+  * Counting in binary, powers of 2 size definitions (nibble = 4 bits, byte = 8 bits).
+  * Determining the largest single digit or maximum value representable with n digits in a base ((base^n) - 1).
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT ask multi-step manual base conversions (e.g., repeated division by 2 or 16, converting 237_10 to binary/hex) — that belongs exclusively to Lesson 3.
+  * DO NOT test binary arithmetic (addition, subtraction, multiplication, division) — that is Lesson 4.
+  * DO NOT test 1's or 2's complements — that is Lesson 5.
+  * DO NOT test signed vs unsigned representation or MSB sign bits — that is Lesson 6.
+  * DO NOT test BCD or ASCII encoding — that is Lesson 7.
+  * DO NOT test logic gates, truth tables, or Boolean algebra — that is Lessons 8-11.`,
 
     2: `**LESSON 2: Types of Number Systems**
-- Focus: Relationships between binary, decimal, octal, hex; grouping patterns
-- Question Types: Text questions about relationships and groupings
-- Visual Requirement: 10-20%
-- EASY: Identify which number systems are used in computing, 4-bit grouping = 1 hex digit
-- MEDIUM: Binary-to-hex shortcut (group 4 bits), binary-to-octal (group 3 bits)
-- HARD: Compare grouping schemes, identify patterns across systems
-- DO NOT ask step-by-step conversion procedures`,
+- Topics in this lesson: Binary ↔ Decimal relationship, Binary ↔ Hex relationship, Digit Groupings
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * The fundamental relationships between number systems (why base 2 is natural for computers, base 10 for humans, base 16/8 as human-readable binary shorthands).
+  * The 4-bit grouping relationship between binary and hexadecimal (16 = 2^4, so each hex digit corresponds to exactly 4 binary bits / 1 nibble).
+  * The 3-bit grouping relationship between binary and octal (8 = 2^3, so each octal digit corresponds to 3 bits, e.g., Unix file permissions chmod 755).
+  * Digit groupings: definitions and bit widths of Bit (1 bit), Nibble (4 bits), Byte (8 bits), Word (16 bits), Double Word (32 bits), Quad Word (64 bits), and their unsigned ranges (e.g., nibble: 0-15, byte: 0-255).
+  * Quick mental shortcuts based on relationships: e.g., LSB = 1 means odd, LSB = 0 means even; 1 byte = 2 hex digits; 32-bit address = 8 hex digits.
+  * Direct inspection of 4-bit grouping (e.g., grouping 1101 0110_2 into hex digits D6_16).
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test step-by-step manual base conversion algorithms (like repeated division by 2 or continuous multiplication for fractions) — that is Lesson 3.
+  * DO NOT test binary arithmetic (addition, subtraction, multiplication, division) — that is Lesson 4.
+  * DO NOT test 1's or 2's complements — that is Lesson 5.
+  * DO NOT test signed representation ranges (-128 to +127) or sign bits — that is Lesson 6.
+  * DO NOT test BCD or ASCII encoding — that is Lesson 7.
+  * DO NOT test logic gates, truth tables, or Boolean algebra — that is Lessons 8-11.`,
 
     3: `**LESSON 3: Conversion of Number Systems**
-- Focus: Manual conversion between decimal, binary, hex, octal (division/remainder, expansion)
-- Question Types: Step-by-step conversion calculations
-- Visual Requirement: 10-20%
-- EASY: Convert small decimal to binary (≤16) or binary to decimal
-- MEDIUM: Convert decimal to hex/octal or hex to binary
-- HARD: Multi-step conversions (decimal → hex → binary)
-- Always show intermediate calculation steps in solutionSteps`,
+- Topics in this lesson: Decimal to Binary, Binary to Decimal, Hex Conversion (and Octal)
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Manual conversion algorithms from decimal to binary (repeated division by 2 recording remainders, or sum-of-powers-of-2).
+  * Manual conversion algorithms from binary to decimal (expanding positional powers 2^n and summing).
+  * Conversion between decimal and hexadecimal (repeated division by 16 or sum-of-powers-of-16).
+  * Multi-step conversions between number systems (e.g., decimal → hex → binary, or octal ↔ binary ↔ hex).
+  * Conversion steps must be clearly shown in solutionSteps.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test binary arithmetic (addition, subtraction, multiplication, division) — that is Lesson 4.
+  * DO NOT test 1's or 2's complements — that is Lesson 5.
+  * DO NOT test signed vs unsigned representation — that is Lesson 6.
+  * DO NOT test BCD or ASCII — that is Lesson 7.
+  * DO NOT test logic gates or Boolean algebra — that is Lessons 8-11.`,
 
     4: `**LESSON 4: Binary Arithmetic**
-- Focus: Binary addition, subtraction, multiplication, division
-- Question Types: Arithmetic calculation problems
-- Visual Requirement: 10-20%
-- EASY: Single-bit addition (with carry), 4-bit + 4-bit without overflow
-- MEDIUM: 4-8 bit addition with carry chain, binary subtraction with borrow
-- HARD: Multi-byte addition, binary multiplication (shift-and-add)
-- Show binary arithmetic working column-by-column in solutionSteps`,
+- Topics in this lesson: Binary Addition, Subtraction, Multiplication, Division
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Binary addition column-by-column with carry bits (0+0=0, 0+1=1, 1+1=10 [0 carry 1], 1+1+1=11 [1 carry 1]).
+  * Binary subtraction column-by-column with borrow mechanics (0-0=0, 1-0=1, 1-1=0, 0-1=1 with borrow from next higher bit).
+  * Binary multiplication using shift-and-add partial products.
+  * Binary long division using quotient and remainder.
+  * Arithmetic operations performed directly on binary numbers.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test 2's complement subtraction (A - B = A + ~B + 1) — that belongs to Lesson 5. Keep Lesson 4 strictly to direct binary arithmetic with carries and borrows.
+  * DO NOT test signed vs unsigned overflow or negative number representation — that is Lesson 6.
+  * DO NOT test BCD or ASCII — that is Lesson 7.
+  * DO NOT test logic gates or Boolean algebra — that is Lessons 8-11.`,
 
     5: `**LESSON 5: Complements**
-- Focus: 1's complement (bit inversion), 2's complement (invert + 1), cascading carry
-- Question Types: Complement calculation problems
-- Visual Requirement: 10-20%
-- EASY: 1's complement of a 4-bit number (just invert)
-- MEDIUM: 2's complement of a 6-8 bit number
-- HARD: Use 2's complement to perform subtraction (A - B = A + ~B + 1)
-- DO NOT ask about overflow conditions or signed interpretation (MSB)`,
+- Topics in this lesson: 1's Complement, 2's Complement, Bit Inversion
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Bit inversion (NOT operation on each bit: 0→1, 1→0) to find 1's complement.
+  * Calculating 2's complement of an n-bit binary number (invert all bits and add 1; or shortcut: copy bits from right up to and including first '1', then invert remaining bits).
+  * Cascading carries when adding 1 during 2's complement derivation (e.g., 1111 → invert 0000 → add 1 = 0001).
+  * Using 2's complement to perform subtraction: A - B = A + (2's complement of B), discarding end carry if positive.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test signed vs unsigned range formulas (e.g., -2^(n-1) to 2^(n-1)-1) or sign bit interpretation — that is Lesson 6.
+  * DO NOT test base conversions (decimal to hex, etc.) — that is Lesson 3.
+  * DO NOT test BCD or ASCII — that is Lesson 7.
+  * DO NOT test logic gates or Boolean algebra — that is Lessons 8-11.`,
 
     6: `**LESSON 6: Signed and Unsigned Numbers**
-- Focus: MSB role, signed vs unsigned interpretation, range calculations
-- Question Types: Interpretation and range calculation problems
-- Visual Requirement: 10-20%
-- EASY: Identify MSB of a binary number, determine if signed or unsigned
-- MEDIUM: Calculate the range of n-bit signed vs unsigned numbers
-- HARD: Interpret the same binary pattern as both signed and unsigned`,
+- Topics in this lesson: MSB (Most Significant Bit), Signed Representation, Unsigned Representation
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Role of the Most Significant Bit (MSB): in unsigned it has positional weight 2^(n-1); in signed representation it acts as the sign bit (0 = positive, 1 = negative).
+  * Range calculations for n-bit numbers: unsigned range [0 to 2^n - 1] vs signed 2's complement range [-2^(n-1) to 2^(n-1) - 1].
+  * Comparing representations: Sign-Magnitude, 1's Complement (two zeros: +0 and -0), and 2's Complement (single zero).
+  * Interpreting the exact same bit pattern (e.g., 11111111) as unsigned (255) vs signed 2's complement (-1).
+  * Determining whether an arithmetic result causes signed overflow.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test binary multiplication or long division — that is Lesson 4.
+  * DO NOT test BCD or ASCII — that is Lesson 7.
+  * DO NOT test logic gates or Boolean algebra — that is Lessons 8-11.`,
 
     7: `**LESSON 7: Binary Codes (BCD & ASCII)**
-- Focus: BCD encoding/decoding, ASCII character codes
-- Question Types: Encoding/decoding calculations
-- Visual Requirement: 10-20%
-- EASY: Convert single decimal digit to BCD (e.g., 7 → 0111)
-- MEDIUM: Convert multi-digit decimal to BCD or BCD to decimal
-- HARD: Identify invalid BCD codes, ASCII character lookups`,
+- Topics in this lesson: BCD Encoding, ASCII Conversion, Character-to-Binary Translator
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Binary Coded Decimal (BCD 8421): encoding each decimal digit (0-9) individually as a 4-bit binary group (e.g., decimal 95 → 1001 0101_BCD).
+  * Identifying valid vs invalid BCD codes: values 1010 to 1111 (10 to 15 decimal) are invalid in BCD.
+  * Comparing BCD with pure binary (BCD requires more bits but is easier to interface with decimal displays).
+  * ASCII character encoding: standard 7-bit/8-bit ASCII codes for characters (e.g., 'A' = 65 = 01000001_2, 'a' = 97 = 01100001_2, '0' = 48 = 00110000_2, uppercase/lowercase bit difference at bit 5).
+  * Character-to-binary translation: encoding/decoding short text strings using ASCII.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test binary arithmetic (addition, subtraction, multiplication, division) — that is Lesson 4.
+  * DO NOT test complements — that is Lesson 5.
+  * DO NOT test signed vs unsigned representation — that is Lesson 6.
+  * DO NOT test logic gates or Boolean algebra — that is Lessons 8-11.`,
 
     8: `**LESSON 8: Introduction to Boolean Algebra**
-- Focus: Basic concepts, Boolean values (0/1, true/false), real-world applications
-- Question Types: Text-based conceptual questions, simple calculations
-- Visual Requirement: 20-30% (mostly text-based)
-- EASY: Basic definitions applied to scenarios, simple OR/AND calculations
-- MEDIUM: Multi-step reasoning, comparing Boolean expressions
-- HARD: Complex application scenarios, edge cases
-- Example stems: "Calculate A OR B when A=1, B=0", "Which expression equals 1?"`,
+- Topics in this lesson: What is Boolean Algebra?, Boolean Values, Applications
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Fundamental concepts and history of Boolean algebra (George Boole, Claude Shannon mapping to telephone switching circuits).
+  * Boolean values: binary states (0/1, false/true, LOW/HIGH, open/closed switch).
+  * Conceptual basic operations: AND (conjunction / logical multiplication ·), OR (disjunction / logical addition +), NOT (negation / inversion ').
+  * Evaluating simple Boolean algebraic expressions for specific variable assignments (e.g., "Given A=1, B=0, evaluate Y = A · B + A'").
+  * Real-world applications of Boolean logic in computer switching, digital design, and programming conditions.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT include schematic circuit diagrams or multi-gate circuits — that is Lesson 9.
+  * DO NOT ask truth table construction or minterm derivation from tables — that is Lesson 10.
+  * DO NOT ask Karnaugh maps or minimization laws (De Morgan's, Absorption) — that is Lesson 11.
+  * DO NOT ask number systems, conversions, or binary arithmetic — that is Lessons 1-7.`,
 
     9: `**LESSON 9: Logic Gates**
-- Focus: AND, OR, NOT, NAND, NOR, XOR, XNOR gate behavior and symbols
-- Question Types: **MUST USE CIRCUIT DIAGRAMS AND TRUTH TABLES**
-- Visual Requirement: 80-90% (circuits and tables are essential)
-- EASY: Single gate analysis, basic truth table reading
-- MEDIUM: 2-gate circuits, truth table to gate identification
-- HARD: 3+ gate circuits, complex signal tracing
-- Limit truth tables to 2 questions max; prefer circuits`,
+- Topics in this lesson: AND, OR, NOT; NAND, NOR; XOR, XNOR
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Gate operation, logic symbols, and behavior for: NOT, AND, OR, NAND, NOR, XOR, XNOR.
+  * Universal gates: why NAND and NOR are universal gates (can implement NOT, AND, OR).
+  * Exclusive gates: XOR (odd parity / inequality detector: output 1 when inputs differ) and XNOR (equality detector: output 1 when inputs are equal).
+  * Circuit diagrams: tracing signals through 1-gate, 2-gate, or 3-gate circuits to determine intermediate and final outputs.
+  * Visual requirement: 80-90% circuits and truth tables for gate behavior.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test Karnaugh maps or algebraic minimization laws — that is Lesson 11.
+  * DO NOT test number systems, conversions, or arithmetic — that is Lessons 1-7.`,
 
     10: `**LESSON 10: Truth Tables**
-- Focus: Reading and analyzing truth tables to derive expressions
-- Question Types: **TRUTH TABLES AND ALGEBRAIC EXPRESSIONS** (READ ONLY - DO NOT ASK TO CONSTRUCT)
-- Visual Requirement: 60-70% (truth tables are the focus)
-- EASY: Read output from a simple 2-variable table, identify the expression
-- MEDIUM: Analyze a 3-variable truth table to find the equivalent Boolean expression
-- HARD: Derive minimal expressions from complex tables, find logical equivalences
-- **CRITICAL**: Always provide the truth table in the question. Ask students to READ/ANALYZE it, NOT to construct it
-- Example: "Given the truth table below, which expression represents the output Y?"`,
+- Topics in this lesson: Constructing Truth Tables, Reading Truth Tables, Truth Tables for Gates
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Reading and analyzing truth tables: determining the output row-by-row for 2-variable and 3-variable functions.
+  * Deriving the Boolean expression from a truth table by identifying minterms (rows where Y=1) in Sum of Products (SOP) form.
+  * Truth tables for combination of gates.
+  * CRITICAL: Truth tables must ALWAYS be provided in the question for the student to read and analyze (multiple choice). Do NOT ask students to create an empty table.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test Karnaugh maps — that is Lesson 11.
+  * DO NOT test number systems, conversions, or arithmetic — that is Lessons 1-7.`,
 
-    11: `**LESSON 11: Simplification & K-Maps**
-- Focus: Boolean laws, Karnaugh maps, SOP/POS optimization
-- Question Types: **KARNAUGH MAPS AND ALGEBRAIC SIMPLIFICATION**
-- Visual Requirement: 70-80% (K-maps for optimization, text for laws)
-- EASY: Apply single law (Identity, Null), 2-variable K-map
-- MEDIUM: Multi-law simplification, 3-variable K-map grouping
-- HARD: Complex expressions, 4-variable K-maps, optimal grouping
-- Use K-maps for visual questions, text for law application`,
+    11: `**LESSON 11: Simplification & Karnaugh Maps**
+- Topics in this lesson: Boolean Laws, Karnaugh Maps, Practical Examples
+- ALLOWED SCOPE (ONLY TEST THESE):
+  * Boolean laws: Identity (A·1=A, A+0=A), Null/Dominance (A·0=0, A+1=1), Idempotent (A·A=A, A+A=A), Complement/Inverse (A·A'=0, A+A'=1), Involution (A''=A), Commutative, Associative, Distributive, De Morgan's Laws ((A·B)' = A' + B', (A+B)' = A'·B'), Absorption (A + A·B = A, A·(A+B) = A, A + A'·B = A + B).
+  * Karnaugh Maps (K-maps): Gray code labeling (00, 01, 11, 10), 2-variable (2x2), 3-variable (2x4), and 4-variable (4x4) K-maps.
+  * Grouping rules: groups must be powers of 2 (1, 2, 4, 8, 16), rectangular, can wrap around edges, must find minimal Sum-of-Products (SOP) expressions.
+- STRICT EXCLUSION ZONE (DO NOT TEST UNDER ANY CIRCUMSTANCES):
+  * DO NOT test sequential logic, flip-flops, or latches.
+  * DO NOT test number systems, conversions, or binary arithmetic — that is Lessons 1-7.`
   };
 
   return (
     guidelines[lessonId] ||
     `**Lesson ${lessonId}**
-- Focus: Core concepts relevant to this lesson
-- Question Types: Text-based conceptual and calculation questions
-- EASY: Basic definitions and simple single-step problems
-- MEDIUM: Multi-step reasoning and application
-- HARD: Complex scenarios combining multiple concepts`
+- Focus: Core concepts strictly relevant to this lesson
+- STRICT EXCLUSION: Do not test topics from any other lesson.`
   );
+}
+
+/**
+ * Get lesson-specific verification rules to prevent hallucinations or cross-lesson bleed
+ */
+function getVerificationGuidelines(lessonId: number): string {
+  switch (lessonId) {
+    case 1:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY FOR LESSON 1)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Verify radix/base limits: Base 2 (digits 0, 1), Base 8 (digits 0-7), Base 10 (digits 0-9), Base 16 (digits 0-9, A-F).
+- Verify powers and positional values: 2^0=1, 2^1=2, 2^2=4, 2^3=8, 2^4=16; 8^0=1, 8^1=8, 8^2=64; 16^0=1, 16^1=16, 16^2=256.
+- Double-check digit place values (e.g., place value = digit * base^position).
+- Verify strictly that NO questions test topics from other lessons (no conversions, no arithmetic, no complements, no logic gates).`;
+
+    case 2:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY FOR LESSON 2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Verify groupings: 1 hex digit = 4 bits (nibble); 1 octal digit = 3 bits; 1 byte = 8 bits = 2 hex digits; 1 word = 16 bits = 4 hex digits.
+- Verify range values: 4-bit nibble = 0 to 15 (2^4 - 1); 8-bit byte = 0 to 255 (2^8 - 1).
+- Verify LSB odd/even property and powers of 2 mapping.
+- Verify strictly that NO questions test topics from other lessons (no conversions, no arithmetic, no complements, no logic gates).`;
+
+    case 3:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY FOR LESSON 3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Manually calculate each conversion step (division-remainder, expansion of powers) to ensure exact correctness.
+- Double-check intermediate quotients and remainders.
+- Verify strictly that NO questions test topics from other lessons (no arithmetic, no complements, no logic gates).`;
+
+    case 4:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY FOR LESSON 4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Verify column-by-column binary addition carries and subtraction borrows manually.
+- Verify binary multiplication shift-and-add results.
+- DO NOT test complements here — that is Lesson 5. Keep arithmetic direct!`;
+
+    case 5:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY FOR LESSON 5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Verify 1's complement: every 0 becomes 1 and every 1 becomes 0.
+- Verify 2's complement: invert all bits and add 1 (accounting for any carry ripple).
+- Verify 2's complement subtraction: A - B = A + (2's comp of B).`;
+
+    case 6:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY FOR LESSON 6)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Verify MSB (leftmost bit) role: 0 = positive, 1 = negative in signed numbers.
+- Verify range formulas: Unsigned [0, 2^n - 1], Signed 2's complement [-2^(n-1), 2^(n-1) - 1].
+- Double check signed vs unsigned interpretation of the same binary string.`;
+
+    case 7:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL VERIFICATION (MANDATORY FOR LESSON 7)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Verify BCD 8421: each decimal digit is encoded independently in 4 bits. Values 1010-1111 are illegal.
+- Verify ASCII codes: 'A' = 65, 'B' = 66, 'a' = 97, '0' = 48.
+- Verify character to binary mappings.`;
+
+    case 8:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ LOGIC VERIFICATION (MANDATORY FOR LESSON 8)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Verify Boolean value substitutions (e.g. A=1, B=0 into expression).
+- Verify basic operations: 1 AND 0 = 0, 1 OR 0 = 1, NOT 1 = 0.
+- DO NOT include multi-gate circuit diagrams (Lesson 9) or K-maps (Lesson 11).`;
+
+    case 9:
+    case 10:
+    case 11:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ LOGIC & CIRCUIT VERIFICATION (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- TRUTH TABLE: Check ALL rows. NAND: 0,0→1; 0,1→1; 1,0→1; 1,1→0.
+- CIRCUIT: Trace signal from inputs through each gate.
+- K-MAP: Verify groupings produce the correct minimal expression.
+- VARIABLE COUNT MUST MATCH: The number of variables in expression MUST match truth table columns.`;
+
+    default:
+      return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ MATHEMATICAL & LOGICAL VERIFICATION (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You MUST verify answers in "_reasoning" field:
+- Check all calculations and reasoning manually before outputting.
+- Ensure questions strictly align with the topics of Lesson ${lessonId}.`;
+  }
 }
 
 /**
@@ -197,21 +357,20 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
 📊 DIFFICULTY GUIDELINES:
 
 **EASY Questions** (for mastery < 40%):
-- Single-step calculations or conceptual questions
-- Direct application of base/positional rules
-- Small values or straightforward base identification
+- Single-step problems or conceptual understanding strictly within this lesson's topics
+- Direct application of rules (e.g. valid digits, positional weights, or grouping definitions)
+- Small values or straightforward identification
 - **solutionSteps**: 2-3 simple steps showing the basic calculation
 
 **MEDIUM Questions** (for mastery 40-69%):
-- Multi-step calculations required
-- Comparing or combining multiple representations
-- Medium range values or intermediate calculations
-- **solutionSteps**: 3-5 detailed steps showing intermediate calculations and conversion/arithmetic stages
+- Multi-step reasoning or calculations within this lesson's scope
+- Comparing or combining concepts from this lesson's topics
+- Medium range values or intermediate steps
+- **solutionSteps**: 3-5 detailed steps showing intermediate calculation stages
 
 **HARD Questions** (for mastery ≥ 70%):
-- Complex multi-step problems or word problems
-- Comparing multiple expressions or values across different bases
-- Larger values or complex encoding/decoding sequences
+- Complex multi-step problems or deep analytical questions within this lesson's scope
+- Comparing multiple representations or edge-case constraints
 - **solutionSteps**: 5-7 comprehensive steps with detailed calculations and logic verified`;
 
   const visualFormatsSection = isLogicVisualLesson
@@ -276,22 +435,6 @@ export function buildLessonQuizPrompt(context: LessonQuizContext): string {
   - MEDIUM: 2-3 gates, may have parallel paths converging
   - HARD: 3-5 gates, multiple levels, parallel paths, requires careful tracing
 
-**Example HARD Circuit** (3-variable, 4 gates):
-{
-  "type": "circuit",
-  "circuit": {
-    "inputs": ["A", "B", "C"],
-    "gates": [
-      {"id": "G1", "type": "NOT", "inputs": ["A"], "output": "A_NOT", "position": {"x": 1, "y": 0}},
-      {"id": "G2", "type": "NOT", "inputs": ["B"], "output": "B_NOT", "position": {"x": 1, "y": 2}},
-      {"id": "G3", "type": "AND", "inputs": ["A_NOT", "C"], "output": "G3_OUT", "position": {"x": 2, "y": 0}},
-      {"id": "G4", "type": "OR", "inputs": ["G3_OUT", "B_NOT"], "output": "Y", "position": {"x": 3, "y": 1}}
-    ],
-    "finalOutput": "Y",
-    "caption": "Determine the Boolean expression: Y = (A'·C) + B'"
-  }
-}
-
 **TYPE 3: KARNAUGH MAP** (for Lesson 11)
 {
   "type": "karnaughMap",
@@ -313,9 +456,6 @@ Just use a string: "Simplify the expression: A + A·B"
 
 **TEXT-ONLY (MANDATORY for Lesson ${context.lessonId})**
 For number systems and arithmetic, do not use circuits, truth tables, or Karnaugh maps. Instead, the "stem" of each question MUST be a pure string.
-Example stems: 
-- "What is the positional value of the digit '5' in the octal number 357_8?"
-- "Compare the following numbers. Which one represents the largest value? A = 10110_2, B = 24_10, C = 17_16"
 `;
 
   const outputFormatSection = `
@@ -336,40 +476,38 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
     "_reasoning": "Internal verification of the correct answer (not shown to user)",
     "solutionSteps": [
       "Step 1: State the problem or calculation to be performed.",
-      "Step 2: Show the first calculation or conversion step.",
+      "Step 2: Show the first calculation or analytical step.",
       "Step 3: Show intermediate calculation steps or comparisons.",
-      "Step 4: Execute the final calculation or conversion stage.",
+      "Step 4: Execute the final calculation stage.",
       "Final Step: Conclude with the final result matching the correct option."
     ],
     "options": [
       {
         "id": "opt_a", 
-        "text": "First conceptually distinct distractor", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Point out the specific error or misconception."
+        "text": "First distinct option", 
+        "isCorrect": false
       },
       {
         "id": "opt_b", 
-        "text": "Correct Answer", 
-        "isCorrect": true, 
-        "rationale": "Comprehensive explanation why this is CORRECT. Justify with mathematical reasoning, show verification, and connect to concepts."
+        "text": "Second distinct option", 
+        "isCorrect": false
       },
       {
         "id": "opt_c", 
-        "text": "Second conceptually distinct distractor", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Identify the mistake made."
+        "text": "Third distinct option (Correct Answer)", 
+        "isCorrect": true, 
+        "rationale": "Clear explanation showing why this answer is correct."
       },
       {
         "id": "opt_d", 
-        "text": "Third conceptually distinct distractor", 
-        "isCorrect": false, 
-        "rationale": "Detailed explanation why this is WRONG. Clarify the misconception."
+        "text": "Fourth distinct option", 
+        "isCorrect": false
       }
     ],
-    "answerId": "opt_b"
+    "answerId": "opt_c"
   }
 ]
+(NOTE: The correct option MUST vary across questions. Distribute correct answers across opt_a, opt_b, opt_c, and opt_d).
 `;
 
   const criticalRequirementsSection = isLogicVisualLesson
@@ -383,16 +521,14 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   - Step 3: Show intermediate outputs
   - Step 4: Trace through subsequent gates
   - Step 5: Derive final expression or output
-  - Example: "Apply NOT to A (1) → A' = 0", "AND gate: A'(0) AND B(1) = 0"
 
 - **LESSON 10 (Truth Tables)**:
   - Step 1: Examine the provided truth table and identify the pattern
   - Step 2: Look at rows where output Y = 1 (identify minterms)
-  - Step 3: Write the expression for each minterm (e.g., A'B'C for row where A=0, B=0, C=1 gives Y=1)
+  - Step 3: Write the expression for each minterm
   - Step 4: Combine minterms with OR operations to form Sum of Products (SOP)
   - Step 5: Simplify if possible using Boolean laws
   - Step 6: Verify by checking the expression against the table
-  - Example: "Rows with Y=1: [0,0,0], [0,1,1] → Minterms: A'B'C' + A'BC → Expression found"
 
 - **LESSON 11 (Simplification & K-Maps)**:
   - Step 1: Write the original expression
@@ -400,88 +536,51 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
   - Step 3: Apply law/grouping (show explicitly: A + A'B = A + B by Absorption)
   - Step 4: Continue simplification with next law
   - Step 5: Verify by truth table or expansion
-  - Example: "Group cells [1,3]: A'B' + A'B = A'(B'+B) = A'(1) = A'"
 
 - **LESSON 8**: Can use simpler steps (2-3 steps) for conceptual questions`
     : `
 ⚠️ **CRITICAL REQUIREMENTS FOR solutionSteps AND rationale:**
 
-**For solutionSteps (Number Systems & Arithmetic):**
-- Step 1: Clearly define the starting value/expression and goal (e.g. converting a value, finding positional value, complements, arithmetic operations)
-- Step 2: Perform the primary calculation/conversion step, showing intermediate values (e.g. dividing by base, multiplying weights, inverting bits)
-- Step 3: Complete subsequent steps, showing all calculations explicitly
+**For solutionSteps:**
+- Step 1: Clearly define the starting value/concept and goal within this lesson's topic
+- Step 2: Perform the primary calculation or analytical step, showing intermediate values
+- Step 3: Complete subsequent steps, showing all reasoning explicitly
 - Final Step: Conclude with the final result and relate it directly to the correct answer choice
 - ALWAYS write detailed, easy-to-follow explanations so students can learn from mistakes!`;
 
-  const logicVerificationSection = isLogicVisualLesson
-    ? `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ LOGIC VERIFICATION (MANDATORY)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-You MUST verify answers in "_reasoning" field:
-- TRUTH TABLE: Check ALL rows. NAND: 0,0→1; 0,1→1; 1,0→1; 1,1→0
-- CIRCUIT: Trace signal from inputs through each gate
-- K-MAP: Verify groupings produce the correct minimal expression
-- EXPRESSION: Show algebraic steps
-
-**⚠️ CRITICAL: VARIABLE COUNT MUST MATCH!**
-- If the expression has 2 variables (A, B): Truth table has 4 rows, headers: ["A", "B", "Y"]
-- If the expression has 3 variables (A, B, C): Truth table has 8 rows, headers: ["A", "B", "C", "Y"]
-- The number of variables in the expression MUST equal the number of input columns in the truth table
-- Y = A' + B' uses ONLY A and B, so table has ONLY A and B columns (4 rows)
-- Y = A·B + C uses A, B, and C, so table has A, B, and C columns (8 rows)
-- **NEVER add extra variables that don't appear in the expression!**
-- **If you want 3 variables for MEDIUM difficulty, the EXPRESSION must use 3 variables!**
-- WRONG: Expression "Y = A' + B'" with table columns [A, B, C] ❌
-- RIGHT: Expression "Y = A' + B' + C" with table columns [A, B, C] ✓
-- RIGHT: Expression "Y = A·B·C'" with table columns [A, B, C] ✓
-
-DO NOT HALLUCINATE. Verify before outputting.`
-    : `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ MATHEMATICAL VERIFICATION (MANDATORY)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-You MUST verify answers in "_reasoning" field:
-- Check all conversions and calculations manually.
-- Double-check positional powers (e.g. 2^0 = 1, 2^1 = 2, 2^2 = 4, 8^0 = 1, 8^1 = 8, 16^0 = 1, 16^1 = 16).
-- Ensure that subtraction borrows and addition carries are calculated correctly for binary arithmetic.
-- Verify complement calculations (1's complement = flip all bits; 2's complement = flip all bits and add 1).
-
-DO NOT HALLUCINATE. Verify before outputting.`;
+  const logicVerificationSection = getVerificationGuidelines(context.lessonId);
 
   const correctOptionRationaleDesc = `
-**For rationale (ALL OPTIONS):**
-- **Correct option**: 3-4 sentences minimum
-  - Sentence 1: State why it's correct
-  - Sentence 2: Show mathematical verification
-  - Sentence 3: Connect to underlying concept/rule
-  - Sentence 4: Optional - relate to common applications
-
-- **Incorrect options**: 2-3 sentences minimum
-  - Sentence 1: Identify the specific error or misconception
-  - Sentence 2: Explain what would be needed for this to be correct
-  - Sentence 3: Optional - show correct calculation for comparison`;
+**For rationale:**
+- **Correct option**: 1-2 clear sentences explaining why this answer is correct and verified.
+- **Incorrect options**: Optional 1 concise sentence noting the misconception, keeping responses fast and complete.`;
 
   return `
-You are a distinguished University Professor of Digital Logic and Boolean Algebra. Your task is to generate a focused, high-quality **10-question** assessment for a single lesson.
+You are a distinguished University Professor of Digital Logic and Computer Systems. Your task is to generate a focused, high-quality **${context.totalQuestions}-question** assessment exclusively for a single lesson.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 LESSON: ${context.lessonTitle} (Lesson ID: ${context.lessonId})
+🛑 STRICT LESSON EXCLUSIVITY MANDATE (HIGHEST PRIORITY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THIS ASSESSMENT IS EXCLUSIVELY FOR:
+🎯 LESSON ${context.lessonId}: "${context.lessonTitle}"
+
+You MUST generate questions that test ONLY the permitted concepts of Lesson ${context.lessonId} and its assigned topics:
+${context.topics.map((t) => `  • Topic ${t.topicId}: "${t.topicTitle}" (${t.questionCount} questions, ${t.difficulty.toUpperCase()} difficulty)`).join('\n')}
+
+DO NOT include, mention, or test ANY concepts, algorithms, operations, or formulas that belong to OTHER lessons!
+Under NO circumstances may you bleed into other lessons. Strictly adhere to these boundaries:
+
+${getLessonGuidelines(context.lessonId)}
 
 🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
-- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
-- "Medium": Requires combining 2 or more concepts or multi-step execution.
-- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting.
+- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps strictly within this lesson's scope. Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
+- "Medium": Requires combining 2 or more concepts or multi-step execution strictly within this lesson's scope.
+- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting strictly within this lesson's scope.
 
 🛑 STRICT OPTION UNIQUENESS & INTEGRITY CONSTRAINTS:
 - Each of the 4 choices generated must be completely distinct in both text and conceptual meaning. Under no circumstances may two options evaluate to or display the same value.
 - Distractors (incorrect choices) must be derived from common student misconceptions or logical slips related to the question, not random filler data.
 - The 'answerId' must point exclusively to the correct option that matches your 'solutionSteps'.
-
-${getLessonGuidelines(context.lessonId)}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 TOPIC-SPECIFIC REQUIREMENTS (MUST FOLLOW EXACTLY)
@@ -495,11 +594,14 @@ ${difficultyGuidelines}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ⚠️ CRITICAL RULES:
-1. **MATCH DIFFICULTY TO TOPIC**: Each question's difficulty MUST match the topic's assigned difficulty
-2. **EXACT QUESTION COUNT**: Generate exactly ${context.topics.map((t) => t.questionCount).join(' + ')} = ${context.totalQuestions} questions
-3. **CORRECT TOPIC IDs**: Each question must have the correct topicId from above
-4. **NO MEMORIZATION**: Use "Calculate", "Analyze", "Design", "Simplify" - NOT "Define" or "What is"
-5. **ONE CORRECT ANSWER**: Exactly one option must be correct with clear mathematical justification
+1. **STRICT EXCLUSIVITY**: Questions must ONLY cover Lesson ${context.lessonId} ("${context.lessonTitle}"). Zero questions from other lessons.
+2. **MATCH DIFFICULTY TO TOPIC**: Each question's difficulty MUST match the topic's assigned difficulty
+3. **EXACT QUESTION COUNT**: Generate exactly ${context.topics.map((t) => t.questionCount).join(' + ')} = ${context.totalQuestions} questions
+4. **CORRECT TOPIC IDs**: Each question must have the correct topicId from above (${context.topics.map((t) => t.topicId).join(', ')})
+5. **NO MEMORIZATION**: Use "Calculate", "Analyze", "Determine", "Evaluate", "Identify" - NOT "Define" or "What is"
+6. **ONE CORRECT ANSWER**: Exactly one option must be correct with clear mathematical/logical justification
+7. **NO LATEX NOTATION**: Do NOT use LaTeX math syntax like $2^i$, $(101100)_2$, or $n$. Instead write plain text: 2^i, 101100 (base 2), n. All question text, options, explanations, rationales, and solutionSteps MUST use plain readable text only. Never wrap anything in dollar signs ($).
+8. **RANDOMIZE CORRECT OPTION (A, B, C, D)**: The correct option MUST NOT always be B or A! Across the ${context.totalQuestions} questions, evenly distribute correct answers: roughly 2-3 questions with opt_a correct, 2-3 with opt_b, 2-3 with opt_c, and 2-3 with opt_d. Set answerId to match the correct option's id.
 
 ${visualFormatsSection}
 
@@ -516,8 +618,8 @@ ${logicVerificationSection}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Remember:
-${context.topics.map((t) => `- ${t.topicTitle}: ${t.questionCount} ${t.difficulty.toUpperCase()} questions`).join('\n')}
-Total: ${context.totalQuestions} questions in valid JSON array format.
+${context.topics.map((t) => `- ${t.topicTitle}: ${t.questionCount} ${t.difficulty.toUpperCase()} questions (Topic ID: ${t.topicId})`).join('\n')}
+Total: ${context.totalQuestions} questions strictly exclusive to Lesson ${context.lessonId}: "${context.lessonTitle}" in valid JSON array format.
 `;
 }
 
@@ -571,8 +673,15 @@ Return ONLY a valid JSON array. No markdown, no text before/after.
 You are a Digital Logic quiz generator. Generate a focused **${context.totalQuestions}-question** assessment.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 LESSON: ${context.lessonTitle} (Lesson ID: ${context.lessonId})
+🛑 STRICT LESSON EXCLUSIVITY MANDATE (HIGHEST PRIORITY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THIS ASSESSMENT IS EXCLUSIVELY FOR:
+🎯 LESSON ${context.lessonId}: "${context.lessonTitle}"
+
+You MUST generate questions that test ONLY the permitted concepts of Lesson ${context.lessonId} and its assigned topics:
+${context.topics.map((t) => `  • Topic ${t.topicId}: "${t.topicTitle}" (${t.questionCount} questions, ${t.difficulty.toUpperCase()} difficulty)`).join('\n')}
+
+DO NOT include or test ANY concepts, algorithms, operations, or formulas from OTHER lessons!
 
 ${getLessonGuidelines(context.lessonId)}
 
@@ -582,10 +691,13 @@ ${getLessonGuidelines(context.lessonId)}
 ${topicInstructions}
 
 ⚠️ CRITICAL RULES:
-1. NO VISUAL FORMATS (no circuits, no truth tables). Stems must be TEXT ONLY.
-2. Generate EXACTLY ${context.totalQuestions} questions.
-3. Only the correct option should have a "rationale" string.
-4. Return ONLY raw JSON array.
+1. STRICT EXCLUSIVITY: Questions must ONLY cover Lesson ${context.lessonId} ("${context.lessonTitle}"). Zero questions from other lessons.
+2. NO VISUAL FORMATS (no circuits, no truth tables). Stems must be TEXT ONLY.
+3. Generate EXACTLY ${context.totalQuestions} questions. The returned JSON array MUST have length ${context.totalQuestions}.
+4. Only the correct option should have a "rationale" string.
+5. Return ONLY raw JSON array.
+6. NO LATEX NOTATION: Do NOT use LaTeX like $2^i$ or $(101)_2$. Write plain text: 2^i, 101 (base 2).
+7. RANDOMIZE CORRECT OPTION (A, B, C, D): Evenly balance correct answers among opt_a, opt_b, opt_c, and opt_d across the questions. Do NOT make opt_b or opt_a always correct.
 
 ${outputFormatSection}
 `;

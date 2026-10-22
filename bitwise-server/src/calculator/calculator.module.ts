@@ -6,7 +6,7 @@ import { BinaryCodesService } from './binary-codes.service';
 import { CalculatorArithmeticService } from './calculator-arithmetic.service';
 import { CalculatorComplementService } from './calculator-complement.service';
 import { CalculatorSignedService } from './calculator-signed.service';
-import { PrismaModule } from 'prisma/prisma.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
@@ -28,4 +28,4 @@ import { PrismaModule } from 'prisma/prisma.module';
     CalculatorSignedService,
   ],
 })
-export class CalculatorModule {}
+export class CalculatorModule { }

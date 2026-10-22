@@ -10,7 +10,15 @@ interface AuthContextType {
   isAuthenticated: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const defaultAuthContext: AuthContextType = {
+  session: null,
+  user: null,
+  loading: false,
+  signOut: async () => {},
+  isAuthenticated: false,
+}
+
+const AuthContext = createContext<AuthContextType>(defaultAuthContext)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = useAuth()
@@ -24,8 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuthContext() {
   const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuthContext must be used within an AuthProvider')
-  }
-  return context
+  return context ?? defaultAuthContext
 }
+

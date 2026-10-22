@@ -1,7 +1,9 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { AdaptiveService, UserSkillWithTopic } from './adaptive.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('adaptive')
+@UseGuards(JwtAuthGuard)
 export class AdaptiveController {
   constructor(private adaptiveService: AdaptiveService) {}
 

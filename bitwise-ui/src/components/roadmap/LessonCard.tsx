@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { Lock } from 'lucide-react'
 import type { Lesson, LessonStatus } from './types'
 
 interface LessonCardProps {
@@ -16,10 +17,22 @@ export function LessonCard({
   lessonImage,
   onSelect,
 }: LessonCardProps) {
-  const { status, progress } = lessonStatus
+  const { status, progress, isLocked } = lessonStatus
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col">
+    <div 
+      className={`bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden transition-all duration-300 group flex flex-col relative ${
+        isLocked ? 'opacity-75 grayscale-[0.5]' : 'hover:shadow-lg'
+      }`}
+    >
+      {/* Lock Overlay for interactions */}
+      {isLocked && (
+        <div className="absolute inset-0 z-10 bg-gray-50/50 dark:bg-gray-900/50 cursor-not-allowed flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg text-gray-500">
+            <Lock className="w-6 h-6" />
+          </div>
+        </div>
+      )}
       {/* Card Header / Image */}
       <div
         className={`h-32 w-full relative overflow-hidden ${
@@ -84,15 +97,20 @@ export function LessonCard({
           <Progress value={progress} className="h-1.5" />
 
           <Button
-            onClick={() => onSelect(lesson)}
+            onClick={() => {
+              if (!isLocked) onSelect(lesson)
+            }}
             variant={status === 'completed' ? 'outline' : 'default'}
             className="w-full mt-2"
+            disabled={isLocked}
           >
-            {status === 'completed'
-              ? 'Review'
-              : status === 'in-progress'
-                ? 'Continue'
-                : 'Start'}
+            {isLocked
+              ? 'Locked'
+              : status === 'completed'
+                ? 'Review'
+                : status === 'in-progress'
+                  ? 'Continue'
+                  : 'Start'}
           </Button>
         </div>
       </div>

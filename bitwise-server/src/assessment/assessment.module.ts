@@ -5,7 +5,7 @@ import { AdaptiveModule } from '../adaptive/adaptive.module';
 import { AiQuizService } from './ai-quiz.service';
 import { EmaMasteryService } from './ema-mastery.service';
 import { LlmProviderService } from './llm-provider.service';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
   imports: [AdaptiveModule],
@@ -24,4 +24,4 @@ import { PrismaService } from 'prisma/prisma.service';
     LlmProviderService,
   ],
 })
-export class AssessmentModule {}
+export class AssessmentModule { }

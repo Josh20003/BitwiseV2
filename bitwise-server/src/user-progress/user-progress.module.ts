@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UserProgressController } from './user-progress.controller';
 import { UserProgressService } from './user-progress.service';
-import { PrismaModule } from 'prisma/prisma.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -10,4 +10,4 @@ import { AuthModule } from '../auth/auth.module';
   providers: [UserProgressService],
   exports: [UserProgressService],
 })
-export class UserProgressModule {}
+export class UserProgressModule { }

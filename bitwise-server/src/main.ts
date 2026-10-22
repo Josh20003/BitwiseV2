@@ -6,6 +6,7 @@ import {
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import helmet from '@fastify/helmet';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -16,6 +17,17 @@ async function bootstrap() {
       new FastifyAdapter(),
       { bufferLogs: true },
     );
+
+    await app.register(helmet, {
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`],
+          imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+          scriptSrc: [`'self'`, `https: 'unsafe-inline'`],
+        },
+      },
+    });
 
     const globalPrefix = process.env.GLOBAL_PREFIX ?? 'api';
     app.setGlobalPrefix(globalPrefix);

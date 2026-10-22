@@ -749,7 +749,7 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
 
     const renderInputControl = () => {
       switch (component.type) {
-        case 'SWITCH':
+        case 'SWITCH': {
           const isOn = component.outputs[0]?.value
           return (
             <div className="relative w-full h-full">
@@ -792,8 +792,9 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
               </svg>
             </div>
           )
+        }
 
-        case 'PUSH_BUTTON':
+        case 'PUSH_BUTTON': {
           const isPressed = component.outputs[0]?.value
           return (
             <div className="relative w-full h-full">
@@ -838,8 +839,9 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
               </svg>
             </div>
           )
+        }
 
-        case 'CLOCK':
+        case 'CLOCK': {
           const isClockHigh = component.outputs[0]?.value
           return (
             <div className="relative w-full h-full">
@@ -889,9 +891,10 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
               )}
             </div>
           )
+        }
 
         case 'HIGH_CONSTANT':
-        case 'LOW_CONSTANT':
+        case 'LOW_CONSTANT': {
           const constantValue =
             component.outputs?.[0]?.value ?? component.type === 'HIGH_CONSTANT'
           return (
@@ -952,6 +955,7 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
               </div>
             </div>
           )
+        }
 
         default:
           return (
@@ -989,7 +993,7 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
 
     const renderOutputControl = () => {
       switch (component.type) {
-        case 'LED':
+        case 'LED': {
           const isLit = component.inputs[0]?.value
           return (
             <div className="relative w-full h-full flex items-center justify-center">
@@ -1180,8 +1184,9 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
               )}
             </div>
           )
+        }
 
-        case 'SEVEN_SEGMENT':
+        case 'SEVEN_SEGMENT': {
           // 7-segment display with proper segment decoding
           // Inputs: [a, b, c, d, e, f, g] (7 segments)
           // Or: [BCD0, BCD1, BCD2, BCD3] for BCD mode (4 bits)
@@ -1368,8 +1373,9 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
               </svg>
             </div>
           )
+        }
 
-        case 'DIGITAL_DISPLAY':
+        case 'DIGITAL_DISPLAY': {
           // Calculate decimal value from binary inputs (MSB first)
           const binaryValue =
             component.inputs.length > 0
@@ -1474,6 +1480,7 @@ export const ComponentRenderer: React.FC<ComponentRendererProps> = React.memo(
               </svg>
             </div>
           )
+        }
 
         default:
           return (

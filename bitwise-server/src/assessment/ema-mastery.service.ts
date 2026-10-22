@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class EmaMasteryService {
   private readonly ALPHA = 0.3; // Weight of the new score
   private readonly BETA = 0.7; // Weight of the historical EMA
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Processes a new quiz score and updates the user's EMA mastery level for a specific topic.

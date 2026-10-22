@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateText } from 'ai';
+import { AI_CONFIG, createGoogleProvider } from '../config/ai.config';
+import { cleanLatexNotation } from './assessment.service';
 
 export interface QuizQuestion {
   id: string;
@@ -20,7 +22,7 @@ export class AiQuizService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * Generates a 10-item adaptive quiz based on the user's EMA mastery.
@@ -62,10 +64,14 @@ export class AiQuizService {
     medium: number,
     hard: number,
   ): Promise<QuizQuestion[]> {
-    const googleApiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
+    const validKeys = AI_CONFIG.assessmentApiKeys.filter((key) =>
+      key.startsWith('AIza'),
+    );
 
-    if (!googleApiKey) {
-      this.logger.warn('No GOOGLE_AI_API_KEY found, using fallback questions.');
+    if (validKeys.length === 0) {
+      this.logger.warn(
+        'Valid GOOGLE_AI_API_KEY for assessment not found, using fallback questions.',
+      );
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
 
@@ -140,11 +146,12 @@ STRICT SCOPE BOUNDARIES:
 3. Verify Knowledge, Not Trivia: Generate specific questions that test application or recall of the permitted concepts. Do not ask meta-questions (e.g., "What did we learn in Lesson 8?").
 4. Options: Create exactly 4 plausible options. The incorrect options must be common mistakes related ONLY to the permitted scope. Never include labels like "Option A" or "(Correct)" in the text.
 5. Output format: Return STRICTLY as a raw JSON object matching the exact schema below. No markdown formatting, backticks, or conversational text.
+6. NO LATEX NOTATION: Do NOT use LaTeX math syntax like $2^i$, $(101)_2$, or $n$. Write plain text instead: 2^i, 101 (base 2), n. Never wrap text in dollar signs ($).
 
 🎓 TARGET COLLEGE-LEVEL DIFFICULTY ("College-Level Engineering/Computer Science" persona):
-- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps (e.g., standard binary subtraction, basic truth table evaluation). Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
-- "Medium": Requires combining 2 or more concepts or multi-step execution.
-- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting.
+- "Easy": Accessible to a first-year university student. Requires understanding a single foundational concept and executing 1-2 basic steps strictly within the permitted scope. Absolutely no trivia, no-brainers, or definitions that can be answered without conceptual application.
+- "Medium": Requires combining 2 or more concepts or multi-step execution strictly within the permitted scope.
+- "Hard": Requires edge-case handling, complex optimization, or deep analytical troubleshooting strictly within the permitted scope.
 
 🛑 STRICT OPTION UNIQUENESS & INTEGRITY CONSTRAINTS:
 - Each of the 4 choices generated must be completely distinct in both text and conceptual meaning. Under no circumstances may two options evaluate to or display the same value.
@@ -186,77 +193,94 @@ ${syllabus.exclusion}
 
 Ensure the questions strictly honor these boundaries and return the exact JSON array format requested in the system prompt.`;
 
-    try {
-      const google = createGoogleGenerativeAI({ apiKey: googleApiKey });
-      let text = '';
+    let parsed: any = null;
 
+    for (const apiKey of validKeys) {
       try {
-        this.logger.log(`Attempting to generate quiz with gemini-3.6-flash...`);
+        const google = createGoogleProvider(apiKey);
+        this.logger.log(
+          `Attempting to generate quiz with ${AI_CONFIG.modelName}...`,
+        );
+
         const result = await (generateText as any)({
-          model: google('gemini-3.6-flash'),
+          model: google(AI_CONFIG.modelName),
           system: systemPrompt,
           prompt: userPrompt,
           maxTokens: 4096,
           temperature: 0.7,
         });
-        text = result.text;
-      } catch (primaryError: any) {
-        this.logger.error(
-          `gemini-3.6-flash failed: ${primaryError.message}. No fallback configured.`,
+
+        const text = result.text;
+        this.logger.log(`Google AI response received, parsing JSON...`);
+
+        // Extract JSON array from response (handles any surrounding text)
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) {
+          this.logger.error(
+            `No JSON array found in response. Trying next key if available.`,
+          );
+          continue;
+        }
+
+        parsed = JSON.parse(jsonMatch[0]);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          this.logger.error(
+            'Parsed result is not a valid array. Trying next key if available.',
+          );
+          parsed = null;
+          continue;
+        }
+
+        // Success!
+        break;
+      } catch (error: any) {
+        this.logger.warn(
+          `API call failed with key ending in ...${apiKey.slice(-4)}. Trying next key if available. Error: ${error.message}`,
         );
-        throw primaryError;
+        continue;
       }
+    }
 
-      this.logger.log(`Google AI response received, parsing JSON...`);
-
-      // Extract JSON array from response (handles any surrounding text)
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        this.logger.error(
-          `No JSON array found in Google AI response. Response: ${text.substring(0, 500)}`,
-        );
-        return this.generateFallbackQuestions(topic, easy, medium, hard);
-      }
-
-      const parsed: Array<{
-        question: string;
-        options: string[];
-        correctOptionIndex: number;
-        stepByStepDerivation: string;
-      }> = JSON.parse(jsonMatch[0]);
-
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        this.logger.error('Parsed result is not a valid array');
-        return this.generateFallbackQuestions(topic, easy, medium, hard);
-      }
-
-      const questions: QuizQuestion[] = parsed.map((q, i) => {
-        const idx =
-          typeof q.correctOptionIndex === 'number' &&
-          q.correctOptionIndex >= 0 &&
-          q.correctOptionIndex <= 3
-            ? q.correctOptionIndex
-            : 0;
-        return {
-          id: `q-${Date.now()}-${i}`,
-          topic,
-          question: q.question,
-          options: q.options,
-          correctAnswer: q.options[idx],
-          explanation: q.stepByStepDerivation,
-        };
-      });
-
-      this.logger.log(
-        `Successfully generated ${questions.length} AI questions for topic "${topic}"`,
-      );
-      return questions;
-    } catch (error: any) {
+    if (!parsed) {
       this.logger.error(
-        `Google AI API failed for topic "${topic}": ${error.message}`,
+        `All API keys failed or returned invalid JSON for topic "${topic}". Using fallback questions.`,
       );
       return this.generateFallbackQuestions(topic, easy, medium, hard);
     }
+
+    const questions: QuizQuestion[] = parsed.map((q: any, i: number) => {
+      const idx =
+        typeof q.correctOptionIndex === 'number' &&
+          q.correctOptionIndex >= 0 &&
+          q.correctOptionIndex <= 3
+          ? q.correctOptionIndex
+          : 0;
+      const cleanedOptions = (q.options || []).map((opt: string) =>
+        cleanLatexNotation(opt),
+      );
+      const correctAnswer = cleanedOptions[idx] || '';
+
+      // Randomize option order so correct answers are balanced across A, B, C, D
+      const shuffled = [...cleanedOptions];
+      for (let s = shuffled.length - 1; s > 0; s--) {
+        const j = Math.floor(Math.random() * (s + 1));
+        [shuffled[s], shuffled[j]] = [shuffled[j], shuffled[s]];
+      }
+
+      return {
+        id: `q-${Date.now()}-${i}`,
+        topic,
+        question: cleanLatexNotation(q.question),
+        options: shuffled,
+        correctAnswer: correctAnswer,
+        explanation: cleanLatexNotation(q.stepByStepDerivation || q.explanation || ''),
+      };
+    });
+
+    this.logger.log(
+      `Successfully generated ${questions.length} AI questions for topic "${topic}"`,
+    );
+    return questions;
   }
 
   private generateFallbackQuestions(
