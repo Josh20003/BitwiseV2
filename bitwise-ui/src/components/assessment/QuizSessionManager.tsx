@@ -656,30 +656,33 @@ export function QuizSessionManager({
             })}
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-            <Button
-              variant={isPassed ? "outline" : "default"}
-              onClick={() => setQuizState('IDLE')}
-              className={`gap-2 font-medium ${!isPassed ? 'bg-purple-600 hover:bg-purple-700 text-white font-semibold' : ''}`}
-            >
-              <RotateCcw className="w-4 h-4" />
-              {isPassed ? 'Take Again' : 'Try Again to Pass (80%)'}
-            </Button>
+          <div className="flex flex-col items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800 max-w-md mx-auto w-full">
             {nextLessonId && isPassed && (
-              <Link to="/lesson/$lessonId" params={{ lessonId: String(nextLessonId) }} search={{ topicId: undefined }}>
-                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full font-semibold">
+              <Link to="/lesson/$lessonId" params={{ lessonId: String(nextLessonId) }} search={{ topicId: undefined }} className="w-full">
+                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white w-full font-semibold h-11">
                   Continue to Lesson {nextLessonId}
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </Link>
             )}
+
             {nextLessonId && !isPassed && (
-              <Button disabled variant="outline" className="gap-2 opacity-50 cursor-not-allowed w-full">
+              <Button disabled variant="outline" className="gap-2 opacity-60 cursor-not-allowed w-full h-11 border-dashed">
                 <Lock className="w-4 h-4" />
                 Lesson {nextLessonId} Locked (Requires 80%)
               </Button>
             )}
-            <Link to="/roadmap">
+
+            <Button
+              variant={isPassed ? "outline" : "default"}
+              onClick={() => setQuizState('IDLE')}
+              className={`gap-2 font-medium w-full h-11 ${!isPassed ? 'bg-purple-600 hover:bg-purple-700 text-white font-semibold' : ''}`}
+            >
+              <RotateCcw className="w-4 h-4" />
+              {isPassed ? 'Take Again' : 'Try Again to Pass (80%)'}
+            </Button>
+
+            <Link to="/roadmap" className="w-full">
               <Button variant="ghost" className="gap-2 text-muted-foreground w-full">
                 <LayoutDashboard className="w-4 h-4" />
                 Back to Dashboard
