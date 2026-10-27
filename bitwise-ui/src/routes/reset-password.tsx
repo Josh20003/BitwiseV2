@@ -69,65 +69,118 @@ function ResetPasswordForm({ className, ...props }: React.ComponentProps<'div'>)
   const updatePasswordMutation = useUpdatePassword()
   const navigate = useNavigate()
   const [checkingSession, setCheckingSession] = useState(true)
+  const [isInvalidLink, setIsInvalidLink] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     let isMounted = true
 
-    // 1. Check for error parameters in URL hash or search params
-    const hash = window.location.hash || ''
-    const search = window.location.search || ''
-    const hashParams = new URLSearchParams(hash.replace(/^#/, ''))
-    const searchParams = new URLSearchParams(search)
+    const initRecoverySession = async () => {
+      // 1. Check for error parameters in URL hash or search params
+      const hash = window.location.hash || ''
+      const search = window.location.search || ''
+      const hashParams = new URLSearchParams(hash.replace(/^#/, ''))
+      const searchParams = new URLSearchParams(search)
 
-    const errorCode = hashParams.get('error_code') || searchParams.get('error_code')
-    const errorDescription =
-      hashParams.get('error_description') || searchParams.get('error_description')
+      const errorCode = hashParams.get('error_code') || searchParams.get('error_code')
+      const errorDescription =
+        hashParams.get('error_description') || searchParams.get('error_description')
 
-    if (errorCode || errorDescription) {
-      const msg = errorDescription
-        ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
-        : 'The password reset link is invalid or has expired. Please request a new one.'
-      toast.error(msg)
-      navigate({ to: '/forgot-password' })
-      return
+      if (errorCode || errorDescription) {
+        const msg = errorDescription
+          ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
+          : 'The password reset link is invalid or has expired.'
+        if (isMounted) {
+          setErrorMsg(msg)
+          setIsInvalidLink(true)
+          setCheckingSession(false)
+        }
+        return
+      }
+
+      // 2. If access_token and refresh_token are in the hash, set session directly
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      if (accessToken) {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          })
+          if (data?.session && isMounted) {
+            setCheckingSession(false)
+            return
+          }
+          if (error && isMounted) {
+            console.warn('Failed to set session from recovery hash:', error.message)
+          }
+        } catch (e) {
+          console.warn('Error setting session from recovery hash:', e)
+        }
+      }
+
+      // 3. If code is in search query (PKCE flow), exchange code
+      const code = searchParams.get('code')
+      if (code) {
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+          if (data?.session && isMounted) {
+            setCheckingSession(false)
+            return
+          }
+          if (error && isMounted) {
+            console.warn('Failed to exchange recovery code:', error.message)
+          }
+        } catch (e) {
+          console.warn('Error exchanging recovery code:', e)
+        }
+      }
+
+      // 4. Check if a session already exists
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session && isMounted) {
+        setCheckingSession(false)
+        return
+      }
+
+      // 5. Brief grace period for background auth changes
+      const timer = setTimeout(async () => {
+        const { data: { session: retrySession } } = await supabase.auth.getSession()
+        if (isMounted) {
+          if (retrySession) {
+            setCheckingSession(false)
+          } else {
+            setIsInvalidLink(true)
+            setErrorMsg('No active password recovery session. Please use the link sent to your email or request a new one.')
+            setCheckingSession(false)
+          }
+        }
+      }, 1500)
+
+      return () => clearTimeout(timer)
     }
 
-    // 2. Listen for Supabase auth state change (PASSWORD_RECOVERY event)
+    // Subscribe to auth state change (PASSWORD_RECOVERY event)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY' || (session && event === 'SIGNED_IN')) {
-        if (isMounted) setCheckingSession(false)
+        if (isMounted) {
+          setIsInvalidLink(false)
+          setCheckingSession(false)
+        }
       }
     })
 
-    // 3. Check for existing session with a grace period for hash parsing
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        if (isMounted) setCheckingSession(false)
-      } else {
-        const timer = setTimeout(() => {
-          supabase.auth.getSession().then(({ data: { session: retrySession } }) => {
-            if (!retrySession && isMounted) {
-              toast.error('Invalid or expired reset link. Please request a new one.')
-              navigate({ to: '/forgot-password' })
-            } else if (isMounted) {
-              setCheckingSession(false)
-            }
-          })
-        }, 1500)
-
-        return () => clearTimeout(timer)
-      }
-    })
+    void initRecoverySession()
 
     return () => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [navigate])
+  }, [])
 
   const {
     register,
@@ -153,8 +206,35 @@ function ResetPasswordForm({ className, ...props }: React.ComponentProps<'div'>)
 
   if (checkingSession) {
     return (
-      <div className="flex justify-center p-8">
+      <div className="flex flex-col items-center justify-center p-8 gap-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="text-sm text-muted-foreground">Verifying password reset link...</p>
+      </div>
+    )
+  }
+
+  if (isInvalidLink) {
+    return (
+      <div className={cn('flex flex-col items-center gap-6 text-center p-6 bg-card border rounded-2xl shadow-sm', className)} {...props}>
+        <div className="flex size-12 items-center justify-center rounded-md mb-2">
+          <img src={logoArrow} alt="bitwise logo" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-bold">Password Reset Link Expired</h2>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            {errorMsg || 'This password reset link is invalid, expired, or has already been used.'}
+          </p>
+        </div>
+        <div className="flex flex-col w-full gap-3">
+          <Link to="/forgot-password" className="w-full">
+            <Button variant="bluez" className="w-full">
+              Request a New Reset Link
+            </Button>
+          </Link>
+          <Link to="/login" className="text-sm text-muted-foreground hover:underline">
+            Back to Login
+          </Link>
+        </div>
       </div>
     )
   }
