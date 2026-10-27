@@ -83,7 +83,7 @@ function ForgotPasswordForm({ className, ...props }: React.ComponentProps<'div'>
     resetPasswordMutation.mutate(data.email, {
       onSuccess: () => {
         setSubmittedEmail(data.email)
-        setCooldown(30)
+        setCooldown(60)
       },
     })
   }
@@ -92,7 +92,7 @@ function ForgotPasswordForm({ className, ...props }: React.ComponentProps<'div'>
     if (!submittedEmail || cooldown > 0 || resetPasswordMutation.isPending) return
     resetPasswordMutation.mutate(submittedEmail, {
       onSuccess: () => {
-        setCooldown(30)
+        setCooldown(60)
       },
     })
   }
