@@ -73,14 +73,60 @@ function ResetPasswordForm({ className, ...props }: React.ComponentProps<'div'>)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        toast.error('Invalid or expired reset link. Please try again.')
-        navigate({ to: '/forgot-password' })
-      } else {
-        setCheckingSession(false)
+    let isMounted = true
+
+    // 1. Check for error parameters in URL hash or search params
+    const hash = window.location.hash || ''
+    const search = window.location.search || ''
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ''))
+    const searchParams = new URLSearchParams(search)
+
+    const errorCode = hashParams.get('error_code') || searchParams.get('error_code')
+    const errorDescription =
+      hashParams.get('error_description') || searchParams.get('error_description')
+
+    if (errorCode || errorDescription) {
+      const msg = errorDescription
+        ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
+        : 'The password reset link is invalid or has expired. Please request a new one.'
+      toast.error(msg)
+      navigate({ to: '/forgot-password' })
+      return
+    }
+
+    // 2. Listen for Supabase auth state change (PASSWORD_RECOVERY event)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (session && event === 'SIGNED_IN')) {
+        if (isMounted) setCheckingSession(false)
       }
     })
+
+    // 3. Check for existing session with a grace period for hash parsing
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        if (isMounted) setCheckingSession(false)
+      } else {
+        const timer = setTimeout(() => {
+          supabase.auth.getSession().then(({ data: { session: retrySession } }) => {
+            if (!retrySession && isMounted) {
+              toast.error('Invalid or expired reset link. Please request a new one.')
+              navigate({ to: '/forgot-password' })
+            } else if (isMounted) {
+              setCheckingSession(false)
+            }
+          })
+        }, 1500)
+
+        return () => clearTimeout(timer)
+      }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [navigate])
 
   const {
@@ -94,7 +140,12 @@ function ResetPasswordForm({ className, ...props }: React.ComponentProps<'div'>)
   const onSubmit = (data: z.infer<typeof resetPasswordSchema>) => {
     updatePasswordMutation.mutate(data.password, {
       onSuccess: async () => {
-        await authService.signOut()
+        try {
+          await authService.signOut()
+        } catch {
+          // ignore signout errors
+        }
+        toast.success('Password updated successfully! Please sign in with your new password.')
         navigate({ to: '/login' })
       },
     })

@@ -59,9 +59,23 @@ export function formatAuthError(error: any): string {
   return message
 }
 
+function getAppBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location.origin) {
+    if (!window.location.origin.includes('localhost')) {
+      return window.location.origin
+    }
+    const envUrl = import.meta.env.VITE_PUBLIC_APP_URL
+    if (envUrl && !envUrl.includes('localhost')) {
+      return envUrl.replace(/\/+$/, '')
+    }
+    return window.location.origin
+  }
+  return (import.meta.env.VITE_PUBLIC_APP_URL || 'https://bitwise-ui.vercel.app').replace(/\/+$/, '')
+}
+
 export const authService = {
   async signUp(credentials: AuthCredentials): Promise<AuthResponse> {
-    const redirectUrl = `${import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin}/login`
+    const redirectUrl = `${getAppBaseUrl()}/login`
     const { data, error } = await supabase.auth.signUp({
       email: credentials.email,
       password: credentials.password!,
@@ -80,7 +94,7 @@ export const authService = {
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: window.location.origin + '/',
+        emailRedirectTo: `${getAppBaseUrl()}/login`,
       },
     })
 
@@ -113,7 +127,7 @@ export const authService = {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/profile`,
+        emailRedirectTo: `${getAppBaseUrl()}/profile`,
       },
     })
 
@@ -131,7 +145,7 @@ export const authService = {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/',
+        redirectTo: `${getAppBaseUrl()}/`,
       },
     })
 
@@ -140,7 +154,7 @@ export const authService = {
 
   async resetPassword(email: string): Promise<void> {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${getAppBaseUrl()}/reset-password`,
     })
     if (error) throw new Error(formatAuthError(error))
   },
