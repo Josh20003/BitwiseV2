@@ -15,6 +15,7 @@ export class LlmProviderService {
       temperature?: number;
       topP?: number;
       maxOutputTokens?: number;
+      timeoutMs?: number;
     },
   ): Promise<string> {
     const temp = options?.temperature ?? AI_CONFIG.temperature;
@@ -25,8 +26,12 @@ export class LlmProviderService {
       throw new Error('Valid GOOGLE_AI_API_KEY for assessment not found.');
     }
 
-    // Try each valid key until one succeeds
+    // Key rotation and SDK retries must share one deadline, not multiply it.
+    const budgetMs = Math.max(1, Math.min(options?.timeoutMs ?? 15000, 20000));
+    const deadline = Date.now() + budgetMs;
     for (const apiKey of validKeys) {
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) break;
       try {
         const google = createGoogleProvider(apiKey);
         this.logger.log(
@@ -38,6 +43,8 @@ export class LlmProviderService {
           temperature: temp,
           topP: topP,
           maxOutputTokens: options?.maxOutputTokens ?? 8192,
+          maxRetries: 0,
+          abortSignal: AbortSignal.timeout(remainingMs),
         });
         return primaryResult.text;
       } catch (primaryError: any) {

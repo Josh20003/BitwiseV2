@@ -16,6 +16,7 @@ import {
 import { jsonrepair } from 'jsonrepair';
 import { AI_CONFIG, createGoogleProvider } from '../config/ai.config';
 import { LlmProviderService } from './llm-provider.service';
+import { buildLocalLessonQuestions } from './lesson-quiz-fallback';
 
 /**
  * Strips raw LaTeX math notation and converts subscripts/superscripts to clean Unicode.
@@ -923,6 +924,7 @@ export class AssessmentService {
           );
           const text = await this.llmProvider.generateStrict(generationPrompt, {
             maxOutputTokens: 8192,
+            timeoutMs: Math.max(1, generationDeadline - Date.now()),
           });
           return await this.extractJsonArray(text);
         } catch (err) {
@@ -931,10 +933,15 @@ export class AssessmentService {
         }
       };
 
+      const generationDeadline = Date.now() + 20000;
+      let generationSource: 'ai' | 'built-in' = 'ai';
       let questions = await requestQuestions(prompt);
 
       // If attempt 1 returned fewer than 10 questions, request fallback to guarantee 10 questions
-      if (!Array.isArray(questions) || questions.length < 10) {
+      if (
+        (!Array.isArray(questions) || questions.length < 10) &&
+        Date.now() < generationDeadline
+      ) {
         console.warn(
           `Attempt 1 returned ${questions?.length ?? 0} questions (10 required). Requesting fallback to reach 10 questions...`,
         );
@@ -955,20 +962,14 @@ export class AssessmentService {
       // Validate and clean questions
       if (!Array.isArray(questions)) {
         console.error(
-          'AI generated non-array response or failed parsing, retrying...',
+          'AI generation failed; using built-in lesson questions.',
         );
-        questions = await requestQuestions(
-          buildFallbackLessonQuizPrompt(promptContext),
-          2,
-        );
-
-        if (!Array.isArray(questions)) {
-          throw new Error('Failed to generate valid questions array');
-        }
+        questions = buildLocalLessonQuestions(promptContext);
+        generationSource = 'built-in';
       }
 
       // Process and validate each question
-      const validQuestions = questions
+      let validQuestions = questions
         .map((q: any, index: number) => {
           // Ensure options exist and is an array
           if (!Array.isArray(q.options) || q.options.length < 3) {
@@ -1182,10 +1183,13 @@ export class AssessmentService {
         `Generated ${validQuestions.length} valid questions out of ${questions.length}`,
       );
 
-      if (validQuestions.length < 8) {
-        throw new Error(
-          `Only ${validQuestions.length} valid questions generated, minimum 8 required`,
-        );
+      if (validQuestions.length < 10) {
+        // Do not save incomplete attempts or issue another unbounded provider call.
+        validQuestions = buildLocalLessonQuestions(promptContext).map(q => {
+          const { shuffledOptions, correctOptionId } = shuffleAndReassignOptions(q.options);
+          return { ...q, options: shuffledOptions, answerId: correctOptionId };
+        });
+        generationSource = 'built-in';
       }
 
       // Take exactly 10 questions (or all if less)
@@ -1204,6 +1208,7 @@ export class AssessmentService {
           performance: {
             lessonId,
             lessonTitle: lesson.title,
+            generationSource,
             overallMastery: averageMastery, // Add overall mastery for display
             recommendedDifficulty: getDifficultyFromMastery(averageMastery), // Add difficulty label
             topicDistribution: topicsForPrompt.map((t) => ({
@@ -1224,6 +1229,7 @@ export class AssessmentService {
       return {
         attemptId: attempt.id,
         questions: finalQuestions,
+        generationSource,
         lessonInfo: {
           lessonId: lesson.id,
           lessonTitle: lesson.title,

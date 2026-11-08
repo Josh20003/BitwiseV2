@@ -257,6 +257,7 @@ export function QuizSessionManager({
   const [error, setError] = useState<string | null>(null);
   const [submittedQuestion, setSubmittedQuestion] = useState<string | null>(null);
   const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [usingBuiltInQuestions, setUsingBuiltInQuestions] = useState(false);
   const [lessonInfo, setLessonInfo] = useState<{
     lessonId: number;
     lessonTitle: string;
@@ -284,6 +285,7 @@ export function QuizSessionManager({
   const startQuiz = async () => {
     setLoading(true);
     setError(null);
+    setUsingBuiltInQuestions(false);
     try {
       if (lessonId) {
         // Use the premium lesson practice route (with BKT + visuals)
@@ -292,7 +294,7 @@ export function QuizSessionManager({
           method: 'POST',
           headers,
           body: JSON.stringify({ uid: userId, lessonId }),
-          signal: AbortSignal.timeout(120000),
+          signal: AbortSignal.timeout(45000),
         });
         const data = await res.json().catch(() => ({ success: false, error: `Server returned HTTP ${res.status}` }));
         if (!res.ok) {
@@ -302,6 +304,7 @@ export function QuizSessionManager({
         if (data.success && data.data && data.data.questions?.length > 0) {
           setQuestions(data.data.questions);
           setAttemptId(data.data.attemptId);
+          setUsingBuiltInQuestions(data.data.generationSource === 'built-in');
           if (data.data.lessonInfo) {
             setLessonInfo(data.data.lessonInfo);
           }
@@ -338,7 +341,9 @@ export function QuizSessionManager({
         }
       }
     } catch (e: any) {
-      setError(e.name === 'TimeoutError' ? 'Quiz generation timed out. Please try again.' : (e.message || 'Failed to connect to server.'));
+      setError(e.name === 'TimeoutError'
+        ? 'Quiz generation timed out. Please try again.'
+        : 'Unable to reach the quiz service. Please check your connection and try again.');
       console.error(e);
     } finally {
       setLoading(false);
@@ -729,6 +734,11 @@ export function QuizSessionManager({
               <Brain className="w-8 h-8 text-purple-600 dark:text-purple-400" />
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Adaptive Assessment</h2>
             </div>
+            {usingBuiltInQuestions && (
+              <p className="mb-3 text-sm text-muted-foreground" role="status">
+                Using built-in practice questions while AI generation is unavailable.
+              </p>
+            )}
             <div className="flex items-center gap-3">
               <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 text-sm font-semibold capitalize">
                 {currentQ.difficulty || 'Easy'}
