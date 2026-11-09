@@ -43,6 +43,7 @@ export class LlmProviderService {
           temperature: temp,
           topP: topP,
           maxOutputTokens: options?.maxOutputTokens ?? 8192,
+          providerOptions: {google: {thinkingConfig: {thinkingBudget: 0}}},
           maxRetries: 0,
           abortSignal: AbortSignal.timeout(remainingMs),
         });

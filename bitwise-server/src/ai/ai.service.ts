@@ -199,6 +199,7 @@ export class AiService {
           temperature: AI_CONFIG.temperature,
           topP: AI_CONFIG.topP,
           maxOutputTokens: 2048,
+          providerOptions: {google: {thinkingConfig: {thinkingBudget: 0}}},
         });
         return result.text;
       } catch (error: any) {
@@ -408,6 +409,7 @@ RULES:
           temperature: 0.3,
           topP: 0.9,
           maxOutputTokens: 2048,
+          providerOptions: {google: {thinkingConfig: {thinkingBudget: 0}}},
         });
         return cleanLatexNotation(result.text);
       } catch (error: any) {
