@@ -589,7 +589,7 @@ const NumberSystemComplementExplorer = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white">✓</div>
-                <span className="text-gray-300">This means <span className="font-mono text-purple-300">-{value}</span> in signed 8-bit representation</span>
+                <span className="text-gray-300">This means <span className="font-mono text-purple-300">{twosValue >= 128 ? twosValue - 256 : twosValue}</span> in signed 8-bit representation (negation modulo 256)</span>
               </div>
             </>
           )}
