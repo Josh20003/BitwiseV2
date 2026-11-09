@@ -99,6 +99,14 @@ export function RadarChartDashboard({ userId }: { userId: string }) {
             </RadarChart>
           </ResponsiveContainer>
         </div>
+        <dl aria-label="Mastery scores" className="mt-4 grid grid-cols-2 gap-3 text-sm">
+          {data.map(item => (
+            <div key={item.subject} className="flex justify-between gap-2">
+              <dt className="text-muted-foreground">{item.subject}</dt>
+              <dd className="font-medium">{item.A}%</dd>
+            </div>
+          ))}
+        </dl>
         <div className="mt-4 flex justify-between text-xs text-muted-foreground">
           <span>Outer Edge = Mastery</span>
           <span>Center = Beginner</span>
