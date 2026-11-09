@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { RecordOwnerGuard } from '../auth/guards/record-owner.guard';
 import { AdaptiveController } from './adaptive.controller';
 import { AdaptiveService } from './adaptive.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,6 +18,8 @@ describe('AdaptiveController', () => {
       ],
     })
       .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RecordOwnerGuard)
       .useValue({ canActivate: () => true })
       .compile();
 

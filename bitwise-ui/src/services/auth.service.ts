@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase'
+import { supabase, SUPABASE_AUTH_STORAGE_KEY } from '../utils/supabase'
 import { apiService } from './api.service'
 
 export interface AuthCredentials {
@@ -135,10 +135,21 @@ export const authService = {
   },
 
   async signOut(): Promise<void> {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw new Error(error.message)
-
-    apiService.setAuthToken(null)
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      if (error && error.name !== 'AuthSessionMissingError') {
+        console.warn('Remote sign-out could not be confirmed; clearing this browser session.')
+      }
+    } finally {
+      apiService.setAuthToken(null)
+      // Only this project's persisted session/PKCE data, never unrelated storage.
+      try {
+        localStorage.removeItem(SUPABASE_AUTH_STORAGE_KEY)
+        localStorage.removeItem(`${SUPABASE_AUTH_STORAGE_KEY}-code-verifier`)
+      } finally {
+        window.dispatchEvent(new Event('bitwise:signed-out'))
+      }
+    }
   },
 
   async signInWithGoogle(): Promise<void> {

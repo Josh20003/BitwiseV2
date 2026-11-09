@@ -6,6 +6,7 @@ const { ValidationPipe } = require('@nestjs/common');
 
 const server = express();
 let cachedApp;
+let bootstrapPromise;
 
 async function bootstrap() {
     if (cachedApp) return cachedApp;
@@ -38,6 +39,13 @@ async function bootstrap() {
 }
 
 module.exports = async function handler(req, res) {
-    await bootstrap();
+    // Concurrent cold-start requests share a single initialization and pool.
+    if (!bootstrapPromise) {
+        bootstrapPromise = bootstrap().catch(error => {
+            bootstrapPromise = undefined;
+            throw error;
+        });
+    }
+    await bootstrapPromise;
     server(req, res);
 };

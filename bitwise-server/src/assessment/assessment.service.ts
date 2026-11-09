@@ -1256,6 +1256,7 @@ export class AssessmentService {
       where: { id: attemptId },
     });
     if (!attempt) throw new Error('Attempt not found');
+    if (attempt.responses !== null) throw new Error('This attempt has already been submitted');
 
     const questions = attempt.questions as any[];
 

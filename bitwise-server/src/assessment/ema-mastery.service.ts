@@ -15,6 +15,7 @@ export class EmaMasteryService {
    * @param newScore The new quiz score (normalized 0.0 to 1.0)
    */
   async processScore(userId: string, topic: string, newScore: number) {
+    if (!Number.isFinite(newScore) || newScore < 0 || newScore > 1) throw new Error('Score must be a normalized number from 0 to 1');
     // Ensure score is between 0 and 1
     const normalizedScore = Math.max(0, Math.min(1, newScore));
 

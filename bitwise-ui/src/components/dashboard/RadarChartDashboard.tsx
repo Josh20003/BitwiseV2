@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { apiService } from '@/services/api.service';
 
 interface MasteryData {
   topic: string;
@@ -8,24 +9,31 @@ interface MasteryData {
 }
 
 export function RadarChartDashboard({ userId }: { userId: string }) {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<{ subject: string; A: number; fullMark: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // Map of internal topic IDs to display names
   const topicMap: Record<string, string> = {
     'boolean-algebra': 'Boolean Algebra',
-    'number-conversions': 'Number Conversions',
+    'number-systems': 'Number Systems',
     'binary-arithmetic': 'Binary Arithmetic',
     'complements': 'Complements',
-    'binary-codes': 'Binary Codes'
+    'binary-codes': 'Binary Codes',
+    'logic-gates': 'Logic Gates',
   };
 
   useEffect(() => {
-    if (!userId) return;
+    let active = true;
+    setLoading(true);
+    setError('');
+    setData([]);
+    if (!userId) { setLoading(false); return; }
 
-    fetch(`/api/assessment/mastery/${userId}`)
-      .then(res => res.json())
+    apiService.get<{success: boolean; data: MasteryData[]; error?: string}>(`/assessment/mastery/${encodeURIComponent(userId)}`, true)
       .then(resData => {
+        if (!active) return;
+        if (!resData.success || !Array.isArray(resData.data)) throw new Error(resData.error || 'Mastery data is unavailable');
         if (resData.success) {
           // Format data for Recharts
           // Default all topics to 0
@@ -37,19 +45,23 @@ export function RadarChartDashboard({ userId }: { userId: string }) {
 
           // Merge fetched data
           resData.data.forEach((item: MasteryData) => {
-            const displayTopic = topicMap[item.topic] || item.topic;
+            const key = item.topic === 'number-conversions' ? 'number-systems' : item.topic;
+            const displayTopic = topicMap[key] || key.replace(/-/g, ' ');
             const dataRow = formattedData.find(d => d.subject === displayTopic);
             if (dataRow) {
               // Convert EMA 0.0-1.0 to 0-100 scale for better visualization
-              dataRow.A = Math.round(item.currentEMA * 100);
+              dataRow.A = Math.round(Math.max(0, Math.min(1, Number(item.currentEMA) || 0)) * 100);
+            } else {
+              formattedData.push({subject: displayTopic, A: Math.round(Math.max(0, Math.min(1, Number(item.currentEMA) || 0)) * 100), fullMark: 100});
             }
           });
 
           setData(formattedData);
         }
       })
-      .catch(err => console.error("Error fetching mastery data:", err))
-      .finally(() => setLoading(false));
+      .catch(err => { if (active) setError(err.message || 'Could not load mastery'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [userId]);
 
   if (loading) {
@@ -65,6 +77,7 @@ export function RadarChartDashboard({ userId }: { userId: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {error ? <p role="alert" className="text-destructive">{error}</p> : <>
         <div className="w-full h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
@@ -90,6 +103,7 @@ export function RadarChartDashboard({ userId }: { userId: string }) {
           <span>Outer Edge = Mastery</span>
           <span>Center = Beginner</span>
         </div>
+        </>}
       </CardContent>
     </Card>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { CheckCircle, XCircle, RefreshCw, Zap, ChevronRight, RotateCcw, Info, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -552,7 +552,11 @@ const NumberSystemComplementExplorer = () => {
             ) : (
               <>
                 <span className="text-white font-semibold">2's complement</span> = flip all bits + add 1.
-                <span className="block mt-1 text-gray-500">This represents <span className="text-purple-300 font-mono">-{value}</span> in signed binary. Verify: {value} + {twosValue} = {value + twosValue} (= 256, which overflows to 0 in 8 bits)</span>
+                <span className="block mt-1 text-gray-500">
+                  {value === 0
+                    ? 'Zero is its own two’s complement: 0 + 0 = 0. The carry out from inversion plus 1 is discarded in 8 bits.'
+                    : `Negation is computed modulo 256: ${value} + ${twosValue} = 256, which wraps to 0. Interpreted as signed two’s complement, the result is ${twosValue >= 128 ? twosValue - 256 : twosValue}.`}
+                </span>
               </>
             )}
           </div>
@@ -1056,7 +1060,14 @@ const BinaryArithmeticTrainer = ({ op }: { op: ArithOp }) => {
   const [q, setQ] = useState(() => genQ())
   const [input, setInput] = useState('')
   const [checked, setChecked] = useState(false)
-  const isCorrect = checked && parseInt(input, 2) === q.ans
+  const expectedAnswer = op === 'add' ? q.a + q.b : q.a - q.b
+  const isCorrect = checked && parseInt(input, 2) === expectedAnswer
+
+  useEffect(() => {
+    setQ(genQ())
+    setInput('')
+    setChecked(false)
+  }, [genQ])
 
   const toBin = (n: number) => n.toString(2).padStart(5, '0')
 
@@ -1099,8 +1110,8 @@ const BinaryArithmeticTrainer = ({ op }: { op: ArithOp }) => {
           {!isCorrect && (
             <p className="mt-1 text-gray-300">
               Correct answer:{' '}
-              <span className="font-mono font-bold text-white">{toBin(q.ans)}</span>
-              {' '}(= {q.ans})
+              <span className="font-mono font-bold text-white">{toBin(expectedAnswer)}</span>
+              {' '}(= {expectedAnswer})
             </p>
           )}
         </div>

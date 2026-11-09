@@ -7,4 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const SUPABASE_AUTH_STORAGE_KEY = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { storageKey: SUPABASE_AUTH_STORAGE_KEY },
+})

@@ -77,10 +77,11 @@ export function NumberSystemConverter() {
         <CardContent className="space-y-5 pt-6">
           {/* Source Value Input */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-foreground">
+            <label htmlFor="converter-value" className="block text-xs font-medium text-foreground">
               Value to Convert
             </label>
             <Input
+              id="converter-value"
               type="text"
               placeholder="e.g. 123"
               value={sourceValue}
@@ -96,11 +97,11 @@ export function NumberSystemConverter() {
           {/* Base Selection Row with Swap button */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="flex-1 w-full space-y-1.5">
-              <label className="block text-xs font-medium text-foreground">
+              <label htmlFor="converter-from-base" className="block text-xs font-medium text-foreground">
                 From Base
               </label>
               <Select value={sourceBase} onValueChange={setSourceBase}>
-                <SelectTrigger className="h-10 bg-background text-xs font-medium">
+                <SelectTrigger id="converter-from-base" className="h-10 bg-background text-xs font-medium">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -123,11 +124,11 @@ export function NumberSystemConverter() {
             </button>
 
             <div className="flex-1 w-full space-y-1.5">
-              <label className="block text-xs font-medium text-foreground">
+              <label htmlFor="converter-to-base" className="block text-xs font-medium text-foreground">
                 To Base
               </label>
               <Select value={targetBase} onValueChange={setTargetBase}>
-                <SelectTrigger className="h-10 bg-background text-xs font-medium">
+                <SelectTrigger id="converter-to-base" className="h-10 bg-background text-xs font-medium">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

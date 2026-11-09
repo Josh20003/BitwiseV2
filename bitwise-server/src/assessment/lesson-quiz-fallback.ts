@@ -21,7 +21,13 @@ function makeItem(lesson: string, topic: string, index: number): Item {
       const hex = index % 2 === 0;
       return item(`How many binary bits correspond to one ${hex ? 'hexadecimal' : 'octal'} digit?`, hex ? 4 : 3, hex ? [2, 3, 8] : [2, 4, 8], `${hex ? '16 = 2^4' : '8 = 2^3'}, so each digit corresponds to ${hex ? 4 : 3} bits.`);
     }
-    if (title.includes('hex')) return item(`What hexadecimal value equals binary ${n.toString(2)}?`, n.toString(16).toUpperCase(), [n + 1, n + 2, n + 3].map(x => x.toString(16).toUpperCase()), `Binary ${n.toString(2)} is ${n} in decimal and ${n.toString(16).toUpperCase()} in hexadecimal.`);
+    const normalized = title.replace(/[-–—]/g, ' ');
+    if (/decimal\s+(?:to|→)\s+binary/.test(normalized)) return item(`Convert decimal ${n} to binary.`, n.toString(2), [n + 1, n + 2, n + 3].map(x => x.toString(2)), `Express ${n} using powers of 2 to obtain ${n.toString(2)}.`);
+    if (/binary\s+(?:to|→)\s+decimal/.test(normalized)) return item(`Convert binary ${n.toString(2)} to decimal.`, n, [n + 1, n + 2, n + 3], `Adding the positional weights in ${n.toString(2)} gives ${n}.`);
+    if (title.includes('hex')) {
+      if (name.includes('conversion') && index % 2 === 1) return item(`Convert hexadecimal ${n.toString(16).toUpperCase()} to binary.`, n.toString(2), [n + 1, n + 2, n + 3].map(x => x.toString(2)), `Each hexadecimal digit represents four bits; removing leading zeroes gives ${n.toString(2)}.`);
+      return item(`What hexadecimal value equals binary ${n.toString(2)}?`, n.toString(16).toUpperCase(), [n + 1, n + 2, n + 3].map(x => x.toString(16).toUpperCase()), `Binary ${n.toString(2)} is ${n} in decimal and ${n.toString(16).toUpperCase()} in hexadecimal.`);
+    }
     if (title.includes('oct')) return item(`What octal value equals decimal ${n}?`, n.toString(8), [n + 1, n + 2, n + 3].map(x => x.toString(8)), `Repeated division by 8 converts ${n} to ${n.toString(8)} in octal.`);
     return item(`What decimal value equals binary ${n.toString(2)}?`, n, [n + 1, n + 2, n + 3], `Adding the binary positional weights gives ${n}.`);
   }
@@ -45,8 +51,9 @@ function makeItem(lesson: string, topic: string, index: number): Item {
     return item(`Interpret ${value.toString(2)} as an 8-bit ${signed ? "two's-complement signed" : 'unsigned'} integer.`, answer, [answer + 1, answer + 2, signed ? value : value - 256], signed ? `The sign bit is 1, so subtract 256: ${value} - 256 = ${answer}.` : `Add the positional weights without a sign adjustment: ${answer}.`);
   }
   if (name.includes('binary codes') || name.includes('bcd')) {
-    if (title.includes('ascii')) {
+    if (title.includes('ascii') || title.includes('character')) {
       const code = 65 + index;
+      if (title.includes('binary') || title.includes('character')) return item(`Encode uppercase '${String.fromCharCode(code)}' as an 8-bit ASCII binary byte.`, code.toString(2).padStart(8, '0'), [code + 1, code - 1, code + 32].map(x => x.toString(2).padStart(8, '0')), `ASCII '${String.fromCharCode(code)}' is decimal ${code}, encoded as ${code.toString(2).padStart(8, '0')}.`);
       return item(`What is the decimal ASCII code for uppercase '${String.fromCharCode(code)}'?`, code, [code + 1, code - 1, code + 32], `Uppercase A is ASCII 65; '${String.fromCharCode(code)}' is ${index} positions after A, giving ${code}.`);
     }
     const value = 20 + index;
@@ -55,11 +62,22 @@ function makeItem(lesson: string, topic: string, index: number): Item {
   }
   if (name.includes('logic gate') || name.includes('truth table')) {
     const a = index % 2, b = Math.floor(index / 2) % 2;
-    const op = title.includes('not') ? 'NOT' : title.includes('or') ? 'OR' : 'AND';
-    const answer = op === 'NOT' ? 1 - a : op === 'OR' ? a | b : a & b;
+    const gates = title.includes('xnor') || title.includes('xor') ? ['XOR', 'XNOR'] : title.includes('nand') || title.includes('nor') ? ['NAND', 'NOR'] : ['AND', 'OR', 'NOT'];
+    const op = gates[index % gates.length];
+    const answer = op === 'NOT' ? 1 - a : op === 'OR' ? a | b : op === 'NAND' ? 1 - (a & b) : op === 'NOR' ? 1 - (a | b) : op === 'XOR' ? a ^ b : op === 'XNOR' ? 1 - (a ^ b) : a & b;
     return item(op === 'NOT' ? `For A=${a}, what is NOT A?` : `For A=${a} and B=${b}, what is A ${op} B?`, answer, [1 - answer, 'Undefined', 'Both 0 and 1'], op === 'NOT' ? 'NOT reverses a single input bit.' : `${op} gives ${answer} for inputs ${a} and ${b}.`);
   }
   if (name.includes('boolean') || name.includes('simplif')) {
+    if (title.includes('map') || title.includes('karnaugh')) {
+      const cases = [
+        {minterms: '0, 1', answer: 'NOT A', why: 'Both cells have A=0 while B changes.'},
+        {minterms: '2, 3', answer: 'A', why: 'Both cells have A=1 while B changes.'},
+        {minterms: '1, 3', answer: 'B', why: 'Both cells have B=1 while A changes.'},
+        {minterms: '0, 2', answer: 'NOT B', why: 'Both cells have B=0 while A changes.'},
+      ];
+      const selected = cases[index % cases.length];
+      return item(`A two-variable Karnaugh map F(A,B) has 1s only at minterms ${selected.minterms} (binary order AB). Group the two adjacent 1s. What is the minimal expression?`, selected.answer, ['A', 'NOT A', 'B', 'NOT B'].filter(x => x !== selected.answer), `${selected.why} Grouping removes the changing variable, leaving ${selected.answer}.`);
+    }
     const variants = [
       item('Simplify A AND 1.', 'A', ['0', '1', 'NOT A'], '1 is the identity for AND, so A AND 1 = A.'),
       item('Simplify A OR 0.', 'A', ['0', '1', 'NOT A'], '0 is the identity for OR, so A OR 0 = A.'),

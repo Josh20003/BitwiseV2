@@ -7,15 +7,17 @@ import {
   ParseIntPipe,
   UseGuards,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { AssessmentService } from './assessment.service';
 import { AdaptiveService } from '../adaptive/adaptive.service';
 import { AiQuizService } from './ai-quiz.service';
 import { EmaMasteryService } from './ema-mastery.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RecordOwnerGuard } from '../auth/guards/record-owner.guard';
 
 @Controller('assessment')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RecordOwnerGuard)
 export class AssessmentController {
   private readonly logger = new Logger(AssessmentController.name);
 
@@ -229,6 +231,9 @@ export class AssessmentController {
       answersJson: any;
     },
   ) {
+    if (!Number.isFinite(body.score) || body.score < 0 || body.score > 1) {
+      throw new BadRequestException('Score must be a normalized number from 0 to 1');
+    }
     try {
       await this.aiQuizService.submitQuiz(
         body.userId,

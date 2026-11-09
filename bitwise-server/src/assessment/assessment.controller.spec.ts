@@ -5,6 +5,7 @@ import { AdaptiveService } from '../adaptive/adaptive.service';
 import { AiQuizService } from './ai-quiz.service';
 import { EmaMasteryService } from './ema-mastery.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RecordOwnerGuard } from '../auth/guards/record-owner.guard';
 
 describe('AssessmentController', () => {
   let controller: AssessmentController;
@@ -20,6 +21,8 @@ describe('AssessmentController', () => {
       ],
     })
       .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RecordOwnerGuard)
       .useValue({ canActivate: () => true })
       .compile();
 

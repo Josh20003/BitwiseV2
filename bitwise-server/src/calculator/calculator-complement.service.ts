@@ -13,6 +13,7 @@ export class CalculatorComplementService {
   constructor(private arithmeticService: CalculatorArithmeticService) {}
 
   public getComplements(value: string): ComplementResult {
+    if (!/^[01]+$/.test(value)) throw new Error('Enter a non-empty binary value');
     // 1's complement: flip bits
     let onesComplement = '';
     for (const bit of value) {
@@ -30,7 +31,7 @@ export class CalculatorComplementService {
     return {
       originalValue: value,
       onesComplement,
-      twosComplement: addResult.result,
+      twosComplement: addResult.result.slice(-value.length).padStart(value.length, '0'),
       cascadeSteps: addResult.traceSteps,
     };
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,10 +41,22 @@ export function BinaryArithmeticWorkspace() {
 
   const [resultData, setResultData] = useState<ArithmeticResult | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const requestVersion = useRef(0);
+  const [loading, setLoading] = useState(false);
+  const invalidateResult = () => {
+    requestVersion.current += 1;
+    setResultData(null);
+    setError(null);
+    setLoading(false);
+  };
 
   const calculate = async (op1 = operand1, op2 = operand2, op = operation) => {
+    const version = ++requestVersion.current;
+    setResultData(null);
+    setLoading(true);
     try {
       setError(null);
+      if (!op1 || !op2) throw new Error('Enter both binary operands');
       const data = await apiService.post<{
         success: boolean;
         result: ArithmeticResult;
@@ -54,6 +66,7 @@ export function BinaryArithmeticWorkspace() {
         operand2: op2,
         operation: op,
       });
+      if (version !== requestVersion.current) return;
       if (data.success && data.result) {
         setResultData(data.result);
         setCurrentStepIndex(0);
@@ -61,7 +74,11 @@ export function BinaryArithmeticWorkspace() {
         setError(data.error || 'Calculation failed');
       }
     } catch (e) {
-      console.error('Arithmetic failed', e);
+      if (version === requestVersion.current) {
+        setError(e instanceof Error ? e.message : 'Calculation failed');
+      }
+    } finally {
+      if (version === requestVersion.current) setLoading(false);
     }
   };
 
@@ -363,7 +380,7 @@ export function BinaryArithmeticWorkspace() {
               <Input
                 value={operand1}
                 onChange={(e) =>
-                  setOperand1(e.target.value.replace(/[^01]/g, ''))
+                  { invalidateResult(); setOperand1(e.target.value.replace(/[^01]/g, '')); }
                 }
                 className="w-full font-mono text-sm h-9 bg-background"
                 placeholder="1011"
@@ -376,7 +393,7 @@ export function BinaryArithmeticWorkspace() {
               <select
                 value={operation}
                 onChange={(e) =>
-                  setOperation(e.target.value as '+' | '-' | '*' | '/')
+                  { invalidateResult(); setOperation(e.target.value as '+' | '-' | '*' | '/'); }
                 }
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
               >
@@ -393,7 +410,7 @@ export function BinaryArithmeticWorkspace() {
               <Input
                 value={operand2}
                 onChange={(e) =>
-                  setOperand2(e.target.value.replace(/[^01]/g, ''))
+                  { invalidateResult(); setOperand2(e.target.value.replace(/[^01]/g, '')); }
                 }
                 className="w-full font-mono text-sm h-9 bg-background"
                 placeholder="110"
@@ -401,16 +418,17 @@ export function BinaryArithmeticWorkspace() {
             </div>
             <div className="sm:col-span-2">
               <Button
+                disabled={loading}
                 onClick={() => calculate()}
                 className="w-full h-9 text-xs font-medium cursor-pointer"
               >
-                Calculate
+                {loading ? 'Calculating...' : 'Calculate'}
               </Button>
             </div>
           </div>
 
           {error && (
-            <div className="p-3 bg-destructive/15 text-destructive rounded-md border border-destructive/30 text-xs">
+            <div role="alert" className="p-3 bg-destructive/15 text-destructive rounded-md border border-destructive/30 text-xs">
               {error}
             </div>
           )}

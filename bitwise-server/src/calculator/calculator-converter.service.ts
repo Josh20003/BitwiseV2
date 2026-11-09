@@ -32,11 +32,16 @@ export class CalculatorConverterService {
     toBase: number,
   ): Promise<ConversionResult> {
     const steps: ConversionStep[] = [];
+    if (![fromBase, toBase].every(base => Number.isInteger(base) && base >= 2 && base <= 16)) {
+      throw new Error('Supported bases are integer radices from 2 through 16');
+    }
 
     // Validate input
     if (!/^[0-9a-fA-F]+$/.test(value)) {
       throw new Error('Invalid characters in input value');
     }
+    const checkedValue = this.toDecimal(value, fromBase);
+    if (!Number.isSafeInteger(checkedValue)) throw new Error('Value exceeds the safe integer range');
 
     // Handle identical base
     if (fromBase === toBase) {

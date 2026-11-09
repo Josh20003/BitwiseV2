@@ -9,13 +9,24 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let locallySignedOut = false
+    let active = true
+    const clearLocalSession = () => {
+      locallySignedOut = true
+      setSession(null)
+      setUser(null)
+      setLoading(false)
+    }
+    window.addEventListener('bitwise:signed-out', clearLocalSession)
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
         if (error) throw error
         
-        setSession(session)
-        setUser(session?.user ?? null)
+        if (active && !locallySignedOut) {
+          setSession(session)
+          setUser(session?.user ?? null)
+        }
       } catch (error) {
         console.error('Error getting session:', error)
       } finally {
@@ -27,13 +38,19 @@ export function useAuth() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (locallySignedOut && session && _event !== 'SIGNED_IN') return
+      if (_event === 'SIGNED_IN') locallySignedOut = false
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      active = false
+      subscription.unsubscribe()
+      window.removeEventListener('bitwise:signed-out', clearLocalSession)
+    }
   }, [])
 
   const signOut = async () => {
