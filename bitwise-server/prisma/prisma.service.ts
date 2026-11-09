@@ -7,7 +7,8 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     const url = process.env.DATABASE_URL;
     if (process.env.VERCEL && url) {
       const pooled = new URL(url);
-      if (!pooled.searchParams.has('connection_limit')) pooled.searchParams.set('connection_limit', '1');
+      // Keep a small pool, with room for a read while a progress transaction runs.
+      if (!pooled.searchParams.has('connection_limit')) pooled.searchParams.set('connection_limit', '2');
       super({datasources: {db: {url: pooled.toString()}}});
     } else {
       super();

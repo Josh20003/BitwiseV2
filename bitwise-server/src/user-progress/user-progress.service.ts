@@ -1,16 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserProgressService {
   constructor(private prisma: PrismaService) { }
 
+  private async writeProgress<T>(operation: (db: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    for (let retry = 0; ; retry++) {
+      try {
+        return await this.prisma.$transaction(operation, {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+          maxWait: 5000,
+          timeout: 15000,
+        });
+      } catch (error) {
+        if (error.code !== 'P2034' || retry >= 2) throw error;
+      }
+    }
+  }
+
   /**
    * Mark a topic as viewed (called when user opens topic page)
    */
   async markTopicViewed(userId: string, topicId: number) {
+    return this.writeProgress(async db => {
     // Check if user topic record exists
-    const existingUserTopic = await this.prisma.userTopic.findUnique({
+    const existingUserTopic = await db.userTopic.findUnique({
       where: { userId_topicId: { userId, topicId } },
     });
 
@@ -22,7 +38,7 @@ export class UserProgressService {
       updatePayload.status = 'viewed';
     }
 
-    const userTopic = await this.prisma.userTopic.upsert({
+    const userTopic = await db.userTopic.upsert({
       where: { userId_topicId: { userId, topicId } },
       update: updatePayload,
       create: {
@@ -34,16 +50,18 @@ export class UserProgressService {
     });
 
     // Update lesson progress
-    await this.updateLessonProgress(userId, topicId);
+    await this.updateLessonProgress(userId, topicId, db);
 
     return userTopic;
+    });
   }
 
   /**
    * Mark a topic as completed (called when user clicks "I understand" button)
    */
   async markTopicCompleted(userId: string, topicId: number) {
-    const userTopic = await this.prisma.userTopic.upsert({
+    return this.writeProgress(async db => {
+    const userTopic = await db.userTopic.upsert({
       where: { userId_topicId: { userId, topicId } },
       update: {
         status: 'completed',
@@ -59,16 +77,17 @@ export class UserProgressService {
       },
     });
 
-    await this.updateLessonProgress(userId, topicId);
+    await this.updateLessonProgress(userId, topicId, db);
 
     return userTopic;
+    });
   }
 
   /**
    * Update lesson progress based on topics viewed/completed
    */
-  private async updateLessonProgress(userId: string, topicId: number) {
-    const topic = await this.prisma.topic.findUnique({
+  private async updateLessonProgress(userId: string, topicId: number, db: Prisma.TransactionClient) {
+    const topic = await db.topic.findUnique({
       where: { id: topicId },
       select: { lessonId: true },
     });
@@ -76,13 +95,13 @@ export class UserProgressService {
     if (!topic) return;
 
     // Get all topics in this lesson
-    const allTopics = await this.prisma.topic.findMany({
+    const allTopics = await db.topic.findMany({
       where: { lessonId: topic.lessonId },
       select: { id: true },
     });
 
     // Get user's progress on these topics
-    const userTopics = await this.prisma.userTopic.findMany({
+    const userTopics = await db.userTopic.findMany({
       where: {
         userId,
         topicId: { in: allTopics.map((t) => t.id) },
@@ -108,13 +127,8 @@ export class UserProgressService {
       status = 'in-progress';
     }
 
-    // Get existing lesson record to preserve masteryScore
-    const existingLesson = await this.prisma.userLesson.findUnique({
-      where: { userId_lessonId: { userId, lessonId: topic.lessonId } },
-    });
-
     // Update or create UserLesson
-    await this.prisma.userLesson.upsert({
+    await db.userLesson.upsert({
       where: { userId_lessonId: { userId, lessonId: topic.lessonId } },
       update: {
         progress,
@@ -128,7 +142,7 @@ export class UserProgressService {
         progress,
         status,
         startedAt: new Date(),
-        masteryScore: existingLesson?.masteryScore || null,
+        masteryScore: null,
       },
     });
   }

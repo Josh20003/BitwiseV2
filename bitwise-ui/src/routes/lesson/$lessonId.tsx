@@ -156,6 +156,8 @@ function RouteComponent() {
 
   // Progress tracking mutations
   const markViewedMutation = useMarkTopicViewed()
+  const markViewed = markViewedMutation.mutate
+  const viewedTopicKeys = useRef(new Set<string>())
   const markCompletedMutation = useMarkTopicCompleted()
 
   const scrollToTop = () => {
@@ -193,12 +195,11 @@ function RouteComponent() {
       setCompletionError(null)
       setIsCompleting(true)
       await markCompletedMutation.mutateAsync(topicId)
+      onSuccess()
     } catch (error) {
-      console.warn('⚠️ Could not save topic progress (continuing anyway):', error)
+      setCompletionError(error instanceof Error ? error.message : 'Could not save topic progress. Please try again.')
     } finally {
       setIsCompleting(false)
-      // Always proceed — progress tracking should never block navigation
-      onSuccess()
     }
   }
 
@@ -227,22 +228,18 @@ function RouteComponent() {
   useEffect(() => {
     const topic = lesson?.topics?.[topicIdx]
     if (user && topic) {
-      console.log(`👁️ Setting up timer to mark topic ${topic.id} as viewed...`)
+      const key = `${user.id}:${topic.id}`
+      if (viewedTopicKeys.current.has(key)) return
       // Mark as viewed after 2 seconds of viewing
       const timer = setTimeout(() => {
-        console.log(`👁️ Marking topic ${topic.id} as viewed now`)
-        markViewedMutation.mutate(topic.id, {
-          onSuccess: (data) => {
-            console.log('✅ Topic marked as viewed:', data)
-          },
-          onError: (error) => {
-            console.error('❌ Error marking topic as viewed:', error)
-          },
+        viewedTopicKeys.current.add(key)
+        markViewed(topic.id, {
+          onError: () => { viewedTopicKeys.current.delete(key) },
         })
       }, 2000)
       return () => clearTimeout(timer)
     }
-  }, [topicIdx, lesson, user, markViewedMutation])
+  }, [lesson?.id, lesson?.topics?.[topicIdx]?.id, user?.id, markViewed])
 
   useEffect(() => {
     if (finished) {
