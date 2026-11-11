@@ -20,7 +20,6 @@ export function LessonCard({
   onPractice,
 }: LessonCardProps) {
   const { status, progress, isLocked, quizScore, quizStatus } = lessonStatus
-  const nextLessonNum = lesson.id + 1
 
   return (
     <div 

@@ -1167,7 +1167,6 @@ function RouteComponent() {
                   quizScore,
                   quizStatus,
                 } = getLessonStatus(lesson.id)
-                const nextLessonNum = lesson.id < lessons.length ? lesson.id + 1 : null
                 return (
                   <div
                     key={lesson.id}
@@ -1342,7 +1341,6 @@ function RouteComponent() {
                   quizScore,
                   quizStatus,
                 } = getLessonStatus(lesson.id)
-                const nextLessonNum = lesson.id < lessons.length ? lesson.id + 1 : null
                 return (
                   <div
                     key={lesson.id}

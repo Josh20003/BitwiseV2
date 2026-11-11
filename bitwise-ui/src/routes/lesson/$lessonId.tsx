@@ -14,7 +14,7 @@ import {
 import { useAuthContext } from '@/contexts/AuthContext'
 
 import { Button } from '@/components/ui/button'
-import { ChevronRight, ChevronLeft, ChevronDown, Check, Brain, Lock, Trophy, Sparkles } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Brain, Lock, Trophy, Sparkles } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { Confetti, type ConfettiRef } from '@/components/magicui/confetti'
 import congratsBitbot from '@/assets/bitbot/congrats.svg'
@@ -171,10 +171,6 @@ function RouteComponent() {
   // Progress tracking mutations
   const markViewedMutation = useMarkTopicViewed()
   const markCompletedMutation = useMarkTopicCompleted()
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
 
   const goToTopic = (nextIndex: number) => {
     if (!lesson?.topics?.length) return
