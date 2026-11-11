@@ -48,6 +48,10 @@ export interface LessonStatus {
   status: 'completed' | 'in-progress' | 'not-started'
   progress: number
   masteryScore: number | null
+  quizScore?: number | null
+  hasQuizAttempts?: boolean
+  isQuizPassed?: boolean
+  quizStatus?: 'passed' | 'failed' | 'not_taken' | null
   isLocked: boolean
 }
 

@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, redirect } from '@tanstack/react-router'
 import { supabase } from '@/utils/supabase'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 import LessonHeader from '@/components/LessonHeader'
 import { useGetLesson } from '@/hooks/useLesson'
@@ -9,13 +9,15 @@ import {
   useMarkTopicCompleted,
   useTopicsForLesson,
   useLessonProgress,
+  useAllUserProgress,
 } from '@/hooks/useUserProgress'
 import { useAuthContext } from '@/contexts/AuthContext'
 
 import { Button } from '@/components/ui/button'
-import { ChevronRight, ChevronLeft, Check, Brain, Lock } from 'lucide-react'
+import { ChevronRight, ChevronLeft, ChevronDown, Check, Brain, Lock, Trophy, Sparkles } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { Confetti, type ConfettiRef } from '@/components/magicui/confetti'
+import congratsBitbot from '@/assets/bitbot/congrats.svg'
 import BitBotGuide from '@/components/BitBotGuide'
 import ToolSpotlight from '@/components/ToolSpotlight'
 import ContentDisplay from '@/components/ContentDisplay'
@@ -132,6 +134,7 @@ function RouteComponent() {
     lessonIdNum && lessonIdNum > 1 ? lessonIdNum - 1 : undefined,
     !!user
   )
+  const { data: allLessonsProgress = [] } = useAllUserProgress(!!user)
 
   const isPrevCompleted =
     prevLessonProgress?.status === 'completed' ||
@@ -148,11 +151,22 @@ function RouteComponent() {
     !isPrevProgressLoading &&
     !(isPrevCompleted && isPrevQuizPassed)
 
+  const completedLessonsCount = allLessonsProgress.filter(
+    (p: any) => p.status === 'completed' || (p.progress || 0) >= 1
+  ).length
+  const isAllLessonsCompleted =
+    lessonIdNum === 11 ||
+    completedLessonsCount >= 11 ||
+    (lessonIdNum === 11 && completedLessonsCount >= 10)
+
   const [topicIdx, setTopicIdx] = useState(0)
   const [finished, setFinished] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
   const [completionError, setCompletionError] = useState<string | null>(null)
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
   const confettiRef = useRef<ConfettiRef>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const scrollCooldownRef = useRef(false)
 
   // Progress tracking mutations
   const markViewedMutation = useMarkTopicViewed()
@@ -276,8 +290,52 @@ function RouteComponent() {
   }, [finished])
 
   useEffect(() => {
-    scrollToTop()
+    window.scrollTo({ top: 0, behavior: 'instant' })
   }, [topicIdx])
+
+  // Check if user has scrolled to the bottom of the content
+  const checkScrolledToBottom = useCallback(() => {
+    // Skip scroll checks during cooldown (right after topic change)
+    if (scrollCooldownRef.current) return
+
+    const threshold = 150 // px from the bottom to consider "scrolled enough"
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    const windowHeight = window.innerHeight
+    const docHeight = document.documentElement.scrollHeight
+
+    if (scrollTop + windowHeight >= docHeight - threshold) {
+      setHasScrolledToBottom(true)
+    }
+  }, [])
+
+  // Reset hasScrolledToBottom when topic changes, then check if content is short
+  useEffect(() => {
+    setHasScrolledToBottom(false)
+    scrollCooldownRef.current = true
+
+    // After a delay (to allow content to fully render), end cooldown and check
+    // if the content is short enough that no scrolling is needed
+    const timer = setTimeout(() => {
+      scrollCooldownRef.current = false
+      const docHeight = document.documentElement.scrollHeight
+      const windowHeight = window.innerHeight
+      // If the page content fits within the viewport (accounting for the fixed bottom bar ~80px),
+      // automatically mark as scrolled
+      if (docHeight <= windowHeight + 100) {
+        setHasScrolledToBottom(true)
+      }
+    }, 600)
+
+    return () => clearTimeout(timer)
+  }, [topicIdx])
+
+  // Listen for scroll events to detect when user reaches the bottom
+  useEffect(() => {
+    if (hasScrolledToBottom || finished) return // No need to listen if already scrolled or finished
+
+    window.addEventListener('scroll', checkScrolledToBottom, { passive: true })
+    return () => window.removeEventListener('scroll', checkScrolledToBottom)
+  }, [hasScrolledToBottom, finished, checkScrolledToBottom])
 
 
 
@@ -458,7 +516,7 @@ function RouteComponent() {
       <LessonHeader progress={calculateProgress()} title={lesson.title} />
       <div className="pt-24 max-w-4xl mx-auto flex flex-col">
         {!finished ? (
-          <div className="w-full p-6 pb-32 flex flex-col relative">
+          <div ref={contentRef} className="w-full p-6 pb-32 flex flex-col relative">
             <BitBotGuide
               message={`Let's learn about ${topic.title}!`}
               emotion="pointing-left"
@@ -540,22 +598,55 @@ function RouteComponent() {
             />
             <div className="relative z-10 text-center">
               <div className="mb-8">
-                <div className="w-24 h-24 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-12 h-12 text-green-600 dark:text-green-300" />
-                </div>
-                <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-                  Lesson Complete!
-                </h1>
-                <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
-                  You've finished the lesson on
-                </p>
-                <p className="text-2xl font-semibold text-blue-600 dark:text-blue-300">
-                  {lesson.title}
-                </p>
+                {isAllLessonsCompleted ? (
+                  <div className="relative inline-block mb-4">
+                    <div className="w-28 h-28 bg-linear-to-tr from-amber-400 via-orange-400 to-yellow-300 dark:from-amber-600 dark:to-yellow-500 rounded-full flex items-center justify-center mx-auto shadow-xl animate-bounce">
+                      <Trophy className="w-14 h-14 text-white" />
+                    </div>
+                    <img
+                      src={congratsBitbot}
+                      alt="Congratulations BitBot"
+                      className="w-12 h-12 absolute -bottom-1 -right-2 drop-shadow-md"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Check className="w-12 h-12 text-green-600 dark:text-green-300" />
+                  </div>
+                )}
+
+                {isAllLessonsCompleted ? (
+                  <>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold uppercase tracking-wider mb-3 border border-amber-300 dark:border-amber-800">
+                      <Sparkles className="w-3.5 h-3.5" /> All Lessons Completed!
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-amber-500 via-orange-500 to-yellow-500 mb-3">
+                      🎉 Congratulations!
+                    </h1>
+                    <p className="text-xl text-gray-700 dark:text-gray-200 font-semibold mb-2">
+                      You have finished all lessons in the Bitwise curriculum!
+                    </p>
+                    <p className="text-base text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+                      From Number Systems to Karnaugh Maps, you've conquered digital systems and binary architecture.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+                      Lesson Complete!
+                    </h1>
+                    <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
+                      You've finished the lesson on
+                    </p>
+                    <p className="text-2xl font-semibold text-blue-600 dark:text-blue-300">
+                      {lesson.title}
+                    </p>
+                  </>
+                )}
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-8">
-                <p className="text-lg text-gray-700 dark:text-gray-200 mb-2">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-8 max-w-xl mx-auto border border-gray-200 dark:border-gray-700">
+                <p className="text-lg text-gray-700 dark:text-gray-200 mb-2 font-medium">
                   Topics completed: {lesson.topics?.length || 0}
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
@@ -572,34 +663,51 @@ function RouteComponent() {
             </div>
 
             <div className="flex flex-col gap-4 relative z-10 items-center">
-              <p className="text-sm text-amber-500 dark:text-amber-400 font-medium">
-                ⚠️ You must complete the AI Quiz and score at least 80% to unlock the next lesson.
-              </p>
-              {user && quizTopic ? (
-                <Link to="/quiz/$topic" params={{ topic: quizTopic }} search={{ lessonId: lesson.id }}>
-                  <Button className="w-60 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-lg py-5 font-semibold">
+              {isAllLessonsCompleted ? (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <Trophy className="w-4 h-4" />
+                  Full Curriculum Complete! Take the AI Quiz to test your mastery across all concepts.
+                </p>
+              ) : (
+                <p className="text-sm text-amber-500 dark:text-amber-400 font-medium">
+                  ⚠️ You must complete the AI Quiz and score at least 80% to unlock the next lesson.
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3 justify-center items-center">
+                {user && quizTopic ? (
+                  <Link to="/quiz/$topic" params={{ topic: quizTopic }} search={{ lessonId: lesson.id }}>
+                    <Button className="w-56 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-base py-5 font-semibold">
+                      <Brain className="w-5 h-5" />
+                      Take AI Quiz
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    className="w-56 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-base py-5 font-semibold"
+                    onClick={() => {
+                      if (!user) {
+                        toast.error('Please log in to take the quiz.')
+                        navigate({ to: '/login' })
+                      }
+                    }}
+                  >
                     <Brain className="w-5 h-5" />
                     Take AI Quiz
                   </Button>
+                )}
+
+                <Link to="/roadmap">
+                  <Button variant="outline" className="w-56 text-base py-5 font-semibold">
+                    Back to Roadmap
+                  </Button>
                 </Link>
-              ) : (
-                <Button
-                  className="w-60 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-lg py-5 font-semibold"
-                  onClick={() => {
-                    if (!user) {
-                      toast.error('Please log in to take the quiz.')
-                      navigate({ to: '/login' })
-                    }
-                  }}
-                >
-                  <Brain className="w-5 h-5" />
-                  Take AI Quiz
-                </Button>
-              )}
+              </div>
+
               <div className="flex gap-3">
                 <Button
                   variant="ghost"
-                  className="text-muted-foreground"
+                  className="text-muted-foreground text-xs"
                   onClick={() => {
                     setTopicIdx(0)
                     setFinished(false)
@@ -644,7 +752,8 @@ function RouteComponent() {
                   onClick={() => {
                     void handleNextTopic()
                   }}
-                  disabled={isCompleting}
+                  disabled={isCompleting || !hasScrolledToBottom}
+                  title={!hasScrolledToBottom ? 'Please scroll down to read the full topic before proceeding' : undefined}
                 >
                   <span>{isCompleting ? 'Saving...' : 'Next'}</span>
                   <ChevronRight className="w-4 h-4" />
@@ -655,7 +764,8 @@ function RouteComponent() {
                   onClick={() => {
                     void handleFinishLesson()
                   }}
-                  disabled={isCompleting}
+                  disabled={isCompleting || !hasScrolledToBottom}
+                  title={!hasScrolledToBottom ? 'Please scroll down to read the full topic before proceeding' : undefined}
                 >
                   <span>{isCompleting ? 'Saving...' : 'Finish'}</span>
                   <Check className="w-4 h-4" />

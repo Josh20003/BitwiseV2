@@ -190,7 +190,16 @@ export function GlobalOnboardingTour() {
   useEffect(() => {
     if (loading) return
     const alreadySeen = localStorage.getItem(storageKey) === 'true'
-    if (!alreadySeen && isHomepage) {
+    const manualRestart = sessionStorage.getItem('bitwise-tour-restart') === 'true'
+
+    // Only show tour for newly created accounts (created within the last 10 minutes)
+    // OR when the user manually clicked "Restart Tour"
+    const isNewAccount = user?.created_at
+      ? (Date.now() - new Date(user.created_at).getTime()) < 10 * 60 * 1000
+      : true // guest users still get the tour
+
+    if (!alreadySeen && isHomepage && (isNewAccount || manualRestart)) {
+      sessionStorage.removeItem('bitwise-tour-restart')
       const cleanup = startTour()
       return cleanup
     }
@@ -214,4 +223,5 @@ function makeStepHtml(description: string, centered = false): string {
  */
 export function resetHomepageTour(userId?: string) {
   localStorage.removeItem(getTourStorageKey(userId))
+  sessionStorage.setItem('bitwise-tour-restart', 'true')
 }

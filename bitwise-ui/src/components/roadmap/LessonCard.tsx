@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Lock } from 'lucide-react'
+import { Lock, AlertCircle, Brain, CheckCircle2 } from 'lucide-react'
 import type { Lesson, LessonStatus } from './types'
 
 interface LessonCardProps {
@@ -9,6 +9,7 @@ interface LessonCardProps {
   lessonStatus: LessonStatus
   lessonImage: string
   onSelect: (lesson: Lesson) => void
+  onPractice?: (lessonId: number) => void
 }
 
 export function LessonCard({
@@ -16,8 +17,10 @@ export function LessonCard({
   lessonStatus,
   lessonImage,
   onSelect,
+  onPractice,
 }: LessonCardProps) {
-  const { status, progress, isLocked } = lessonStatus
+  const { status, progress, isLocked, quizScore, quizStatus } = lessonStatus
+  const nextLessonNum = lesson.id + 1
 
   return (
     <div 
@@ -78,14 +81,14 @@ export function LessonCard({
         </p>
 
         {/* Progress */}
-        <div className="space-y-3 mt-auto">
-          <div className="flex justify-between text-xs font-medium">
+        <div className="space-y-2.5 mt-auto">
+          <div className="flex justify-between items-center text-xs font-medium">
             <span
               className={
                 status === 'completed'
-                  ? 'text-green-600'
+                  ? 'text-green-600 dark:text-green-400'
                   : status === 'in-progress'
-                    ? 'text-blue-600'
+                    ? 'text-blue-600 dark:text-blue-400'
                     : 'text-gray-500'
               }
             >
@@ -93,25 +96,84 @@ export function LessonCard({
                 ? 'Not Started'
                 : `${progress}% Complete`}
             </span>
+
+            {status === 'completed' && quizStatus && (
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                  quizStatus === 'passed'
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                    : quizStatus === 'failed'
+                      ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300'
+                      : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                }`}
+              >
+                {quizStatus === 'passed' && (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    Quiz: {quizScore}% Passed
+                  </>
+                )}
+                {quizStatus === 'failed' && (
+                  <>
+                    <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
+                    Quiz: {quizScore}% Failed
+                  </>
+                )}
+                {quizStatus === 'not_taken' && (
+                  <>
+                    <Brain className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                    Quiz Pending
+                  </>
+                )}
+              </span>
+            )}
           </div>
+
           <Progress value={progress} className="h-1.5" />
 
-          <Button
-            onClick={() => {
-              if (!isLocked) onSelect(lesson)
-            }}
-            variant={status === 'completed' ? 'outline' : 'default'}
-            className="w-full mt-2"
-            disabled={isLocked}
-          >
-            {isLocked
-              ? 'Locked'
-              : status === 'completed'
-                ? 'Review'
-                : status === 'in-progress'
-                  ? 'Continue'
-                  : 'Start'}
-          </Button>
+
+          {isLocked ? (
+            <Button
+              variant="default"
+              className="w-full mt-2"
+              disabled
+            >
+              Locked
+            </Button>
+          ) : status === 'completed' ? (
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <Button
+                onClick={() => onSelect(lesson)}
+                variant="outline"
+                className="w-full"
+              >
+                Review
+              </Button>
+              <Button
+                onClick={() => onPractice ? onPractice(lesson.id) : onSelect(lesson)}
+                className={`w-full text-white font-medium ${
+                  quizStatus === 'passed'
+                    ? 'bg-gray-700 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700'
+                    : 'bg-purple-600 hover:bg-purple-700'
+                }`}
+              >
+                <Brain className="w-3.5 h-3.5 mr-1" />
+                {quizStatus === 'failed'
+                  ? 'Retake Quiz'
+                  : quizStatus === 'not_taken'
+                    ? 'Take Quiz'
+                    : 'Practice'}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => onSelect(lesson)}
+              variant={status === 'in-progress' ? 'default' : 'default'}
+              className="w-full mt-2"
+            >
+              {status === 'in-progress' ? 'Continue' : 'Start'}
+            </Button>
+          )}
         </div>
       </div>
     </div>

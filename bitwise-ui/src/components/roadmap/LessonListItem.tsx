@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Lock } from 'lucide-react'
+import { Lock, Brain } from 'lucide-react'
 import type { Lesson, LessonStatus } from './types'
 
 interface LessonListItemProps {
@@ -8,6 +8,7 @@ interface LessonListItemProps {
   lessonStatus: LessonStatus
   lessonImage: string
   onSelect: (lesson: Lesson) => void
+  onPractice?: (lessonId: number) => void
 }
 
 export function LessonListItem({
@@ -15,8 +16,10 @@ export function LessonListItem({
   lessonStatus,
   lessonImage,
   onSelect,
+  onPractice,
 }: LessonListItemProps) {
-  const { status, progress, isLocked } = lessonStatus
+  const { status, progress, isLocked, quizScore, quizStatus } = lessonStatus
+  const nextLessonNum = lesson.id + 1
 
   return (
     <div 
@@ -63,8 +66,8 @@ export function LessonListItem({
         </div>
 
         {/* Progress Section */}
-        <div className="shrink-0 w-32">
-          <div className="text-right mb-2">
+        <div className="shrink-0 w-44">
+          <div className="flex items-center justify-between mb-1.5">
             <span
               className={`text-xs font-medium ${
                 status === 'completed'
@@ -76,12 +79,56 @@ export function LessonListItem({
             >
               {status === 'not-started' ? 'Not Started' : `${progress}%`}
             </span>
+
+            {status === 'completed' && quizStatus && (
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${
+                  quizStatus === 'passed'
+                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                    : quizStatus === 'failed'
+                      ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300'
+                      : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                }`}
+              >
+                {quizStatus === 'passed' && `Quiz: ${quizScore}%`}
+                {quizStatus === 'failed' && `Quiz: ${quizScore}% (Failed)`}
+                {quizStatus === 'not_taken' && 'Quiz Pending'}
+              </span>
+            )}
           </div>
-          <Progress value={progress} className="h-1.5" />
+          <Progress value={progress} className="h-1.5 mb-1" />
+          {status === 'completed' && quizStatus === 'failed' && (
+            <p className="text-[10px] text-red-600 dark:text-red-400 truncate">
+              Need 80% to unlock L{nextLessonNum}
+            </p>
+          )}
+          {status === 'completed' && quizStatus === 'not_taken' && (
+            <p className="text-[10px] text-amber-600 dark:text-amber-400 truncate">
+              Quiz needed for L{nextLessonNum}
+            </p>
+          )}
         </div>
 
         {/* Action Button */}
-        <div className="shrink-0 relative z-20">
+        <div className="shrink-0 relative z-20 flex items-center gap-2">
+          {status === 'completed' && onPractice && (
+            <Button
+              onClick={() => onPractice(lesson.id)}
+              size="sm"
+              className={`text-white text-xs ${
+                quizStatus === 'passed'
+                  ? 'bg-gray-700 hover:bg-gray-800'
+                  : 'bg-purple-600 hover:bg-purple-700'
+              }`}
+            >
+              <Brain className="w-3 h-3 mr-1" />
+              {quizStatus === 'failed'
+                ? 'Retake'
+                : quizStatus === 'not_taken'
+                  ? 'Quiz'
+                  : 'Practice'}
+            </Button>
+          )}
           <Button
             onClick={() => {
               if (!isLocked) onSelect(lesson)

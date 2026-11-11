@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { createFileRoute, useNavigate, Link, redirect } from '@tanstack/react-router'
 import { supabase } from '@/utils/supabase'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useRoadmapData } from '@/hooks/useRoadmapData'
-import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp, Lock } from 'lucide-react'
+import { Brain, CheckCircle2, Target, LayoutGrid, List, BookOpen, TrendingUp, Lock, AlertCircle, Trophy, Sparkles } from 'lucide-react'
+import { Confetti, type ConfettiRef } from '@/components/magicui/confetti'
 import {
   Dialog,
   DialogContent,
@@ -705,6 +706,28 @@ function RouteComponent() {
           ? Math.round(progress.masteryScore * 100)
           : null
 
+      // Check current lesson quiz status & score
+      const currentMasteryRaw = progress?.masteryScore
+      const quizScore = currentMasteryRaw != null
+        ? Math.round(currentMasteryRaw > 1 ? currentMasteryRaw : currentMasteryRaw * 100)
+        : (hasAnyAttempts && lessonMastery?.length
+            ? Math.round(
+                (lessonMastery.reduce((sum, topic) => sum + ((topic.attempts || 0) > 0 ? topic.mastery : 0), 0) /
+                  lessonMastery.length) *
+                  100
+              )
+            : null)
+
+      const hasQuizAttempts = (hasAnyAttempts ?? false) || currentMasteryRaw != null
+      const isQuizPassed = quizScore != null && quizScore >= 80
+      const quizStatus: 'passed' | 'failed' | 'not_taken' | null = !isCompleted
+        ? null
+        : isQuizPassed
+          ? 'passed'
+          : hasQuizAttempts
+            ? 'failed'
+            : 'not_taken'
+
       // Check if previous lesson is completed AND its AI quiz has been passed with at least 80%
       const previousLessonProgress =
         lessonId > 1
@@ -745,6 +768,10 @@ function RouteComponent() {
           ? Math.round(progress.progress > 1 ? progress.progress : progress.progress * 100)
           : 0,
         masteryScore,
+        quizScore,
+        hasQuizAttempts,
+        isQuizPassed,
+        quizStatus,
         isLocked,
       } as const
     },
@@ -761,6 +788,71 @@ function RouteComponent() {
       return true
     })
   }, [statusFilter, getLessonStatus])
+
+  const completedLessons = useMemo(() => {
+    return lessons.filter((lesson) => getLessonStatus(lesson.id).status === 'completed')
+  }, [getLessonStatus])
+
+  const allLessonsCompleted = completedLessons.length === lessons.length && lessons.length > 0
+  const [showCelebrationModal, setShowCelebrationModal] = useState(false)
+  const celebrationConfettiRef = useRef<ConfettiRef>(null)
+
+  // Auto-trigger celebration modal only once when all lessons are completed
+  useEffect(() => {
+    if (allLessonsCompleted && effectiveUser?.id) {
+      const storageKey = `bitwise_all_lessons_celebrated_${effectiveUser.id}`
+      const alreadyCelebrated = localStorage.getItem(storageKey)
+      if (!alreadyCelebrated) {
+        setShowCelebrationModal(true)
+        localStorage.setItem(storageKey, 'true')
+      }
+    }
+  }, [allLessonsCompleted, effectiveUser?.id])
+
+  useEffect(() => {
+    if (showCelebrationModal) {
+      // Initial burst
+      const t1 = setTimeout(() => {
+        celebrationConfettiRef.current?.fire({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.5 },
+        })
+      }, 200)
+      // Left side burst
+      const t2 = setTimeout(() => {
+        celebrationConfettiRef.current?.fire({
+          particleCount: 60,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.6 },
+        })
+      }, 500)
+      // Right side burst
+      const t3 = setTimeout(() => {
+        celebrationConfettiRef.current?.fire({
+          particleCount: 60,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.6 },
+        })
+      }, 700)
+      // Final big burst
+      const t4 = setTimeout(() => {
+        celebrationConfettiRef.current?.fire({
+          particleCount: 80,
+          spread: 100,
+          origin: { y: 0.4 },
+        })
+      }, 1000)
+      return () => {
+        clearTimeout(t1)
+        clearTimeout(t2)
+        clearTimeout(t3)
+        clearTimeout(t4)
+      }
+    }
+  }, [showCelebrationModal])
 
   const getTopicsForLesson = (lesson: Lesson): LessonTopicDisplay[] => {
     const dynamicTopics = topicsProgress[lesson.id] as
@@ -816,6 +908,49 @@ function RouteComponent() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-20 pb-12 px-4 sm:px-6 lg:px-8">
       <RoadmapOnboardingTour />
       <div className="max-w-7xl mx-auto space-y-8 mt-5">
+        {/* All Lessons Completed Congratulations Banner */}
+        {allLessonsCompleted && (
+          <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-amber-500 via-orange-500 to-yellow-600 p-6 sm:p-8 text-white shadow-xl border border-amber-300/40">
+            {/* Background sparkle icons */}
+            <Trophy className="absolute -right-6 -bottom-6 w-44 h-44 text-white/10 rotate-12 pointer-events-none" />
+            <Sparkles className="absolute right-36 top-4 w-12 h-12 text-white/15 pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <div className="relative shrink-0">
+                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-inner">
+                    <img
+                      src={bitboCongrats}
+                      alt="Celebration BitBot"
+                      className="w-14 h-14 object-contain animate-bounce"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-xs font-bold uppercase tracking-wider mb-2 border border-white/30">
+                    <Sparkles className="w-3.5 h-3.5" /> Curriculum Mastered
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    Congratulations! You have finished all lessons!
+                  </h1>
+                  <p className="text-amber-100 text-sm sm:text-base mt-1 max-w-2xl">
+                    Outstanding accomplishment! You have completed all 11 lessons across Digital Systems, Binary Logic, Arithmetic, and Circuit Design.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4 mt-3 text-xs font-semibold text-white/90">
+                    <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-md">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-300" /> 11 / 11 Lessons Finished
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-md">
+                      <Brain className="w-4 h-4 text-purple-200" /> Adaptive Practice Ready
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Top Section: Adaptive & Analytics */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Adaptive Practice Card */}
@@ -1025,7 +1160,14 @@ function RouteComponent() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredLessons.map((lesson) => {
-                const { status, progress, isLocked } = getLessonStatus(lesson.id)
+                const {
+                  status,
+                  progress,
+                  isLocked,
+                  quizScore,
+                  quizStatus,
+                } = getLessonStatus(lesson.id)
+                const nextLessonNum = lesson.id < lessons.length ? lesson.id + 1 : null
                 return (
                   <div
                     key={lesson.id}
@@ -1091,14 +1233,14 @@ function RouteComponent() {
                       </p>
 
                       {/* Progress */}
-                      <div className="space-y-3 mt-auto">
-                        <div className="flex justify-between text-xs font-medium">
+                      <div className="space-y-2.5 mt-auto">
+                        <div className="flex justify-between items-center text-xs font-medium">
                           <span
                             className={
                               status === 'completed'
-                                ? 'text-green-600'
+                                ? 'text-green-600 dark:text-green-400'
                                 : status === 'in-progress'
-                                  ? 'text-blue-600'
+                                  ? 'text-blue-600 dark:text-blue-400'
                                   : 'text-gray-500'
                             }
                           >
@@ -1106,27 +1248,84 @@ function RouteComponent() {
                               ? 'Not Started'
                               : `${progress}% Complete`}
                           </span>
+
+                          {status === 'completed' && quizStatus && (
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                quizStatus === 'passed'
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                                  : quizStatus === 'failed'
+                                    ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300'
+                                    : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                              }`}
+                            >
+                              {quizStatus === 'passed' && (
+                                <>
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                  Quiz: {quizScore}% Passed
+                                </>
+                              )}
+                              {quizStatus === 'failed' && (
+                                <>
+                                  <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
+                                  Quiz: {quizScore}% Failed
+                                </>
+                              )}
+                              {quizStatus === 'not_taken' && (
+                                <>
+                                  <Brain className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                                  Quiz Pending
+                                </>
+                              )}
+                            </span>
+                          )}
                         </div>
+
                         <Progress value={progress} className="h-1.5" />
 
-                        <Button
-                          onClick={() => {
-                            if (!isLocked) setSelectedLesson(lesson)
-                          }}
-                          variant={
-                            status === 'completed' ? 'outline' : 'default'
-                          }
-                          className="w-full mt-2"
-                          disabled={isLocked}
-                        >
-                          {isLocked
-                            ? 'Locked'
-                            : status === 'completed'
-                              ? 'Review'
-                              : status === 'in-progress'
-                                ? 'Continue'
-                                : 'Start'}
-                        </Button>
+
+                        {isLocked ? (
+                          <Button
+                            variant="default"
+                            className="w-full mt-2"
+                            disabled
+                          >
+                            Locked
+                          </Button>
+                        ) : status === 'completed' ? (
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <Button
+                              onClick={() => setSelectedLesson(lesson)}
+                              variant="outline"
+                              className="w-full"
+                            >
+                              Review
+                            </Button>
+                            <Button
+                              onClick={() => handleStartLessonPractice(lesson.id)}
+                              className={`w-full text-white font-medium ${
+                                quizStatus === 'passed'
+                                  ? 'bg-gray-700 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700'
+                                  : 'bg-purple-600 hover:bg-purple-700'
+                              }`}
+                            >
+                              <Brain className="w-3.5 h-3.5 mr-1" />
+                              {quizStatus === 'failed'
+                                ? 'Retake Quiz'
+                                : quizStatus === 'not_taken'
+                                  ? 'Take Quiz'
+                                  : 'Practice'}
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => setSelectedLesson(lesson)}
+                            variant={status === 'in-progress' ? 'default' : 'default'}
+                            className="w-full mt-2"
+                          >
+                            {status === 'in-progress' ? 'Continue' : 'Start'}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1136,7 +1335,14 @@ function RouteComponent() {
           ) : (
             <div className="space-y-2">
               {filteredLessons.map((lesson) => {
-                const { status, progress, isLocked } = getLessonStatus(lesson.id)
+                const {
+                  status,
+                  progress,
+                  isLocked,
+                  quizScore,
+                  quizStatus,
+                } = getLessonStatus(lesson.id)
+                const nextLessonNum = lesson.id < lessons.length ? lesson.id + 1 : null
                 return (
                   <div
                     key={lesson.id}
@@ -1193,8 +1399,8 @@ function RouteComponent() {
                       </div>
 
                       {/* Progress Section */}
-                      <div className="shrink-0 w-32">
-                        <div className="text-right mb-2">
+                      <div className="shrink-0 w-44">
+                        <div className="flex items-center justify-between mb-1.5">
                           <span
                             className={`text-xs font-medium ${
                               status === 'completed'
@@ -1208,12 +1414,56 @@ function RouteComponent() {
                               ? 'Not Started'
                               : `${progress}%`}
                           </span>
+
+                          {status === 'completed' && quizStatus && (
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${
+                                quizStatus === 'passed'
+                                  ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                                  : quizStatus === 'failed'
+                                    ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300'
+                                    : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                              }`}
+                            >
+                              {quizStatus === 'passed' && `Quiz: ${quizScore}%`}
+                              {quizStatus === 'failed' && `Quiz: ${quizScore}% (Failed)`}
+                              {quizStatus === 'not_taken' && 'Quiz Pending'}
+                            </span>
+                          )}
                         </div>
-                        <Progress value={progress} className="h-1.5" />
+                        <Progress value={progress} className="h-1.5 mb-1" />
+                        {status === 'completed' && quizStatus === 'failed' && (
+                          <p className="text-[10px] text-red-600 dark:text-red-400 truncate">
+                            Need 80% to unlock L{nextLessonNum}
+                          </p>
+                        )}
+                        {status === 'completed' && quizStatus === 'not_taken' && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 truncate">
+                            Quiz needed for L{nextLessonNum}
+                          </p>
+                        )}
                       </div>
 
                       {/* Action Button */}
-                      <div className="shrink-0">
+                      <div className="shrink-0 flex items-center gap-2">
+                        {status === 'completed' && (
+                          <Button
+                            onClick={() => handleStartLessonPractice(lesson.id)}
+                            size="sm"
+                            className={`text-white text-xs ${
+                              quizStatus === 'passed'
+                                ? 'bg-gray-700 hover:bg-gray-800'
+                                : 'bg-purple-600 hover:bg-purple-700'
+                            }`}
+                          >
+                            <Brain className="w-3 h-3 mr-1" />
+                            {quizStatus === 'failed'
+                              ? 'Retake'
+                              : quizStatus === 'not_taken'
+                                ? 'Quiz'
+                                : 'Practice'}
+                          </Button>
+                        )}
                         <Button
                           onClick={() => {
                             if (!isLocked) setSelectedLesson(lesson)
@@ -1420,6 +1670,57 @@ function RouteComponent() {
           {/* Scrollable Content */}
           <div className="px-6 py-4 overflow-y-auto flex-1 custom-scrollbar">
             <div className="space-y-6">
+              {/* Quiz Alert Banner if lesson is completed */}
+              {(() => {
+                const selectedLessonStatus = selectedLesson ? getLessonStatus(selectedLesson.id) : null
+                const selectedNextLessonNum = selectedLesson && selectedLesson.id < lessons.length ? selectedLesson.id + 1 : null
+
+                if (selectedLessonStatus?.status !== 'completed') return null
+
+                if (selectedLessonStatus.quizStatus === 'failed') {
+                  return (
+                    <div className="rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 p-3 flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                      <div className="text-xs text-red-800 dark:text-red-300">
+                        <p className="font-semibold mb-0.5">Quiz Score: {selectedLessonStatus.quizScore}% (Failed)</p>
+                        <p>
+                          You still can't take{' '}
+                          <strong>Lesson {selectedNextLessonNum ?? 'the next lesson'}</strong> because you need at least <strong>80%</strong> on this lesson's AI Quiz to unlock it. Retake the quiz to pass.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+
+                if (selectedLessonStatus.quizStatus === 'not_taken') {
+                  return (
+                    <div className="rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-3 flex items-start gap-3">
+                      <Brain className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div className="text-xs text-amber-800 dark:text-amber-300">
+                        <p className="font-semibold mb-0.5">AI Quiz Required (80% to pass)</p>
+                        <p>
+                          You finished all topics in this lesson! However, you still can't take{' '}
+                          <strong>Lesson {selectedNextLessonNum ?? 'the next lesson'}</strong> until you pass the AI Quiz with at least <strong>80%</strong>.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+
+                if (selectedLessonStatus.quizStatus === 'passed') {
+                  return (
+                    <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 p-2.5 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <p className="text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+                        Quiz passed with {selectedLessonStatus.quizScore}%! Lesson {selectedNextLessonNum} is unlocked.
+                      </p>
+                    </div>
+                  )
+                }
+
+                return null
+              })()}
+
               {/* Description */}
               <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                 {selectedLesson?.details}
@@ -1528,6 +1829,33 @@ function RouteComponent() {
             >
               Close
             </Button>
+            {(() => {
+              const selectedLessonStatus = selectedLesson ? getLessonStatus(selectedLesson.id) : null
+              if (!selectedLesson || selectedLessonStatus?.status !== 'completed') return null
+
+              return (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (selectedLesson) {
+                      handleStartLessonPractice(selectedLesson.id)
+                    }
+                  }}
+                  className={`font-medium h-9 px-4 text-white ${
+                    selectedLessonStatus.quizStatus === 'passed'
+                      ? 'bg-gray-700 hover:bg-gray-800'
+                      : 'bg-purple-600 hover:bg-purple-700'
+                  }`}
+                >
+                  <Brain className="w-4 h-4 mr-1.5" />
+                  {selectedLessonStatus.quizStatus === 'failed'
+                    ? 'Retake AI Quiz'
+                    : selectedLessonStatus.quizStatus === 'not_taken'
+                      ? 'Take AI Quiz'
+                      : 'Practice Quiz'}
+                </Button>
+              )
+            })()}
             <Button
               size="sm"
               onClick={() => {
@@ -1550,7 +1878,9 @@ function RouteComponent() {
               }}
               className="bg-black hover:bg-gray-800 text-white dark:bg-white dark:text-black dark:hover:bg-gray-200 h-9 px-6"
             >
-              Start Lesson
+              {selectedLesson && getLessonStatus(selectedLesson.id).status === 'completed'
+                ? 'Review Topics'
+                : 'Start Lesson'}
             </Button>
           </div>
         </DialogContent>
@@ -1671,6 +2001,87 @@ function RouteComponent() {
             <div className="flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <TrendingUp className="w-3 h-3" />
               <span>Difficulty adapts based on your mastery level</span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Full-screen confetti for celebration */}
+      {showCelebrationModal && (
+        <Confetti
+          ref={celebrationConfettiRef}
+          manualstart={true}
+          className="fixed left-0 top-0 z-[100] w-full h-full pointer-events-none"
+        />
+      )}
+
+      {/* Course Completion Celebration Modal */}
+      <Dialog
+        open={showCelebrationModal}
+        onOpenChange={(open: boolean) => setShowCelebrationModal(open)}
+      >
+        <DialogContent className="sm:max-w-xl p-0 gap-0 bg-white dark:bg-gray-950 border-amber-300 dark:border-amber-900/60 shadow-2xl overflow-hidden relative">
+          <div className="p-6 text-center bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent flex flex-col items-center relative z-10">
+            <div className="relative mb-4">
+              <div className="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-300 dark:from-amber-600 dark:to-yellow-500 rounded-full flex items-center justify-center mx-auto shadow-lg animate-pulse">
+                <Trophy className="w-14 h-14 text-white" />
+              </div>
+              <img
+                src={bitboCongrats}
+                alt="BitBot Congrats"
+                className="w-12 h-12 absolute -bottom-1 -right-2 drop-shadow-md"
+              />
+            </div>
+
+            <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-300 dark:border-amber-800 mb-2">
+              <Sparkles className="w-3.5 h-3.5 mr-1" /> All 11 Lessons Completed
+            </Badge>
+
+            <DialogTitle className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2">
+              Congratulations, Scholar!
+            </DialogTitle>
+
+            <DialogDescription className="text-sm text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-6">
+              You've officially completed every single lesson in the Bitwise curriculum! Here is the foundational curriculum you have mastered:
+            </DialogDescription>
+
+            {/* Curriculum Mastered Summary */}
+            <div className="w-full bg-gray-50 dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 rounded-xl p-4 text-left space-y-2.5 mb-6">
+              <div className="flex items-center gap-2.5 text-xs text-gray-800 dark:text-gray-200 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span><strong>Part 1:</strong> Number Systems & Base Conversions (Lessons 1–3)</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs text-gray-800 dark:text-gray-200 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span><strong>Part 2:</strong> Binary Arithmetic & Number Representation (Lessons 4–7)</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs text-gray-800 dark:text-gray-200 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span><strong>Part 3:</strong> Boolean Algebra, Logic Gates & Truth Tables (Lessons 8–10)</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-xs text-gray-800 dark:text-gray-200 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span><strong>Part 4:</strong> Karnaugh Maps & Circuit Simplification (Lesson 11)</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+              <Button
+                onClick={() => {
+                  setShowCelebrationModal(false)
+                  handleOpenLessonSelect()
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+              >
+                <Brain className="w-4 h-4 mr-2" />
+                Adaptive AI Practice
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowCelebrationModal(false)}
+              >
+                Explore Roadmap
+              </Button>
             </div>
           </div>
         </DialogContent>
