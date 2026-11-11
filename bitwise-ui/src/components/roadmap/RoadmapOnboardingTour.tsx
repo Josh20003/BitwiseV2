@@ -168,9 +168,10 @@ export function RoadmapOnboardingTour() {
     const alreadySeen = localStorage.getItem(storageKey) === 'true'
 
     // Only show tour for newly created accounts (created within the last 10 minutes)
+    // Guests and old accounts don't see the tour
     const isNewAccount = user?.created_at
       ? (Date.now() - new Date(user.created_at).getTime()) < 10 * 60 * 1000
-      : true // guest users still get the tour
+      : false
 
     if (!alreadySeen && isRoadmapPage && isNewAccount) {
       const cleanup = startTour()
