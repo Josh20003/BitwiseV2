@@ -1432,12 +1432,12 @@ function RouteComponent() {
                         <Progress value={progress} className="h-1.5 mb-1" />
                         {status === 'completed' && quizStatus === 'failed' && (
                           <p className="text-[10px] text-red-600 dark:text-red-400 truncate">
-                            Need 80% to unlock L{nextLessonNum}
+                            Need 80% to unlock L{lesson.id + 1}
                           </p>
                         )}
                         {status === 'completed' && quizStatus === 'not_taken' && (
                           <p className="text-[10px] text-amber-600 dark:text-amber-400 truncate">
-                            Quiz needed for L{nextLessonNum}
+                            Quiz needed for L{lesson.id + 1}
                           </p>
                         )}
                       </div>
