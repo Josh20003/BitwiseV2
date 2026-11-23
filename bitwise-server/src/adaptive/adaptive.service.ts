@@ -90,63 +90,66 @@ export class AdaptiveService {
   async updateUserSkills(userId: string, performanceData: PerformanceData[]) {
     await this.initializeUserSkills(userId);
 
-    for (const performance of performanceData) {
-      const userSkill = await this.prisma.userSkill.findUnique({
-        where: {
-          userId_topicId: {
-            userId,
-            topicId: performance.topicId,
-          },
-        },
-      });
+    const topicIds = performanceData.map((p) => p.topicId);
+    const existingSkills = await this.prisma.userSkill.findMany({
+      where: {
+        userId,
+        topicId: { in: topicIds },
+      },
+    });
+    const skillMap = new Map(existingSkills.map((s) => [s.topicId, s]));
 
-      if (!userSkill) continue;
+    await Promise.all(
+      performanceData.map(async (performance) => {
+        const userSkill = skillMap.get(performance.topicId);
+        if (!userSkill) return;
 
-      const params =
-        this.bktParams[performance.difficulty] || this.bktParams.medium;
-      const correctRate =
-        performance.total > 0 ? performance.correct / performance.total : 0;
+        const params =
+          this.bktParams[performance.difficulty] || this.bktParams.medium;
+        const correctRate =
+          performance.total > 0 ? performance.correct / performance.total : 0;
 
-      // More aggressive BKT updates
-      const priorKnowledge = userSkill.mastery;
+        // More aggressive BKT updates
+        const priorKnowledge = userSkill.mastery;
 
-      // Simplified BKT - more responsive to performance
-      let newMastery = priorKnowledge;
-      let newLevel = userSkill.level;
+        // Simplified BKT - more responsive to performance
+        let newMastery = priorKnowledge;
+        let newLevel = userSkill.level;
 
-      if (performance.total > 0) {
-        // Update based on performance
-        const performanceWeight = 0.3; // How much current performance affects mastery
-        newMastery =
-          priorKnowledge * (1 - performanceWeight) +
-          correctRate * performanceWeight;
+        if (performance.total > 0) {
+          // Update based on performance
+          const performanceWeight = 0.3; // How much current performance affects mastery
+          newMastery =
+            priorKnowledge * (1 - performanceWeight) +
+            correctRate * performanceWeight;
 
-        // Update level more aggressively
-        if (correctRate >= 0.8) {
-          newLevel = Math.min(1.0, userSkill.level + params.pLearn * 2);
-        } else if (correctRate >= 0.6) {
-          newLevel = Math.min(1.0, userSkill.level + params.pLearn);
-        } else if (correctRate < 0.4) {
-          newLevel = Math.max(0.0, userSkill.level - params.pForget);
+          // Update level more aggressively
+          if (correctRate >= 0.8) {
+            newLevel = Math.min(1.0, userSkill.level + params.pLearn * 2);
+          } else if (correctRate >= 0.6) {
+            newLevel = Math.min(1.0, userSkill.level + params.pLearn);
+          } else if (correctRate < 0.4) {
+            newLevel = Math.max(0.0, userSkill.level - params.pForget);
+          }
         }
-      }
 
-      // Update the user skill
-      await this.prisma.userSkill.update({
-        where: {
-          userId_topicId: {
-            userId,
-            topicId: performance.topicId,
+        // Update the user skill
+        await this.prisma.userSkill.update({
+          where: {
+            userId_topicId: {
+              userId,
+              topicId: performance.topicId,
+            },
           },
-        },
-        data: {
-          level: Math.max(0.0, Math.min(1.0, newLevel)),
-          mastery: Math.max(0.0, Math.min(1.0, newMastery)),
-          attempts: userSkill.attempts + performance.total,
-          correct: userSkill.correct + performance.correct,
-        },
-      });
-    }
+          data: {
+            level: Math.max(0.0, Math.min(1.0, newLevel)),
+            mastery: Math.max(0.0, Math.min(1.0, newMastery)),
+            attempts: userSkill.attempts + performance.total,
+            correct: userSkill.correct + performance.correct,
+          },
+        });
+      }),
+    );
   }
 
   /**

@@ -31,6 +31,7 @@ function RootComponent() {
   }, [location.pathname])
 
   const isLesson = location.pathname.startsWith('/lesson')
+  const isQuiz = location.pathname.startsWith('/quiz') || location.pathname.startsWith('/assessment')
   const isAuth =
     location.pathname === '/login' || 
     location.pathname === '/signup' || 
@@ -38,12 +39,12 @@ function RootComponent() {
     location.pathname === '/reset-password'
   return (
     <>
-      {!isLesson && !isAuth && <HomeHeader />}
+      {!isLesson && !isQuiz && !isAuth && <HomeHeader />}
       <main>
         <Outlet />
       </main>
-      {/* Global AI guides — hidden on auth pages */}
-      {!isAuth && (
+      {/* Global AI guides — hidden on auth pages and during quizzes */}
+      {!isAuth && !isQuiz && (
         <>
           <GlobalOnboardingTour />
           <GlobalAiBot currentPath={location.pathname} />

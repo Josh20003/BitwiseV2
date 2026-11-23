@@ -7,17 +7,14 @@ import rainbow_small from '@/assets/bg-icon/rainbow_small.svg'
 import small_stairs from '@/assets/bg-icon/small_stairs.svg'
 import small_butterfly from '@/assets/bg-icon/small_butterfly.svg'
 import landing002 from '@/assets/bg-icon/landing002.svg'
-import logoArrow from '@/assets/bg-icon/logo-arrow.svg'
 import landingLesson001 from '@/assets/bg-icon/landing-lesson001.svg'
 import lesson_home_right001 from '@/assets/bg-icon/lesson_home_right001.svg'
 import home_lesson_left001 from '@/assets/bg-icon/home_lesson_left001.svg'
-import chevronright from '@/assets/bg-icon/chevron-right.svg'
 import softstar from '@/assets/bg-icon/softstar.svg'
 import starshape from '@/assets/bg-icon/starshape.svg'
 import summerflower from '@/assets/bg-icon/summerflower.svg'
 import bg_text from '@/assets/bg-icon/bg_text.svg'
 import halfasterisk from '@/assets/bg-icon/halfasterisk.svg'
-import rectangle_diamond from '@/assets/bg-icon/rectangle_diamond.svg'
 import roadmapSample from '@/assets/bg-icon/roadmapsample1.png'
 import booleImg from '@/assets/bg-icon/GeorgeBoole.png'
 import vennImg from '@/assets/bg-icon/venn.jpg'
@@ -228,10 +225,6 @@ function RouteComponent() {
                 Overview of Boolean Algebra, who created it, and its
                 significance in mathematics and computer science.
               </p>
-              <div className="flex flex-row items-center space-x-2 pt-3">
-                <p className="text-xs">View lesson</p>
-                <img src={logoArrow} alt="My Icon" className="h-2" />
-              </div>
             </div>
           </div>
           <div className="w-full md:w-86 h-auto rounded-3xl border border-primary bg-primary-foreground box-shadow2 flex flex-col">
@@ -250,10 +243,6 @@ function RouteComponent() {
                 Introduction to fundamental operations: AND, OR, and NOT, with
                 simple examples
               </p>
-              <div className="flex flex-row items-center space-x-2 pt-3">
-                <p className="text-xs">View lesson</p>
-                <img src={logoArrow} alt="My Icon" className="h-2" />
-              </div>
             </div>
           </div>
           <div className="w-full md:w-86 h-auto rounded-3xl border border-primary bg-primary-foreground box-shadow2 flex flex-col">
@@ -270,10 +259,6 @@ function RouteComponent() {
                 Understanding how to construct and interpret truth tables, and
                 how they represent logical expressions.
               </p>
-              <div className="flex flex-row items-center space-x-2 pt-3">
-                <p className="text-xs">View lesson</p>
-                <img src={logoArrow} alt="My Icon" className="h-2" />
-              </div>
             </div>
           </div>
           <div className="w-full md:w-86 h-auto rounded-3xl border border-primary bg-primary-foreground box-shadow2 flex flex-col">
@@ -289,35 +274,7 @@ function RouteComponent() {
               <p className="text-xs md:text-sm">
                 Master binary, decimal, and hexadecimal number systems used in computing and digital logic.
               </p>
-              <div className="flex flex-row items-center space-x-2 pt-3">
-                <p className="text-xs">View lesson</p>
-                <img src={logoArrow} alt="My Icon" className="h-2" />
-              </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div className="min-h-[50vh] w-full flex flex-col md:flex-row bg-[var(--color-offwhite)] py-12 px-4">
-        <div className="w-full md:w-1/2 flex items-center justify-center px-5 md:px-20 mb-8 md:mb-0">
-          <h1 className="text-2xl md:text-5xl font-bold addgrotesk text-center md:text-left">
-            Teach Smarter, Learn Faster – With Classroom Mode.
-          </h1>
-        </div>
-        <div className="w-full md:w-1/2 flex justify-center flex-col space-y-4 md:space-y-8">
-          <p className="text-sm md:text-lg px-5 md:px-0 md:pr-20 text-center md:text-left">
-            Bitwise empowers teachers with full control over their lessons. With
-            Classroom Mode, educators can customize, reorder, and tailor Boolean
-            Algebra topics to fit their teaching style. Track progress, create
-            interactive exercises, and adapt lessons to meet student needs—all
-            in one intuitive platform designed for effective learning.
-          </p>
-          <div className="flex flex-col md:flex-row w-full items-center justify-center md:justify-start gap-4">
-            <button className="w-full md:w-auto text-xs md:text-base bg-[var(--color-grayz)] px-6 md:px-8 py-2 md:py-3 border border-black rounded-full box-shadow3 addgrotesk text-white">
-              Host a class
-            </button>
-            <button className="w-full md:w-auto px-6 md:px-8 py-2 md:py-3 flex flex-row text-xs md:text-base items-center justify-center gap-2">
-              Join a class <img src={chevronright} alt="My Icon" className="h-3" />
-            </button>
           </div>
         </div>
       </div>
@@ -331,11 +288,6 @@ function RouteComponent() {
             your learning!
           </p>
         </div>
-        <img
-          src={rectangle_diamond}
-          alt="My Icon"
-          className="hidden md:block absolute -top-180 md:-top-115 left-10 z-50 w-20 md:w-auto"
-        />
         <img
           src={halfasterisk}
           alt="My Icon"

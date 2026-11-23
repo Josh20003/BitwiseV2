@@ -8,6 +8,7 @@ import { z } from 'zod'
 
 const searchSchema = z.object({
   lessonId: z.number().optional(),
+  previewResults: z.union([z.boolean(), z.string()]).optional(),
 })
 
 export const Route = createFileRoute('/quiz/$topic')({
@@ -37,7 +38,7 @@ const topicToNextLesson: Record<string, number> = {
 
 function RouteComponent() {
   const { topic } = Route.useParams()
-  const { lessonId } = useSearch({ from: '/quiz/$topic' })
+  const { lessonId, previewResults } = useSearch({ from: '/quiz/$topic' })
   const navigate = useNavigate()
   const { user } = useAuthContext()
 
@@ -72,6 +73,7 @@ function RouteComponent() {
           topic={topic}
           lessonId={lessonId}
           nextLessonId={nextLessonId}
+          previewResults={previewResults}
           onComplete={() => {
             // Could add redirect logic here if needed
           }}

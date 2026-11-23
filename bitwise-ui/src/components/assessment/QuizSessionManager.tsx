@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,6 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  Volume2,
   Lock,
 } from 'lucide-react';
 import CircuitRenderer from '@/components/CircuitRenderer';
@@ -241,12 +240,14 @@ export function QuizSessionManager({
   lessonId,
   onComplete,
   nextLessonId,
+  previewResults,
 }: {
   userId: string;
   topic: string;
   lessonId?: number;
   onComplete?: () => void;
   nextLessonId?: number;
+  previewResults?: boolean | string;
 }) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -257,7 +258,6 @@ export function QuizSessionManager({
   const [error, setError] = useState<string | null>(null);
   const [submittedQuestion, setSubmittedQuestion] = useState<string | null>(null);
   const [attemptId, setAttemptId] = useState<number | null>(null);
-  const [usingBuiltInQuestions, setUsingBuiltInQuestions] = useState(false);
   const [lessonInfo, setLessonInfo] = useState<{
     lessonId: number;
     lessonTitle: string;
@@ -269,6 +269,56 @@ export function QuizSessionManager({
       questionCount: number;
     }>;
   } | null>(null);
+
+  // Initialize completed screen immediately if previewResults is requested
+  useEffect(() => {
+    if (previewResults && quizState === 'IDLE') {
+      const isLowEma = previewResults === 'locked' || previewResults === 'low';
+      setQuizState('COMPLETED');
+      setScoreData({
+        score: isLowEma ? 0.7 : 0.9,
+        correct: isLowEma ? 7 : 9,
+        total: 10,
+        emaData: { previousEMA: 0.45, newEMA: isLowEma ? 0.62 : 0.88 },
+        questions: [
+          {
+            id: 'sample-1',
+            stem: 'Convert binary 1010₂ to decimal.',
+            options: [
+              { id: 'a', text: '8', isCorrect: false },
+              { id: 'b', text: '10', isCorrect: true, rationale: '8 + 2 = 10' },
+              { id: 'c', text: '12', isCorrect: false },
+              { id: 'd', text: '14', isCorrect: false },
+            ],
+            explanation: '1×8 + 0×4 + 1×2 + 0×1 = 10.',
+          },
+          {
+            id: 'sample-2',
+            stem: 'What is the base of the hexadecimal number system?',
+            options: [
+              { id: 'a', text: '2', isCorrect: false },
+              { id: 'b', text: '8', isCorrect: false },
+              { id: 'c', text: '10', isCorrect: false },
+              { id: 'd', text: '16', isCorrect: true, rationale: 'Hexadecimal uses base 16.' },
+            ],
+            explanation: 'Hexadecimal is base 16 (0-9 and A-F).',
+          },
+          {
+            id: 'sample-3',
+            stem: 'What is the positional weight at position 2 in base 16, counting the rightmost position as 0?',
+            options: [
+              { id: 'a', text: '16', isCorrect: false },
+              { id: 'b', text: '1', isCorrect: false },
+              { id: 'c', text: '256', isCorrect: true, rationale: '16² = 256.' },
+              { id: 'd', text: '4096', isCorrect: false },
+            ],
+            explanation: '16² = 256.',
+          },
+        ],
+        selectedAnswers: { 'sample-1': 'b', 'sample-2': 'd', 'sample-3': 'c' },
+      });
+    }
+  }, [previewResults, quizState]);
 
   const rawApiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
   const API_BASE = rawApiBase.replace(/\/+$/, '');
@@ -285,7 +335,6 @@ export function QuizSessionManager({
   const startQuiz = async () => {
     setLoading(true);
     setError(null);
-    setUsingBuiltInQuestions(false);
     try {
       if (lessonId) {
         // Use the premium lesson practice route (with BKT + visuals)
@@ -304,7 +353,6 @@ export function QuizSessionManager({
         if (data.success && data.data && data.data.questions?.length > 0) {
           setQuestions(data.data.questions);
           setAttemptId(data.data.attemptId);
-          setUsingBuiltInQuestions(data.data.generationSource === 'built-in');
           if (data.data.lessonInfo) {
             setLessonInfo(data.data.lessonInfo);
           }
@@ -381,59 +429,68 @@ export function QuizSessionManager({
   };
 
   const submitQuiz = async () => {
-    setLoading(true);
+    // 1. Calculate score and results immediately on client
+    let correctCount = 0;
+    questions.forEach(q => {
+      const answer = selectedAnswers[q.id];
+      const isCorrect = q.options.find((o: any) => o.id === answer && o.isCorrect) ||
+        (q.correctAnswer && answer === q.correctAnswer);
+      if (isCorrect) correctCount++;
+    });
+    const finalScore = questions.length > 0 ? correctCount / questions.length : 0;
+
+    // Instantly transition to COMPLETED state (0ms wait)
+    setQuizState('COMPLETED');
+    setScoreData({
+      score: finalScore,
+      correct: correctCount,
+      total: questions.length,
+      emaData: null,
+      questions,
+      selectedAnswers,
+    });
+
+    if (finalScore >= 0.8) {
+      confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
+    }
+
+    // Optimistically update localStorage progress cache so next lesson is immediately unlocked
+    if (userId && lessonId && finalScore >= 0.8) {
+      try {
+        const cacheKey = `bitwise_progress_${userId}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const list = JSON.parse(cached);
+          const item = list.find((p: any) => p.lessonId === lessonId);
+          if (item) {
+            item.masteryScore = Math.max(item.masteryScore || 0, finalScore);
+            item.status = 'completed';
+            item.progress = 1.0;
+            localStorage.setItem(cacheKey, JSON.stringify(list));
+          }
+        }
+      } catch {}
+    }
+
+    // 2. Perform background sync to backend
     try {
+      const headers = await getAuthHeaders();
       if (attemptId) {
-        // Submit using adaptive practice endpoint (BKT updates)
-        const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE}/assessment/submit-adaptive-practice`, {
           method: 'POST',
           headers,
           body: JSON.stringify({
             attemptId,
-            responses: selectedAnswers
-          })
+            responses: selectedAnswers,
+          }),
         });
         const data = await res.json();
-        if (data.success) {
-          setQuizState('COMPLETED');
-          
-          let correctCount = 0;
-          questions.forEach(q => {
-            const answer = selectedAnswers[q.id];
-            const isCorrect = q.options.find(o => o.id === answer && o.isCorrect);
-            if (isCorrect) correctCount++;
-          });
-          const score = correctCount / questions.length;
-
-          setScoreData({
-            score,
-            correct: correctCount,
-            total: questions.length,
-            emaData: data.data.emaData, // synced in backend
-            questions,
-            selectedAnswers,
-          });
-
-          if (score >= 0.8) {
-            confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
-          }
-
-          if (onComplete) onComplete();
-        } else {
-          setError(data.error || 'Failed to submit adaptive assessment.');
+        if (data?.success && data?.data?.emaData) {
+          setScoreData((prev: any) =>
+            prev ? { ...prev, emaData: data.data.emaData } : prev
+          );
         }
       } else {
-        // Submit using simple quiz endpoint
-        let correctCount = 0;
-        questions.forEach(q => {
-          if (selectedAnswers[q.id] === q.correctAnswer) {
-            correctCount++;
-          }
-        });
-        const finalScore = correctCount / questions.length;
-
-        const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE}/assessment/ai-quiz/submit`, {
           method: 'POST',
           headers,
@@ -441,35 +498,20 @@ export function QuizSessionManager({
             userId,
             topic,
             score: finalScore,
-            answersJson: selectedAnswers
-          })
+            answersJson: selectedAnswers,
+          }),
         });
         const data = await res.json();
-        if (data.success) {
-          setQuizState('COMPLETED');
-          setScoreData({
-            score: finalScore,
-            correct: correctCount,
-            total: questions.length,
-            emaData: data.data,
-            questions,
-            selectedAnswers,
-          });
-
-          if (finalScore >= 0.8) {
-            confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
-          }
-
-          if (onComplete) onComplete();
-        } else {
-          setError(data.error || 'Failed to submit quiz.');
+        if (data?.success && data?.data) {
+          setScoreData((prev: any) =>
+            prev ? { ...prev, emaData: data.data } : prev
+          );
         }
       }
+
+      if (onComplete) onComplete();
     } catch (e) {
-      setError('Failed to submit quiz. Please try again.');
-      console.error(e);
-    } finally {
-      setLoading(false);
+      console.warn('Background assessment sync:', e);
     }
   };
 
@@ -551,7 +593,13 @@ export function QuizSessionManager({
 
   if (quizState === 'COMPLETED') {
     const percent = Math.round(scoreData.score * 100);
-    const isPassed = percent >= 80;
+    const emaValue = scoreData.emaData?.newEMA;
+    const emaPercent = emaValue !== undefined
+      ? Math.round(emaValue > 1 ? emaValue : emaValue * 100)
+      : undefined;
+
+    // Continue to next lesson requires EMA Mastery >= 80%
+    const isPassed = emaPercent !== undefined ? emaPercent >= 80 : percent >= 80;
 
     return (
       <Card className="max-w-2xl mx-auto border border-gray-200 dark:border-gray-800 shadow-md">
@@ -580,19 +628,25 @@ export function QuizSessionManager({
               {isPassed ? (
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold text-sm">
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Passed (80% Passing Mark Reached)</span>
+                  <span>Passed (80% EMA Mastery Reached)</span>
                 </div>
               ) : (
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-semibold text-sm">
                   <AlertCircle className="w-4 h-4" />
-                  <span>Passing Mark Not Met (80% Required to Continue)</span>
+                  <span>
+                    {emaPercent !== undefined
+                      ? `EMA Mastery: ${emaPercent}% (80% Required to Continue)`
+                      : '80% EMA Mastery Required to Continue'}
+                  </span>
                 </div>
               )}
             </div>
 
             {!isPassed && nextLessonId && (
               <p className="text-xs text-amber-700 dark:text-amber-300 text-center mt-3 max-w-md">
-                You need at least 80% (8 out of 10) on this quiz to unlock and continue to Lesson {nextLessonId}. Review the explanations below and try again!
+                {emaPercent !== undefined && emaPercent < 80
+                  ? `Your current EMA mastery is ${emaPercent}%. You need at least 80% EMA mastery on this lesson to unlock and continue to Lesson ${nextLessonId}. Take the quiz again to raise your EMA!`
+                  : `You need at least 80% on this quiz to unlock and continue to Lesson ${nextLessonId}. Review the explanations below and try again!`}
               </p>
             )}
           </div>
@@ -674,7 +728,7 @@ export function QuizSessionManager({
             {nextLessonId && !isPassed && (
               <Button disabled variant="outline" className="gap-2 opacity-60 cursor-not-allowed w-full h-11 border-dashed">
                 <Lock className="w-4 h-4" />
-                Lesson {nextLessonId} Locked (Requires 80%)
+                Lesson {nextLessonId} Locked (Requires 80% EMA)
               </Button>
             )}
 
@@ -684,7 +738,7 @@ export function QuizSessionManager({
               className={`gap-2 font-medium w-full h-11 ${!isPassed ? 'bg-purple-600 hover:bg-purple-700 text-white font-semibold' : ''}`}
             >
               <RotateCcw className="w-4 h-4" />
-              {isPassed ? 'Take Again' : 'Try Again to Pass (80%)'}
+              {isPassed ? 'Take Again' : 'Try Again to Pass (80% EMA)'}
             </Button>
 
             <Link to="/roadmap" className="w-full">
@@ -725,6 +779,15 @@ export function QuizSessionManager({
     (lessonId && LESSON_METADATA[lessonId]?.title) ||
     null;
 
+  const currentTopicMastery = lessonInfo?.topicMasteries?.find(
+    (tm) => tm.topicId === currentQ?.topicId || tm.topicTitle === (currentQ as any)?.topicName
+  );
+  const currentMasteryVal = currentTopicMastery
+    ? Math.round(currentTopicMastery.mastery > 1 ? currentTopicMastery.mastery : currentTopicMastery.mastery * 100)
+    : (lessonInfo?.topicMasteries && lessonInfo.topicMasteries.length > 0
+        ? Math.round(lessonInfo.topicMasteries.reduce((acc, m) => acc + (m.mastery > 1 ? m.mastery : m.mastery * 100), 0) / lessonInfo.topicMasteries.length)
+        : 0);
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="pb-6 mb-6">
@@ -734,16 +797,19 @@ export function QuizSessionManager({
               <Brain className="w-8 h-8 text-purple-600 dark:text-purple-400" />
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Adaptive Assessment</h2>
             </div>
-            {usingBuiltInQuestions && (
-              <p className="mb-3 text-sm text-muted-foreground" role="status">
-                Using built-in practice questions while AI generation is unavailable.
-              </p>
-            )}
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 text-sm font-semibold capitalize">
+              <span className={`px-3 py-1 rounded-full text-sm font-semibold capitalize ${
+                (currentQ.difficulty || '').toLowerCase() === 'hard'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                  : (currentQ.difficulty || '').toLowerCase() === 'medium'
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                  : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+              }`}>
                 {currentQ.difficulty || 'Easy'}
               </span>
-              <span className="text-sm font-medium text-muted-foreground">Mastery: 0%</span>
+              <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 text-sm font-semibold">
+                EMA Mastery: {currentMasteryVal}%
+              </span>
             </div>
           </div>
           
@@ -774,9 +840,6 @@ export function QuizSessionManager({
                {currentQ.difficulty || 'Easy'}
             </span>
           </div>
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-            <Volume2 className="w-5 h-5" />
-          </button>
         </div>
       </div>
       

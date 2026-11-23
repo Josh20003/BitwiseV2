@@ -62,6 +62,10 @@ interface GlobalAiBotProps {
 }
 
 export default function GlobalAiBot({ currentPath = '/' }: GlobalAiBotProps) {
+  if (currentPath.startsWith('/quiz') || currentPath.startsWith('/assessment')) {
+    return null
+  }
+
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {

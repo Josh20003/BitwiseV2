@@ -65,6 +65,63 @@ export class UserProgressService {
   }
 
   /**
+   * Mark all topics in a lesson as completed and set lesson progress to 100%
+   */
+  async markLessonCompleted(userId: string, lessonId: number) {
+    const allTopics = await this.prisma.topic.findMany({
+      where: { lessonId },
+      select: { id: true },
+    });
+
+    if (allTopics.length > 0) {
+      await Promise.all(
+        allTopics.map((t) =>
+          this.prisma.userTopic.upsert({
+            where: { userId_topicId: { userId, topicId: t.id } },
+            update: {
+              status: 'completed',
+              completedAt: new Date(),
+              lastViewedAt: new Date(),
+            },
+            create: {
+              userId,
+              topicId: t.id,
+              status: 'completed',
+              firstViewedAt: new Date(),
+              completedAt: new Date(),
+            },
+          }),
+        ),
+      );
+    }
+
+    const existingLesson = await this.prisma.userLesson.findUnique({
+      where: { userId_lessonId: { userId, lessonId } },
+    });
+
+    const userLesson = await this.prisma.userLesson.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      update: {
+        progress: 1.0,
+        status: 'completed',
+        lastViewedAt: new Date(),
+        completedAt: new Date(),
+      },
+      create: {
+        userId,
+        lessonId,
+        progress: 1.0,
+        status: 'completed',
+        startedAt: new Date(),
+        completedAt: new Date(),
+        masteryScore: existingLesson?.masteryScore || null,
+      },
+    });
+
+    return userLesson;
+  }
+
+  /**
    * Update lesson progress based on topics viewed/completed
    */
   private async updateLessonProgress(userId: string, topicId: number) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { type Session, type User } from '@supabase/supabase-js'
 import { supabase } from '../utils/supabase'
 import { authService } from '../services/auth.service'
+import { clearUserSessionData } from '../queryClient'
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
@@ -9,11 +10,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let currentUserId: string | null = null
+
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
         if (error) throw error
         
+        currentUserId = session?.user?.id ?? null
         setSession(session)
         setUser(session?.user ?? null)
       } catch (error) {
@@ -27,7 +31,12 @@ export function useAuth() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const newUserId = session?.user?.id ?? null
+      if (event === 'SIGNED_OUT' || (currentUserId && newUserId !== currentUserId)) {
+        clearUserSessionData()
+      }
+      currentUserId = newUserId
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -38,6 +47,7 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
+      clearUserSessionData()
       await authService.signOut()
     } catch (error) {
       console.error('Sign out error:', error)

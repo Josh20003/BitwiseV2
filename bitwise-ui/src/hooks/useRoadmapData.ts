@@ -27,13 +27,44 @@ interface UseRoadmapDataResult {
 }
 
 export function useRoadmapData(userId: string | undefined, lessonIds: number[]): UseRoadmapDataResult {
-  const { data: lessonProgress = [], isLoading: progressLoading } = useAllUserProgress(!!userId)
+  const { data: lessonProgress = [], isLoading: progressLoading } = useAllUserProgress(userId, !!userId)
   const [topicsProgress, setTopicsProgress] = useState<TopicsProgressMap>({})
-  const [topicMastery, setTopicMastery] = useState<Record<number, TopicMastery[]>>({})
-  const [analytics, setAnalytics] = useState<AdaptiveAnalytics | null>(null)
+  const [topicMastery, setTopicMastery] = useState<Record<number, TopicMastery[]>>(() => {
+    if (!userId) return {}
+    try {
+      const cached = localStorage.getItem(`bitwise_mastery_${userId}`)
+      if (cached) return JSON.parse(cached)
+    } catch {}
+    return {}
+  })
+  const [analytics, setAnalytics] = useState<AdaptiveAnalytics | null>(() => {
+    if (!userId) return null
+    try {
+      const cached = localStorage.getItem(`bitwise_analytics_${userId}`)
+      if (cached) return JSON.parse(cached)
+    } catch {}
+    return null
+  })
   const [statistics, setStatistics] = useState<AssessmentStatistics | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!userId) {
+      setTopicsProgress({})
+      setTopicMastery({})
+      setAnalytics(null)
+      setStatistics(null)
+      setError(null)
+    } else {
+      try {
+        const cachedMastery = localStorage.getItem(`bitwise_mastery_${userId}`)
+        if (cachedMastery) setTopicMastery(JSON.parse(cachedMastery))
+        const cachedAnalytics = localStorage.getItem(`bitwise_analytics_${userId}`)
+        if (cachedAnalytics) setAnalytics(JSON.parse(cachedAnalytics))
+      } catch {}
+    }
+  }, [userId])
 
   const lessonKey = useMemo(() => [...lessonIds].sort().join('-'), [lessonIds])
 
@@ -50,15 +81,18 @@ export function useRoadmapData(userId: string | undefined, lessonIds: number[]):
     setLoading(true)
     setError(null)
     try {
-      const [topicsSnapshot, analyticsData, statsData] = await Promise.all([
-        roadmapService.getTopicsProgressSnapshot(lessonIds),
+      const [analyticsData, statsData] = await Promise.all([
         roadmapService.getAdaptiveAnalytics(userId),
         roadmapService.getAssessmentStats(userId),
       ])
 
-      setTopicsProgress(topicsSnapshot)
       setAnalytics(analyticsData)
       setStatistics(statsData)
+      if (userId && analyticsData) {
+        try {
+          localStorage.setItem(`bitwise_analytics_${userId}`, JSON.stringify(analyticsData))
+        } catch {}
+      }
 
       if (analyticsData?.skillsByLesson?.length) {
         type LessonSkillSummary = AdaptiveAnalytics['skillsByLesson'][number]
@@ -76,6 +110,11 @@ export function useRoadmapData(userId: string | undefined, lessonIds: number[]):
           {} as Record<number, TopicMastery[]>
         )
         setTopicMastery(masteryMap)
+        if (userId) {
+          try {
+            localStorage.setItem(`bitwise_mastery_${userId}`, JSON.stringify(masteryMap))
+          } catch {}
+        }
       } else {
         setTopicMastery({})
       }

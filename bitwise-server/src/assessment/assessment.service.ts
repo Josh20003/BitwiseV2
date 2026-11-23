@@ -313,10 +313,19 @@ export class AssessmentService {
     attemptCount: number;
     averageMastery: number;
   }> {
-    // Get user's recent attempts
-    const attempts = await this.getUserAttempts(userId);
+    // Get user's recent attempts efficiently (limit to 5 rather than fetching all historical rows)
+    const [recentAttempts, attemptCount] = await Promise.all([
+      (this.prisma as any).attempt.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+      (this.prisma as any).attempt.count({
+        where: { userId },
+      }),
+    ]);
 
-    if (attempts.length === 0) {
+    if (attemptCount === 0 || recentAttempts.length === 0) {
       return {
         currentDifficulty: 'easy',
         canProgressToMedium: false,
@@ -326,9 +335,6 @@ export class AssessmentService {
         averageMastery: 0,
       };
     }
-
-    const attemptCount = attempts.length;
-    const recentAttempts = attempts.slice(0, Math.min(5, attempts.length)); // Last 5 attempts
 
     // Calculate mastery percentages for each attempt
     const masteryPercentages = recentAttempts.map((attempt) => {
@@ -933,7 +939,7 @@ export class AssessmentService {
         }
       };
 
-      const generationDeadline = Date.now() + 20000;
+      const generationDeadline = Date.now() + 3500;
       let generationSource: 'ai' | 'built-in' = 'ai';
       let questions = await requestQuestions(prompt);
 
@@ -964,7 +970,8 @@ export class AssessmentService {
         console.error(
           'AI generation failed; using built-in lesson questions.',
         );
-        questions = buildLocalLessonQuestions(promptContext);
+        const randomSeed = Math.floor(Math.random() * 10000) + 1;
+        questions = buildLocalLessonQuestions(promptContext, randomSeed);
         generationSource = 'built-in';
       }
 
@@ -1185,7 +1192,8 @@ export class AssessmentService {
 
       if (validQuestions.length < 10) {
         // Do not save incomplete attempts or issue another unbounded provider call.
-        validQuestions = buildLocalLessonQuestions(promptContext).map(q => {
+        const randomSeed = Math.floor(Math.random() * 10000) + 1;
+        validQuestions = buildLocalLessonQuestions(promptContext, randomSeed).map(q => {
           const { shuffledOptions, correctOptionId } = shuffleAndReassignOptions(q.options);
           return { ...q, options: shuffledOptions, answerId: correctOptionId };
         });
@@ -1485,30 +1493,38 @@ export class AssessmentService {
 
     let finalEmaData: any = null;
 
-    // Update mastery for each lesson
-    for (const [lessonId, data] of lessonScores.entries()) {
-      const lessonScore = data.correct / data.total;
-      await this.adaptiveService.updateLessonMasteryFromAssessment(
-        attempt.userId,
-        lessonId,
-        lessonScore,
-      );
-
-      // Process EMA and Streaks
-      const topicSlug = lessonToTopicSlug[lessonId];
-      if (topicSlug) {
-        const emaResult = await this.emaMasteryService.processScore(
+    // Update mastery for each lesson in parallel
+    const emaResults = await Promise.all(
+      Array.from(lessonScores.entries()).map(async ([lessonId, data]) => {
+        const lessonScore = data.correct / data.total;
+        await this.adaptiveService.updateLessonMasteryFromAssessment(
           attempt.userId,
-          topicSlug,
+          lessonId,
           lessonScore,
         );
-        finalEmaData = {
-          topic: topicSlug,
-          previousEMA: emaResult.previousEMA,
-          newEMA: emaResult.newEMA,
-          score: emaResult.score,
-        };
-      }
+
+        // Process EMA and Streaks
+        const topicSlug = lessonToTopicSlug[lessonId];
+        if (topicSlug) {
+          const emaResult = await this.emaMasteryService.processScore(
+            attempt.userId,
+            topicSlug,
+            lessonScore,
+          );
+          return {
+            topic: topicSlug,
+            previousEMA: emaResult.previousEMA,
+            newEMA: emaResult.newEMA,
+            score: emaResult.score,
+          };
+        }
+        return null;
+      }),
+    );
+
+    const validEma = emaResults.find((e) => e !== null);
+    if (validEma) {
+      finalEmaData = validEma;
     }
 
     // Save responses, score, and BOTH feedbacks

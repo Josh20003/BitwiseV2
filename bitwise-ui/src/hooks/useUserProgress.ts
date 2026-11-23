@@ -2,40 +2,76 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { userProgressService } from '@/services/user-progress.service'
 
 export const USER_PROGRESS_QUERY_KEYS = {
-  all: ['user-progress'] as const,
-  allProgress: () => [...USER_PROGRESS_QUERY_KEYS.all, 'lessons'] as const,
-  lesson: (lessonId: number) => [...USER_PROGRESS_QUERY_KEYS.all, 'lesson', lessonId] as const,
-  topics: (lessonId: number) => [...USER_PROGRESS_QUERY_KEYS.all, 'topics', lessonId] as const,
-  statistics: () => [...USER_PROGRESS_QUERY_KEYS.all, 'statistics'] as const,
+  all: (userId?: string) => ['user-progress', userId || 'anonymous'] as const,
+  allProgress: (userId?: string) => [...USER_PROGRESS_QUERY_KEYS.all(userId), 'lessons'] as const,
+  lesson: (lessonId: number, userId?: string) => [...USER_PROGRESS_QUERY_KEYS.all(userId), 'lesson', lessonId] as const,
+  topics: (lessonId: number, userId?: string) => [...USER_PROGRESS_QUERY_KEYS.all(userId), 'topics', lessonId] as const,
+  statistics: (userId?: string) => [...USER_PROGRESS_QUERY_KEYS.all(userId), 'statistics'] as const,
 } as const
 
-export function useAllUserProgress(enabled: boolean = true) {
+export function useAllUserProgress(
+  userIdOrEnabled?: string | boolean,
+  enabledArg?: boolean
+) {
+  const userId = typeof userIdOrEnabled === 'string' ? userIdOrEnabled : undefined
+  const enabled = typeof userIdOrEnabled === 'boolean' ? userIdOrEnabled : (enabledArg ?? true)
+
   return useQuery({
-    queryKey: USER_PROGRESS_QUERY_KEYS.allProgress(),
-    queryFn: () => userProgressService.getAllProgress(),
-    enabled,
+    queryKey: USER_PROGRESS_QUERY_KEYS.allProgress(userId),
+    queryFn: async () => {
+      const data = await userProgressService.getAllProgress()
+      if (userId && Array.isArray(data)) {
+        try {
+          localStorage.setItem(`bitwise_progress_${userId}`, JSON.stringify(data))
+        } catch {}
+      }
+      return data
+    },
+    initialData: () => {
+      if (!userId) return undefined
+      try {
+        const cached = localStorage.getItem(`bitwise_progress_${userId}`)
+        if (cached) return JSON.parse(cached)
+      } catch {}
+      return undefined
+    },
+    enabled: enabled && (userId !== undefined ? !!userId : true),
   })
 }
 
-export function useLessonProgress(lessonId: number | undefined, enabled: boolean = true) {
+export function useLessonProgress(
+  lessonId: number | undefined,
+  userIdOrEnabled?: string | boolean,
+  enabledArg?: boolean
+) {
+  const userId = typeof userIdOrEnabled === 'string' ? userIdOrEnabled : undefined
+  const enabled = typeof userIdOrEnabled === 'boolean' ? userIdOrEnabled : (enabledArg ?? true)
+
   return useQuery({
-    queryKey: USER_PROGRESS_QUERY_KEYS.lesson(lessonId!),
+    queryKey: USER_PROGRESS_QUERY_KEYS.lesson(lessonId!, userId),
     queryFn: () => userProgressService.getLessonProgress(lessonId!),
-    enabled: enabled && !!lessonId,
+    enabled: enabled && !!lessonId && (userId !== undefined ? !!userId : true),
   })
 }
 
-export function useTopicsForLesson(lessonId: number | undefined, enabled: boolean = true) {
+export function useTopicsForLesson(
+  lessonId: number | undefined,
+  userIdOrEnabled?: string | boolean,
+  enabledArg?: boolean
+) {
+  const userId = typeof userIdOrEnabled === 'string' ? userIdOrEnabled : undefined
+  const enabled = typeof userIdOrEnabled === 'boolean' ? userIdOrEnabled : (enabledArg ?? true)
+
   return useQuery({
-    queryKey: USER_PROGRESS_QUERY_KEYS.topics(lessonId!),
+    queryKey: USER_PROGRESS_QUERY_KEYS.topics(lessonId!, userId),
     queryFn: () => userProgressService.getTopicsForLesson(lessonId!),
-    enabled: enabled && !!lessonId,
+    enabled: enabled && !!lessonId && (userId !== undefined ? !!userId : true),
   })
 }
 
-export function useUserStatistics(enabled: boolean = true) {
+export function useUserStatistics(userId?: string, enabled: boolean = true) {
   return useQuery({
-    queryKey: USER_PROGRESS_QUERY_KEYS.statistics(),
+    queryKey: USER_PROGRESS_QUERY_KEYS.statistics(userId),
     queryFn: () => userProgressService.getStatistics(),
     enabled,
   })
@@ -48,7 +84,19 @@ export function useMarkTopicViewed() {
     mutationFn: (topicId: number) => userProgressService.markTopicViewed(topicId),
     onSuccess: () => {
       // Invalidate all progress queries to refetch
-      queryClient.invalidateQueries({ queryKey: USER_PROGRESS_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: ['user-progress'] })
+    },
+  })
+}
+
+export function useMarkLessonCompleted() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (lessonId: number) => userProgressService.markLessonCompleted(lessonId),
+    onSuccess: () => {
+      // Invalidate all progress queries to refetch
+      queryClient.invalidateQueries({ queryKey: ['user-progress'] })
     },
   })
 }
@@ -60,7 +108,7 @@ export function useMarkTopicCompleted() {
     mutationFn: (topicId: number) => userProgressService.markTopicCompleted(topicId),
     onSuccess: () => {
       // Invalidate all progress queries to refetch
-      queryClient.invalidateQueries({ queryKey: USER_PROGRESS_QUERY_KEYS.all })
+      queryClient.invalidateQueries({ queryKey: ['user-progress'] })
     },
   })
 }

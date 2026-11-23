@@ -148,9 +148,8 @@ DIRECT_URL="postgresql://username:password@host:5432/database"
 # Authentication
 JWT_SECRET="your-secure-random-string-here"
 
-# AI Services
+# AI Services (Google Gemini Paid API)
 GOOGLE_AI_API_KEY="your-google-ai-key"
-GROQ_API_KEY="your-groq-api-key"
 
 # Supabase
 SUPABASE_URL="your-supabase-url"
@@ -458,7 +457,7 @@ docker system prune -af
 - `FRONTEND_URL` - Must be `https://bitwise.live` (or your domain)
 - `CORS_ALLOWED_ORIGINS` - Include both www and non-www domains
 - `DATABASE_URL` - Supabase connection with pooling
-- `GROQ_API_KEY` - AI service key
+- `GOOGLE_AI_API_KEY` - Google Gemini Paid API key
 
 **Frontend (.env in bitwise-ui/):**
 - `VITE_API_BASE_URL` - Must be `https://bitwise.live/api` (through Traefik)

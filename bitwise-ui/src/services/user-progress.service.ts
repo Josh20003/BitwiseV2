@@ -57,6 +57,14 @@ export const userProgressService = {
     )
   },
 
+  async markLessonCompleted(lessonId: number): Promise<UserLessonProgress> {
+    return await apiService.post<UserLessonProgress>(
+      `/progress/lesson/${lessonId}/completed`,
+      {},
+      true
+    )
+  },
+
   async getLessonProgress(lessonId: number): Promise<UserLessonProgress> {
     return await apiService.get<UserLessonProgress>(
       `/progress/lesson/${lessonId}`,

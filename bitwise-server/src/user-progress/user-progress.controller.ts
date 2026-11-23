@@ -27,6 +27,17 @@ export class UserProgressController {
     );
   }
 
+  @Post('lesson/:lessonId/completed')
+  async markLessonCompleted(
+    @CurrentUser('id') userId: string,
+    @Param('lessonId') lessonId: string,
+  ) {
+    return this.userProgressService.markLessonCompleted(
+      userId,
+      parseInt(lessonId),
+    );
+  }
+
   @Get('lesson/:lessonId')
   async getLessonProgress(
     @CurrentUser('id') userId: string,

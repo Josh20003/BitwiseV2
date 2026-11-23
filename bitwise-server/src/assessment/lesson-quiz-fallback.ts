@@ -4,11 +4,26 @@ type Item = { stem: string; answer: string; wrong: string[]; explanation: string
 const item = (stem: string, answer: string | number, wrong: Array<string | number>, explanation: string): Item =>
   ({ stem, answer: String(answer), wrong: wrong.map(String), explanation });
 
-/** Local, computed questions; no network calls and no placeholder answers. */
-function makeItem(lesson: string, topic: string, index: number): Item {
+/** Local, computed questions; difficulty-aware, randomized on retakes, no network calls. */
+function makeItem(lesson: string, topic: string, index: number, difficulty: string = 'medium', seed: number = 0): Item {
   const name = lesson.toLowerCase();
   const title = topic.toLowerCase();
-  const n = 5 + index;
+  const diff = (difficulty || 'medium').toLowerCase();
+
+  // n varies with difficulty and seed
+  let n: number;
+  if (seed === 0) {
+    n = 5 + index;
+  } else {
+    if (diff === 'easy') {
+      n = 2 + ((seed * 3 + index * 2) % 6); // 2 to 7
+    } else if (diff === 'hard') {
+      n = 24 + ((seed * 7 + index * 5) % 40); // 24 to 63
+    } else {
+      n = 8 + ((seed * 5 + index * 3) % 16); // 8 to 23
+    }
+  }
+
   if (name.includes('introduction to number')) {
     const base = title.includes('hex') ? 16 : title.includes('oct') ? 8 : title.includes('decimal') ? 10 : 2;
     if (index % 3 === 0) return item(`How many distinct digits are used in base ${base}?`, base, [base + 1, base - 1, base * 2], `A base-${base} system uses exactly ${base} distinct digits.`);
@@ -26,7 +41,7 @@ function makeItem(lesson: string, topic: string, index: number): Item {
     return item(`What decimal value equals binary ${n.toString(2)}?`, n, [n + 1, n + 2, n + 3], `Adding the binary positional weights gives ${n}.`);
   }
   if (name.includes('arithmetic')) {
-    const a = n + 3, b = 2;
+    const a = n + 3, b = diff === 'easy' ? 1 : diff === 'hard' ? 4 : 2;
     const op = title.includes('sub') ? '-' : title.includes('mult') ? '*' : title.includes('div') ? '/' : '+';
     const dividend = op === '/' ? a * b : a;
     const result = op === '-' ? a - b : op === '*' ? a * b : op === '/' ? a : a + b;
@@ -46,10 +61,10 @@ function makeItem(lesson: string, topic: string, index: number): Item {
   }
   if (name.includes('binary codes') || name.includes('bcd')) {
     if (title.includes('ascii')) {
-      const code = 65 + index;
-      return item(`What is the decimal ASCII code for uppercase '${String.fromCharCode(code)}'?`, code, [code + 1, code - 1, code + 32], `Uppercase A is ASCII 65; '${String.fromCharCode(code)}' is ${index} positions after A, giving ${code}.`);
+      const code = 65 + (n % 26);
+      return item(`What is the decimal ASCII code for uppercase '${String.fromCharCode(code)}'?`, code, [code + 1, code - 1, code + 32], `Uppercase A is ASCII 65; '${String.fromCharCode(code)}' is ${code - 65} positions after A, giving ${code}.`);
     }
-    const value = 20 + index;
+    const value = 10 + n;
     const bcd = (v: number) => String(v).split('').map(d => Number(d).toString(2).padStart(4, '0')).join(' ');
     return item(`Encode decimal ${value} in BCD (one 4-bit group per digit).`, bcd(value), [value + 1, value + 2, value + 3].map(bcd), `Encode each decimal digit separately: ${value} becomes ${bcd(value)}.`);
   }
@@ -65,23 +80,42 @@ function makeItem(lesson: string, topic: string, index: number): Item {
       item('Simplify A OR 0.', 'A', ['0', '1', 'NOT A'], '0 is the identity for OR, so A OR 0 = A.'),
       item('Simplify A AND (NOT A).', '0', ['A', '1', 'NOT A'], 'A and its complement cannot both be true.'),
       item('Simplify A OR (NOT A).', '1', ['A', '0', 'NOT A'], 'Either A or its complement must be true.'),
+      item('Simplify A AND 0.', '0', ['A', '1', 'NOT A'], '0 dominates AND: A AND 0 = 0.'),
+      item('Simplify A OR 1.', '1', ['A', '0', 'NOT A'], '1 dominates OR: A OR 1 = 1.'),
     ];
-    return variants[index % variants.length];
+    return variants[(index + (seed % variants.length)) % variants.length];
   }
   throw new Error(`No local lesson quiz is configured for "${lesson}".`);
 }
 
-export function buildLocalLessonQuestions(context: LessonQuizContext) {
+function pseudoShuffle<T>(arr: T[], seed: number): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.abs((seed * 31 + i * 17) % (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+export function buildLocalLessonQuestions(context: LessonQuizContext, seed: number = 0) {
   return context.topics.flatMap(topic => Array.from({ length: topic.questionCount }, (_, i) => {
-    const value = makeItem(context.lessonTitle, topic.topicTitle, i);
-    const values = [...new Set([value.answer, ...value.wrong])];
-    if (values.length !== 4) throw new Error('Local quiz options must be distinct.');
+    const value = makeItem(context.lessonTitle, topic.topicTitle, i, topic.difficulty, seed);
+    const rawValues = [...new Set([value.answer, ...value.wrong])];
+    if (rawValues.length !== 4) throw new Error('Local quiz options must be distinct.');
+    const values = seed > 0 ? pseudoShuffle(rawValues, seed + i * 7) : rawValues;
+    const options = values.map((text, optIdx) => ({
+      id: `opt_${optIdx}`,
+      text,
+      isCorrect: text === value.answer,
+      rationale: text === value.answer ? value.explanation : `Incorrect. ${value.explanation}`,
+    }));
+    const correctOpt = options.find(o => o.isCorrect) || options[0];
     return {
-      id: `local-${context.lessonId}-${topic.topicId}-${i}`,
+      id: `local-${context.lessonId}-${topic.topicId}-${i}-${seed}`,
       lessonId: context.lessonId, topicId: topic.topicId, difficulty: topic.difficulty,
       tags: topic.tags, stem: value.stem, questionType: 'multiple-choice',
-      options: values.map((text, index) => ({id: `opt_${index}`, text, isCorrect: index === 0, rationale: value.explanation})),
-      answerId: 'opt_0', explanation: value.explanation, solutionSteps: [value.explanation],
+      options,
+      answerId: correctOpt.id, explanation: value.explanation, solutionSteps: [value.explanation],
     };
   })).slice(0, context.totalQuestions);
 }

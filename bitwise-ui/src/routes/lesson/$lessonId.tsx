@@ -7,6 +7,7 @@ import { useGetLesson } from '@/hooks/useLesson'
 import {
   useMarkTopicViewed,
   useMarkTopicCompleted,
+  useMarkLessonCompleted,
   useTopicsForLesson,
   useLessonProgress,
   useAllUserProgress,
@@ -129,12 +130,13 @@ function RouteComponent() {
   // useGetLesson from useLessonQueries (react-query)
   const { data: lesson, isLoading, error } = useGetLesson(lessonIdNum)
 
-  const { data: lessonTopicsProgress } = useTopicsForLesson(lessonIdNum, !!user)
+  const { data: lessonTopicsProgress } = useTopicsForLesson(lessonIdNum, user?.id, !!user)
   const { data: prevLessonProgress, isLoading: isPrevProgressLoading } = useLessonProgress(
     lessonIdNum && lessonIdNum > 1 ? lessonIdNum - 1 : undefined,
+    user?.id,
     !!user
   )
-  const { data: allLessonsProgress = [] } = useAllUserProgress(!!user)
+  const { data: allLessonsProgress = [] } = useAllUserProgress(user?.id, !!user)
 
   const isPrevCompleted =
     prevLessonProgress?.status === 'completed' ||
@@ -161,9 +163,9 @@ function RouteComponent() {
 
   const [topicIdx, setTopicIdx] = useState(0)
   const [finished, setFinished] = useState(false)
-  const [isCompleting, setIsCompleting] = useState(false)
-  const [completionError, setCompletionError] = useState<string | null>(null)
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
+  const [isCompleting] = useState(false)
+  const [completionError] = useState<string | null>(null)
   const confettiRef = useRef<ConfettiRef>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const scrollCooldownRef = useRef(false)
@@ -171,6 +173,7 @@ function RouteComponent() {
   // Progress tracking mutations
   const markViewedMutation = useMarkTopicViewed()
   const markCompletedMutation = useMarkTopicCompleted()
+  const markLessonCompletedMutation = useMarkLessonCompleted()
 
   const goToTopic = (nextIndex: number) => {
     if (!lesson?.topics?.length) return
@@ -180,7 +183,6 @@ function RouteComponent() {
     )
     setTopicIdx(clampedIndex)
     setFinished(false)
-    setCompletionError(null)
 
     const nextTopic = lesson.topics[clampedIndex]
     if (nextTopic) {
@@ -193,23 +195,9 @@ function RouteComponent() {
     }
   }
 
-  const completeTopic = async (topicId: number, onSuccess: () => void) => {
-    if (!user) {
-      onSuccess()
-      return
-    }
-
-    try {
-      setCompletionError(null)
-      setIsCompleting(true)
-      await markCompletedMutation.mutateAsync(topicId)
-    } catch (error) {
-      console.warn('⚠️ Could not save topic progress (continuing anyway):', error)
-    } finally {
-      setIsCompleting(false)
-      // Always proceed — progress tracking should never block navigation
-      onSuccess()
-    }
+  const completeTopic = (topicId: number) => {
+    if (!user) return
+    markCompletedMutation.mutate(topicId)
   }
 
   // reset progress when lesson changes
@@ -417,48 +405,30 @@ function RouteComponent() {
   const isCurrentTopicCompleted = currentTopicProgress?.status === 'completed'
 
   const handleMarkTopicComplete = () => {
-    if (!topic || isCurrentTopicCompleted || isCompleting) return
-    void completeTopic(topic.id, () => {})
+    if (!topic || isCurrentTopicCompleted) return
+    completeTopic(topic.id)
   }
 
-  const handleNextTopic = async () => {
-    if (isCompleting) return
+  const handleNextTopic = () => {
     if (!lesson?.topics?.length) return
 
     const current = lesson.topics[topicIdx]
-    if (!current) return
-
-    if (!user || isCurrentTopicCompleted) {
-      goToTopic(topicIdx + 1)
-      return
+    if (current && user) {
+      completeTopic(current.id)
     }
 
-    await completeTopic(current.id, () => {
-      goToTopic(topicIdx + 1)
-    })
+    goToTopic(topicIdx + 1)
   }
 
-  const handleFinishLesson = async () => {
-    if (isCompleting) return
-    if (!lesson?.topics?.length) {
-      setFinished(true)
-      return
+  const handleFinishLesson = () => {
+    setFinished(true)
+    const current = lesson?.topics?.[topicIdx]
+    if (current && user) {
+      completeTopic(current.id)
     }
-
-    const current = lesson.topics[topicIdx]
-    if (!current) {
-      setFinished(true)
-      return
+    if (lesson?.id && user) {
+      markLessonCompletedMutation.mutate(lesson.id)
     }
-
-    if (!user || isCurrentTopicCompleted) {
-      setFinished(true)
-      return
-    }
-
-    await completeTopic(current.id, () => {
-      setFinished(true)
-    })
   }
 
   const calculateProgress = () => {
@@ -727,7 +697,6 @@ function RouteComponent() {
                   variant="outline"
                   className="flex items-center space-x-2"
                   onClick={() => goToTopic(topicIdx - 1)}
-                  disabled={isCompleting}
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Previous</span>
@@ -746,24 +715,24 @@ function RouteComponent() {
                 <Button
                   className="flex items-center space-x-2 transition-all duration-200"
                   onClick={() => {
-                    void handleNextTopic()
+                    handleNextTopic()
                   }}
-                  disabled={isCompleting || !hasScrolledToBottom}
+                  disabled={!hasScrolledToBottom}
                   title={!hasScrolledToBottom ? 'Please scroll down to read the full topic before proceeding' : undefined}
                 >
-                  <span>{isCompleting ? 'Saving...' : 'Next'}</span>
+                  <span>Next</span>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
                 <Button
                   className="flex items-center space-x-2 transition-all duration-200"
                   onClick={() => {
-                    void handleFinishLesson()
+                    handleFinishLesson()
                   }}
-                  disabled={isCompleting || !hasScrolledToBottom}
+                  disabled={!hasScrolledToBottom}
                   title={!hasScrolledToBottom ? 'Please scroll down to read the full topic before proceeding' : undefined}
                 >
-                  <span>{isCompleting ? 'Saving...' : 'Finish'}</span>
+                  <span>Finish</span>
                   <Check className="w-4 h-4" />
                 </Button>
               )}
