@@ -19,7 +19,7 @@ import roadmapSample from '@/assets/bg-icon/roadmapsample1.png'
 import booleImg from '@/assets/bg-icon/GeorgeBoole.png'
 import vennImg from '@/assets/bg-icon/venn.jpg'
 import circuitImg from '@/assets/bg-icon/circuits.jpg'
-import numberSystemImg from '@/assets/bg-icon/roadmapsample.png'
+import numberSystemImg from '@/assets/bg-icon/leibniz.jpg'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -265,8 +265,8 @@ function RouteComponent() {
             <div className="w-full h-48 md:h-64 rounded-t-3xl overflow-hidden">
               <img
                 src={numberSystemImg}
-                className="w-full h-full object-cover"
-                alt="Number System"
+                className="w-full h-full object-cover object-top"
+                alt="Gottfried Wilhelm Leibniz - Number System"
               />
             </div>
             <div className="w-full p-4 space-y-2">
